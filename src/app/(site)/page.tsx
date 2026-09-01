@@ -94,23 +94,20 @@ export default async function HomePage() {
   );
 }
 
-const ROW_CLASS =
-  "group flex items-start justify-between gap-6 rounded-lg px-3 py-5 transition-colors hover:bg-surface";
+/** Layout only — the surface below owns the padding and the hover. */
+const ROW_CLASS = "flex min-w-0 flex-1 items-start justify-between gap-6";
 
 /**
- * Links to the case-study page when the project has a long description,
- * otherwise straight out to the live site. A project with neither renders
- * as a plain, unlinked row.
+ * The row is one surface. The padding, rounding and hover background sit on
+ * this wrapper rather than on the link, so they take in the video thumbnail
+ * too — with them on the link, the thumbnail sat outside the highlight and
+ * the two read as separate panels side by side.
  */
 function ProjectRow({ project }: { project: Project }) {
-  const row = <ProjectLink project={project} />;
-
-  if (!project.videoUrl) return row;
-
   return (
-    <div className="flex items-center gap-4">
-      <div className="min-w-0 flex-1">{row}</div>
-      <VideoThumb url={project.videoUrl} title={project.title} />
+    <div className="group flex items-center gap-4 rounded-lg px-3 py-5 transition-colors hover:bg-surface">
+      <ProjectLink project={project} />
+      {project.videoUrl ? <VideoThumb url={project.videoUrl} title={project.title} /> : null}
     </div>
   );
 }
