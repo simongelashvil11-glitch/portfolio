@@ -1,24 +1,24 @@
 import type { MetadataRoute } from "next";
 
-import { getPosts, getProjects } from "@/lib/queries";
+import { getProjects } from "@/lib/queries";
 import { siteUrl } from "@/lib/site-url";
 
+/**
+ * Only the pages the navigation actually reaches. /writing still resolves,
+ * but nothing links to it, so advertising it would point crawlers at a
+ * section with no way in — add it back here if it returns to the nav.
+ */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [projects, posts] = await Promise.all([getProjects(), getPosts()]);
+  const projects = await getProjects();
 
   return [
     { url: siteUrl, changeFrequency: "monthly", priority: 1 },
     { url: `${siteUrl}/about`, changeFrequency: "monthly", priority: 0.9 },
-    { url: `${siteUrl}/writing`, changeFrequency: "weekly", priority: 0.8 },
     ...projects
       .filter((project) => project.description)
       .map((project) => ({
         url: `${siteUrl}/projects/${project.slug}`,
         lastModified: project.createdAt,
       })),
-    ...posts.map((post) => ({
-      url: `${siteUrl}/writing/${post.slug}`,
-      lastModified: post.publishedAt ?? post.createdAt,
-    })),
   ];
 }
