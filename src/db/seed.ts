@@ -68,10 +68,6 @@ async function seedContent() {
       startDate: "2023-01",
       endDate: null,
       description: "Running search, paid social and email campaigns end to end for small teams and founders.",
-      highlights: [
-        "Planned and ran paid campaigns across Google and Meta, from creative brief to weekly reporting.",
-        "Built SEO and content programmes that grew organic traffic month over month.",
-      ],
       sortOrder: 0,
     },
     {
@@ -80,7 +76,6 @@ async function seedContent() {
       startDate: "2021-06",
       endDate: "2022-12",
       description: "Replace this with your own history from the admin dashboard.",
-      highlights: [],
       sortOrder: 1,
     },
   ]);

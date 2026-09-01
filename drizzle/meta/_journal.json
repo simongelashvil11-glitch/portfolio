@@ -57,6 +57,13 @@
       "when": 1788286562767,
       "tag": "0007_cooing_violations",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788292723379,
+      "tag": "0008_unknown_karen_page",
+      "breakpoints": true
     }
   ]
 }

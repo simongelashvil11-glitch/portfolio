@@ -176,22 +176,9 @@ export default async function AboutPage() {
                     </h3>
 
                     {item.description ? (
-                      <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-muted">
-                        {item.description}
-                      </p>
-                    ) : null}
-
-                    {item.highlights.length > 0 ? (
-                      <ul className="mt-3 grid gap-1.5">
-                        {item.highlights.map((highlight) => (
-                          <li
-                            key={highlight}
-                            className="relative pl-4 text-[0.9375rem] leading-relaxed text-muted before:absolute before:left-0 before:top-2.5 before:size-1 before:rounded-full before:bg-accent"
-                          >
-                            {highlight}
-                          </li>
-                        ))}
-                      </ul>
+                      <div className="mt-2 text-[0.9375rem]">
+                        <Prose content={item.description} />
+                      </div>
                     ) : null}
                   </div>
 

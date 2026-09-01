@@ -166,7 +166,6 @@ const ExperienceSchema = z.object({
   startDate: z.string().regex(PERIOD, "Use YYYY or YYYY-MM."),
   endDate: z.string().regex(PERIOD, "Use YYYY or YYYY-MM, or leave blank for Present.").nullable(),
   description: z.string().nullable(),
-  highlights: z.array(z.string()),
   sortOrder: z.number().int(),
   published: z.boolean(),
 });
@@ -186,7 +185,6 @@ export async function saveExperience(
     startDate: text(formData.get("startDate")),
     endDate: nullable(formData.get("endDate")),
     description: nullable(formData.get("description")),
-    highlights: lines(formData.get("highlights")),
     sortOrder: Number(text(formData.get("sortOrder")) || 0),
     published: checked(formData.get("published")),
   });

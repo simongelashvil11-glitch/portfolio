@@ -57,7 +57,6 @@ export const experiences = pgTable("experiences", {
   /** null => "Present" */
   endDate: varchar("end_date", { length: 20 }),
   description: text("description"),
-  highlights: jsonb("highlights").$type<string[]>().default([]).notNull(),
   sortOrder: integer("sort_order").default(0).notNull(),
   published: boolean("published").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -54,20 +54,12 @@ export function ExperienceForm({ experience }: { experience?: Experience }) {
         </Field>
       </div>
 
-      <Field label="Description" error={state.fieldErrors?.description}>
-        <Textarea name="description" rows={3} defaultValue={experience?.description ?? ""} />
-      </Field>
-
       <Field
-        label="Highlights"
-        hint="One bullet per line."
-        error={state.fieldErrors?.highlights}
+        label="Description"
+        hint="Blank line starts a new paragraph, a single Enter breaks the line. ## heading, ### smaller heading, - bullet, --- divider."
+        error={state.fieldErrors?.description}
       >
-        <Textarea
-          name="highlights"
-          rows={5}
-          defaultValue={(experience?.highlights ?? []).join("\n")}
-        />
+        <Textarea name="description" rows={10} defaultValue={experience?.description ?? ""} />
       </Field>
 
       <div className="flex flex-wrap items-center gap-6">
