@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Reveal } from "@/components/reveal";
+import { VideoPoster } from "@/components/video";
 import { getProfile, getProjectBySlug, getProjects } from "@/lib/queries";
 
 export const revalidate = 60;
@@ -39,10 +40,10 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
   if (!project) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16">
+    <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16 lg:px-12">
       <Link
         href="/#work"
-        className="group inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted transition-colors hover:text-foreground"
+        className="group inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-3.5 transition-transform duration-300 group-hover:-translate-x-0.5" />
         {profile?.name ?? "Back"}
@@ -50,10 +51,10 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
 
       <Reveal>
         <header className="mt-10 border-b border-line pb-10">
-          <p className="tnum font-mono text-xs uppercase tracking-widest text-faint">
+          <p className="tnum text-sm text-faint">
             {[project.year, ...project.tags].filter(Boolean).join(" · ")}
           </p>
-          <h1 className="mt-4 font-display text-4xl leading-tight tracking-tight text-balance sm:text-5xl">
+          <h1 className="mt-4 font-display text-4xl leading-tight tracking-display text-balance sm:text-5xl">
             {project.title}
           </h1>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-muted">{project.summary}</p>
@@ -65,7 +66,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
                   href={project.url}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent transition-opacity hover:opacity-75"
+                  className="inline-flex items-center gap-1.5 text-sm text-accent transition-opacity hover:opacity-75"
                 >
                   <ExternalLink className="size-3.5" />
                   Visit site
@@ -76,7 +77,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
                   href={project.repoUrl}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-muted transition-colors hover:text-foreground"
+                  className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
                 >
                   <Code2 className="size-3.5" />
                   Source
@@ -87,7 +88,19 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
         </header>
       </Reveal>
 
-      {project.imageUrl ? (
+      {/*
+        A video takes the lead when there is one — it reuses the cover image
+        as its poster, so setting both loses nothing.
+      */}
+      {project.videoUrl ? (
+        <Reveal index={1}>
+          <VideoPoster
+            url={project.videoUrl}
+            title={project.title}
+            posterUrl={project.imageUrl}
+          />
+        </Reveal>
+      ) : project.imageUrl ? (
         <Reveal index={1}>
           <div className="relative mt-10 aspect-[16/10] overflow-hidden rounded-xl border border-line bg-surface">
             <Image

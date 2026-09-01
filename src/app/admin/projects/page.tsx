@@ -4,12 +4,13 @@ import Link from "next/link";
 import { deleteProject } from "@/actions/admin";
 import { DeleteForm } from "@/components/admin/delete-form";
 import { Card, EmptyState, PageHeading } from "@/components/admin/ui";
+import { Mark } from "@/components/mark";
 import { requireSession } from "@/lib/auth";
 import { getProjects } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Projects" };
+export const metadata = { title: "Selected work" };
 
 export default async function AdminProjectsPage() {
   await requireSession();
@@ -18,8 +19,8 @@ export default async function AdminProjectsPage() {
   return (
     <>
       <PageHeading
-        title="Projects"
-        description="Selected work shown on the home page."
+        title="Selected work"
+        description="The work list on the home page."
         action={
           <Link
             href="/admin/projects/new"
@@ -37,9 +38,10 @@ export default async function AdminProjectsPage() {
         <ul className="grid gap-3">
           {items.map((item) => (
             <li key={item.id}>
-              <Card className="flex items-start justify-between gap-4">
-                <Link href={`/admin/projects/${item.id}`} className="group min-w-0 flex-1">
-                  <p className="font-mono text-xs text-faint">
+              <Card className="group flex items-start gap-4">
+                <Mark src={item.logoUrl} label={item.title} className="mt-0.5" />
+                <Link href={`/admin/projects/${item.id}`} className="min-w-0 flex-1">
+                  <p className="text-xs text-faint">
                     {item.year ?? "—"}
                     {item.featured ? (
                       <span className="ml-2 uppercase tracking-widest text-accent">Featured</span>

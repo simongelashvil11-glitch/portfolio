@@ -8,6 +8,48 @@
       "when": 1788198243882,
       "tag": "0000_dusty_gravity",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788199566601,
+      "tag": "0001_skinny_sasquatch",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788200961380,
+      "tag": "0002_luxuriant_shriek",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788202158767,
+      "tag": "0003_shallow_doctor_strange",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788256822613,
+      "tag": "0004_salty_nehzno",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788267957697,
+      "tag": "0005_green_silver_samurai",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788268519609,
+      "tag": "0006_shiny_bedlam",
+      "breakpoints": true
     }
   ]
 }

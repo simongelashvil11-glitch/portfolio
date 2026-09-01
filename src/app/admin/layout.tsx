@@ -28,7 +28,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-8 md:flex-row md:py-12">
       <aside className="md:w-52 md:shrink-0">
         <div className="mb-6 flex items-center justify-between md:mb-8 md:block">
-          <Link href="/" className="font-display text-xl tracking-tight hover:text-accent">
+          <Link href="/" className="font-display text-xl tracking-display hover:text-accent">
             Portfolio
           </Link>
           <p className="mt-1 hidden truncate font-mono text-xs text-faint md:block">

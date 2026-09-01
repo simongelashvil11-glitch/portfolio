@@ -1,42 +1,27 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 :root {
-  /* Paper */
-  --background: #faf9f6;
-  --surface: #ffffff;
-  --foreground: #14140f;
-  --muted: #6b6b60;
-  --faint: #9a9a8e;
-  --line: #e4e2da;
-  --accent: #a86a12;
-  --accent-soft: #f3e7d0;
-}
+  /* Monochrome. Pure white on charcoal, neutral greys for hierarchy. */
+  --background: #121212;
+  --surface: #1b1b1b;
+  --foreground: #ffffff;
+  --muted: #b3b3b3;
+  --faint: #7c7c7c;
+  --line: #2a2a2a;
+  --accent: #ffffff;
+  --accent-soft: #202020;
 
-.dark {
-  /* Ink */
-  --background: #0b0b0c;
-  --surface: #131315;
-  --foreground: #edece7;
-  --muted: #9b9a93;
-  --faint: #6a6a64;
-  --line: #26262a;
-  --accent: #e6a94b;
-  --accent-soft: #2a2114;
-}
+  /*
+   * Sidebar gradient. Deliberately kept within a few points of the page
+   * background — it should read as the same surface catching a little light,
+   * not as a coloured panel bolted to the side.
+   */
+  --aurora-1: #0f2119;
+  --aurora-2: #102030;
+  --aurora-3: #1b1733;
+  --aurora-4: #26163a;
 
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --background: #0b0b0c;
-    --surface: #131315;
-    --foreground: #edece7;
-    --muted: #9b9a93;
-    --faint: #6a6a64;
-    --line: #26262a;
-    --accent: #e6a94b;
-    --accent-soft: #2a2114;
-  }
+  --sidebar-width: 15rem;
 }
 
 @theme inline {
@@ -51,14 +36,18 @@
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-display: var(--font-display), Georgia, "Times New Roman", serif;
+  --font-display: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+
+  /* Large sans headings want a little negative tracking to look even. */
+  --tracking-display: -0.011em;
 }
 
 @layer base {
   html {
+    color-scheme: dark;
     scroll-behavior: smooth;
-    /* Keeps anchored sections clear of the sticky header. */
-    scroll-padding-top: 6rem;
+    /* Keeps anchored sections clear of the mobile bar. */
+    scroll-padding-top: 5rem;
   }
 
   body {
@@ -70,12 +59,12 @@
   }
 
   ::selection {
-    background-color: var(--accent);
+    background-color: var(--foreground);
     color: var(--background);
   }
 
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--foreground);
     outline-offset: 3px;
     border-radius: 2px;
   }
@@ -104,12 +93,163 @@
   .link-underline:focus-visible {
     background-size: 100% 1px;
   }
+
+  /*
+   * The shell's living background: a wide multi-stop gradient drifting
+   * across itself, with a soft bloom breathing on a different clock so the
+   * two never line up the same way twice. The stops carry real colour —
+   * green through teal to violet — but at a luminance low enough that white
+   * over them still clears 14:1, leaving the panel beside it neutral.
+   */
+  .aurora {
+    background-image: linear-gradient(
+      165deg,
+      var(--aurora-1) 0%,
+      var(--aurora-2) 30%,
+      var(--aurora-3) 58%,
+      var(--aurora-4) 80%,
+      var(--aurora-1) 100%
+    );
+    background-size: 280% 280%;
+    background-position: 0% 0%;
+    animation: aurora-drift 26s ease-in-out infinite;
+  }
+
+  .aurora::after {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    background-image: radial-gradient(
+      52% 40% at 50% 40%,
+      rgb(180 210 255 / 0.09) 0%,
+      rgb(180 210 255 / 0) 72%
+    );
+    animation: aurora-bloom 19s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /*
+   * Smoke. Two banks of soft radial blobs drifting over the gradient on
+   * mismatched clocks, so they pass through each other instead of moving as
+   * one sheet — that parallax is what reads as depth rather than a texture.
+   *
+   * The softness comes from the gradients' own alpha falloff rather than a
+   * blur filter, which would have to re-rasterise the whole viewport every
+   * frame. These only ever animate `transform`, so the browser composites
+   * them on the GPU and the paint happens once.
+   *
+   * Alphas stay under 0.1: stacked at their most opaque they still leave
+   * white text over the sidebar above 10:1.
+   */
+  .smoke {
+    position: absolute;
+    inset: -30%;
+    pointer-events: none;
+  }
+
+  .smoke-a {
+    background-image:
+      radial-gradient(38% 30% at 22% 28%, rgb(120 210 180 / 0.1), transparent 70%),
+      radial-gradient(30% 26% at 72% 62%, rgb(150 140 255 / 0.09), transparent 72%);
+    animation: smoke-a 38s ease-in-out infinite;
+  }
+
+  .smoke-b {
+    background-image:
+      radial-gradient(34% 28% at 62% 18%, rgb(90 180 220 / 0.08), transparent 70%),
+      radial-gradient(42% 34% at 30% 82%, rgb(200 130 230 / 0.08), transparent 72%);
+    animation: smoke-b 53s ease-in-out infinite;
+  }
+
+  @keyframes smoke-a {
+    0%,
+    100% {
+      transform: translate3d(-4%, -2%, 0) scale(1);
+    }
+    33% {
+      transform: translate3d(5%, 4%, 0) scale(1.12);
+    }
+    66% {
+      transform: translate3d(-2%, 7%, 0) scale(1.05);
+    }
+  }
+
+  @keyframes smoke-b {
+    0%,
+    100% {
+      transform: translate3d(3%, 5%, 0) scale(1.08);
+    }
+    40% {
+      transform: translate3d(-6%, -3%, 0) scale(1);
+    }
+    75% {
+      transform: translate3d(2%, -6%, 0) scale(1.14);
+    }
+  }
+
+  @keyframes aurora-drift {
+    0%,
+    100% {
+      background-position: 0% 0%;
+    }
+    35% {
+      background-position: 100% 30%;
+    }
+    65% {
+      background-position: 60% 100%;
+    }
+  }
+
+  @keyframes aurora-bloom {
+    0%,
+    100% {
+      transform: translate3d(-8%, -6%, 0) scale(1);
+      opacity: 0.7;
+    }
+    50% {
+      transform: translate3d(9%, 8%, 0) scale(1.18);
+      opacity: 1;
+    }
+  }
+
+  /*
+   * The greeting only resolves once the visitor's local hour is known, so it
+   * always arrives a beat after paint. It settles in rather than snapping on:
+   * blur and lift falling away together, on the easing the rest of the site
+   * uses for motion.
+   */
+  .greeting-in {
+    display: inline-block;
+    opacity: 0;
+    filter: blur(12px);
+    transform: translateY(0.12em) scale(0.985);
+    transition:
+      opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+      filter 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .greeting-in[data-ready="true"] {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
+
+  /*
+   * Scroll reveals start hidden via an inline style so the server and client
+   * markup match. `!important` beats that inline style, so anyone who prefers
+   * reduced motion simply gets the content, already in place.
+   */
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
   *,
   *::before,
   *::after {

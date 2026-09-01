@@ -41,10 +41,10 @@ export default async function PostPage({ params }: PageProps<"/writing/[slug]">)
   if (!post) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
+    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16 lg:px-12">
       <Link
         href="/writing"
-        className="group inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted transition-colors hover:text-foreground"
+        className="group inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-3.5 transition-transform duration-300 group-hover:-translate-x-0.5" />
         Writing
@@ -52,10 +52,10 @@ export default async function PostPage({ params }: PageProps<"/writing/[slug]">)
 
       <Reveal>
         <header className="mt-10">
-          <time className="tnum font-mono text-xs text-faint">
+          <time className="tnum text-sm text-faint">
             {formatDate(post.publishedAt)}
           </time>
-          <h1 className="mt-3 font-display text-4xl leading-tight tracking-tight text-balance">
+          <h1 className="mt-3 font-display text-4xl leading-tight tracking-display text-balance">
             {post.title}
           </h1>
         </header>

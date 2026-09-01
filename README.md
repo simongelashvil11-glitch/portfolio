@@ -3,20 +3,24 @@
 A portfolio site with a database-backed admin dashboard, built to deploy on Vercel.
 
 - **Next.js 16** (App Router, server actions) + **React 19**
-- **Tailwind CSS v4** with a light/dark token palette
+- **Tailwind CSS v4**, monochrome dark palette with an animated gradient sidebar
 - **Neon Postgres** via **Drizzle ORM**
 - Cookie session auth for a single admin account
-- **Motion** for scroll reveals and the retracting header
+- **Motion** for scroll reveals and the mobile nav drawer
 
 ## Routes
 
-| Route              | Purpose                                            |
-| ------------------ | -------------------------------------------------- |
-| `/`                | Hero, selected work, experience, toolkit, contact   |
-| `/projects/[slug]` | Case study page (only for projects with body text) |
-| `/writing`         | Post index                                          |
-| `/writing/[slug]`  | Post                                                |
-| `/admin`           | Dashboard — profile, experience, projects, skills, writing, messages |
+| Route              | Purpose                                                          |
+| ------------------ | ---------------------------------------------------------------- |
+| `/`                | Time-of-day greeting, selected work, contact                     |
+| `/about`           | About copy, personal updates, tech stack, career                 |
+| `/projects/[slug]` | Case study (only for projects with body text), with video player |
+| `/writing`         | Post index — built and reachable, but not linked in the nav       |
+| `/writing/[slug]`  | Post                                                             |
+| `/admin`           | Dashboard, grouped by the page each section feeds                |
+
+Public pages share one shell in `src/app/(site)/layout.tsx`: a fixed gradient
+sidebar with the content as an inset panel beside it.
 
 Everything on the public site is edited from `/admin`. Nothing is hard-coded.
 
@@ -62,6 +66,9 @@ Everything on the public site is edited from `/admin`. Nothing is hard-coded.
 | `bun run db:migrate`  | Apply pending migrations                          |
 | `bun run db:studio`   | Drizzle Studio, a GUI over the data               |
 | `bun run db:seed`     | Create/refresh the admin account, seed placeholders |
+
+Note: `next build` and `next dev` both write to `.next`, so running a build
+while the dev server is up will stop the dev server.
 
 ## Deploying to Vercel
 

@@ -27,9 +27,18 @@ export function ExperienceForm({ experience }: { experience?: Experience }) {
         </Field>
       </div>
 
-      <Field label="Company URL" error={state.fieldErrors?.companyUrl}>
-        <Input name="companyUrl" type="url" defaultValue={experience?.companyUrl ?? ""} />
-      </Field>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Company URL" error={state.fieldErrors?.companyUrl}>
+          <Input name="companyUrl" type="url" defaultValue={experience?.companyUrl ?? ""} />
+        </Field>
+        <Field
+          label="Logo URL"
+          hint="Shown beside the role in Career. Falls back to the first letter."
+          error={state.fieldErrors?.logoUrl}
+        >
+          <Input name="logoUrl" type="url" defaultValue={experience?.logoUrl ?? ""} />
+        </Field>
+      </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Start" hint="YYYY-MM, e.g. 2023-04" error={state.fieldErrors?.startDate}>

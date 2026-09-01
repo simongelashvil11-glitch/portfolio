@@ -67,7 +67,7 @@ export function PageHeading({
   return (
     <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 className="font-display text-3xl tracking-tight">{title}</h1>
+        <h1 className="font-display text-3xl tracking-display">{title}</h1>
         {description ? <p className="mt-1.5 text-sm text-muted">{description}</p> : null}
       </div>
       {action}

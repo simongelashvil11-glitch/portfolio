@@ -2,29 +2,23 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Reveal } from "@/components/reveal";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
-import { getPosts, getProfile } from "@/lib/queries";
+import { getPosts } from "@/lib/queries";
 import { formatDate } from "@/lib/utils";
 
 export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Writing",
-  description: "Notes on building for the web.",
+  description: "Notes on marketing, growth and the craft of getting attention.",
 };
 
 export default async function WritingPage() {
-  const [posts, profile] = await Promise.all([getPosts(), getProfile()]);
-  const name = profile?.name ?? "Portfolio";
+  const posts = await getPosts();
 
   return (
-    <>
-      <SiteHeader name={name} />
-
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16">
+    <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16 lg:px-12">
         <Reveal>
-          <h1 className="font-display text-4xl tracking-tight sm:text-5xl">Writing</h1>
+          <h1 className="font-display text-4xl tracking-display sm:text-5xl">Writing</h1>
         </Reveal>
 
         {posts.length === 0 ? (
@@ -38,14 +32,14 @@ export default async function WritingPage() {
                     href={`/writing/${post.slug}`}
                     className="group block rounded-lg px-3 py-5 transition-colors hover:bg-surface"
                   >
-                    <time className="tnum font-mono text-xs text-faint">
+                    <time className="tnum text-sm text-faint">
                       {formatDate(post.publishedAt)}
                     </time>
                     <h2 className="mt-1 text-base font-medium transition-colors group-hover:text-accent">
                       {post.title}
                     </h2>
                     {post.excerpt ? (
-                      <p className="mt-1 text-sm leading-relaxed text-muted">{post.excerpt}</p>
+                      <p className="mt-1 text-[0.9375rem] leading-relaxed text-muted">{post.excerpt}</p>
                     ) : null}
                   </Link>
                 </li>
@@ -53,9 +47,6 @@ export default async function WritingPage() {
             ))}
           </ul>
         )}
-      </main>
-
-      <SiteFooter name={name} socials={profile?.socials ?? []} />
-    </>
+    </main>
   );
 }

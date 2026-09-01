@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { experiences, messages, posts, profile, projects, skills } from "@/db/schema";
+import { experiences, messages, posts, profile, projects, skills, updates } from "@/db/schema";
 import { requireSession } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
 
@@ -71,6 +71,7 @@ function revalidateSite(...paths: string[]) {
 
 const ProfileSchema = z.object({
   name: z.string().min(1, "Name is required.").max(120),
+  role: z.string().max(120).nullable(),
   headline: z.string().min(1, "Headline is required.").max(200),
   bio: z.string().min(1, "Bio is required."),
   location: z.string().max(120).nullable(),
@@ -85,6 +86,7 @@ export async function saveProfile(_previous: FormState, formData: FormData): Pro
 
   const parsed = ProfileSchema.safeParse({
     name: text(formData.get("name")),
+    role: nullable(formData.get("role")),
     headline: text(formData.get("headline")),
     bio: text(formData.get("bio")),
     location: nullable(formData.get("location")),
@@ -107,6 +109,50 @@ export async function saveProfile(_previous: FormState, formData: FormData): Pro
 }
 
 /* ------------------------------------------------------------------ */
+/* about page                                                          */
+/* ------------------------------------------------------------------ */
+
+const AboutSchema = z.object({
+  aboutTitle: z.string().max(120).nullable(),
+  about: z.string().nullable(),
+  updatesHeading: z.string().max(120).nullable(),
+  techHeading: z.string().max(120).nullable(),
+  techIntro: z.string().nullable(),
+  careerHeading: z.string().max(120).nullable(),
+  careerIntro: z.string().nullable(),
+});
+
+export async function saveAboutPage(
+  _previous: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  await requireSession();
+
+  const parsed = AboutSchema.safeParse({
+    aboutTitle: nullable(formData.get("aboutTitle")),
+    about: nullable(formData.get("about")),
+    updatesHeading: nullable(formData.get("updatesHeading")),
+    techHeading: nullable(formData.get("techHeading")),
+    techIntro: nullable(formData.get("techIntro")),
+    careerHeading: nullable(formData.get("careerHeading")),
+    careerIntro: nullable(formData.get("careerIntro")),
+  });
+
+  if (!parsed.success) return failure(parsed.error);
+
+  // These columns hang off the profile row, which the seed always creates.
+  const [existing] = await db.select({ id: profile.id }).from(profile).limit(1);
+  if (!existing) {
+    return { error: "Save your profile first — the about page hangs off it." };
+  }
+
+  await db.update(profile).set(parsed.data).where(eq(profile.id, 1));
+
+  revalidateSite("/admin/about", "/about");
+  return { success: "About page saved." };
+}
+
+/* ------------------------------------------------------------------ */
 /* experience                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -116,6 +162,7 @@ const ExperienceSchema = z.object({
   role: z.string().min(1, "Role is required.").max(200),
   company: z.string().min(1, "Company is required.").max(200),
   companyUrl: z.url("Enter a valid URL.").nullable(),
+  logoUrl: z.url("Enter a valid URL.").nullable(),
   startDate: z.string().regex(PERIOD, "Use YYYY or YYYY-MM."),
   endDate: z.string().regex(PERIOD, "Use YYYY or YYYY-MM, or leave blank for Present.").nullable(),
   description: z.string().nullable(),
@@ -135,6 +182,7 @@ export async function saveExperience(
     role: text(formData.get("role")),
     company: text(formData.get("company")),
     companyUrl: nullable(formData.get("companyUrl")),
+    logoUrl: nullable(formData.get("logoUrl")),
     startDate: text(formData.get("startDate")),
     endDate: nullable(formData.get("endDate")),
     description: nullable(formData.get("description")),
@@ -151,14 +199,14 @@ export async function saveExperience(
     await db.insert(experiences).values(parsed.data);
   }
 
-  revalidateSite("/admin/experience");
+  revalidateSite("/admin/experience", "/about");
   redirect("/admin/experience");
 }
 
 export async function deleteExperience(formData: FormData) {
   await requireSession();
   await db.delete(experiences).where(eq(experiences.id, Number(text(formData.get("id")))));
-  revalidateSite("/admin/experience");
+  revalidateSite("/admin/experience", "/about");
 }
 
 /* ------------------------------------------------------------------ */
@@ -173,6 +221,8 @@ const ProjectSchema = z.object({
   url: z.url("Enter a valid URL.").nullable(),
   repoUrl: z.url("Enter a valid URL.").nullable(),
   imageUrl: z.url("Enter a valid URL.").nullable(),
+  logoUrl: z.url("Enter a valid URL.").nullable(),
+  videoUrl: z.url("Enter a valid URL.").nullable(),
   tags: z.array(z.string()),
   year: z.string().max(12).nullable(),
   featured: z.boolean(),
@@ -194,6 +244,8 @@ export async function saveProject(_previous: FormState, formData: FormData): Pro
     url: nullable(formData.get("url")),
     repoUrl: nullable(formData.get("repoUrl")),
     imageUrl: nullable(formData.get("imageUrl")),
+    logoUrl: nullable(formData.get("logoUrl")),
+    videoUrl: nullable(formData.get("videoUrl")),
     tags: csv(formData.get("tags")),
     year: nullable(formData.get("year")),
     featured: checked(formData.get("featured")),
@@ -225,12 +277,59 @@ export async function deleteProject(formData: FormData) {
 }
 
 /* ------------------------------------------------------------------ */
+/* updates                                                             */
+/* ------------------------------------------------------------------ */
+
+const UpdateSchema = z.object({
+  title: z.string().min(1, "Title is required.").max(200),
+  url: z.url("Enter a valid URL.").nullable(),
+  logoUrl: z.url("Enter a valid URL.").nullable(),
+  description: z.string().nullable(),
+  date: z.string().regex(PERIOD, "Use YYYY-MM, e.g. 2026-07."),
+  sortOrder: z.number().int(),
+  published: z.boolean(),
+});
+
+export async function saveUpdate(_previous: FormState, formData: FormData): Promise<FormState> {
+  await requireSession();
+
+  const id = text(formData.get("id"));
+  const parsed = UpdateSchema.safeParse({
+    title: text(formData.get("title")),
+    url: nullable(formData.get("url")),
+    logoUrl: nullable(formData.get("logoUrl")),
+    description: nullable(formData.get("description")),
+    date: text(formData.get("date")),
+    sortOrder: Number(text(formData.get("sortOrder")) || 0),
+    published: checked(formData.get("published")),
+  });
+
+  if (!parsed.success) return failure(parsed.error);
+
+  if (id) {
+    await db.update(updates).set(parsed.data).where(eq(updates.id, Number(id)));
+  } else {
+    await db.insert(updates).values(parsed.data);
+  }
+
+  revalidateSite("/admin/updates", "/about");
+  redirect("/admin/updates");
+}
+
+export async function deleteUpdate(formData: FormData) {
+  await requireSession();
+  await db.delete(updates).where(eq(updates.id, Number(text(formData.get("id")))));
+  revalidateSite("/admin/updates", "/about");
+}
+
+/* ------------------------------------------------------------------ */
 /* skills                                                              */
 /* ------------------------------------------------------------------ */
 
 const SkillSchema = z.object({
   name: z.string().min(1, "Name is required.").max(100),
   category: z.string().min(1).max(100),
+  logoUrl: z.url("Enter a valid URL.").nullable(),
   sortOrder: z.number().int(),
 });
 
@@ -241,6 +340,7 @@ export async function saveSkill(_previous: FormState, formData: FormData): Promi
   const parsed = SkillSchema.safeParse({
     name: text(formData.get("name")),
     category: text(formData.get("category")) || "General",
+    logoUrl: nullable(formData.get("logoUrl")),
     sortOrder: Number(text(formData.get("sortOrder")) || 0),
   });
 
@@ -252,14 +352,18 @@ export async function saveSkill(_previous: FormState, formData: FormData): Promi
     await db.insert(skills).values(parsed.data);
   }
 
-  revalidateSite("/admin/skills");
+  revalidateSite("/admin/skills", "/about");
+
+  // Editing comes from its own page and returns there; adding happens on the
+  // list itself, where staying put lets the next one be typed straight in.
+  if (id) redirect("/admin/skills");
   return { success: "Skill saved." };
 }
 
 export async function deleteSkill(formData: FormData) {
   await requireSession();
   await db.delete(skills).where(eq(skills.id, Number(text(formData.get("id")))));
-  revalidateSite("/admin/skills");
+  revalidateSite("/admin/skills", "/about");
 }
 
 /* ------------------------------------------------------------------ */

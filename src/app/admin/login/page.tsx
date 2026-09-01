@@ -11,7 +11,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/admin/logi
   return (
     <main className="flex flex-1 items-center justify-center px-6 py-20">
       <div className="w-full max-w-sm">
-        <h1 className="font-display text-3xl tracking-tight">Sign in</h1>
+        <h1 className="font-display text-3xl tracking-display">Sign in</h1>
         <p className="mt-2 text-sm text-muted">Admin access to the portfolio content.</p>
         <div className="mt-8">
           <LoginForm next={target} />

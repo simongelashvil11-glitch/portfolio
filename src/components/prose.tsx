@@ -47,7 +47,7 @@ export function Prose({ content }: { content: string }) {
       {blocks.map((block, index) => (
         <Fragment key={index}>
           {block.kind === "heading" && block.level === 2 ? (
-            <h2 className="mt-6 font-display text-2xl tracking-tight">{block.text}</h2>
+            <h2 className="mt-6 font-display text-2xl tracking-display">{block.text}</h2>
           ) : null}
 
           {block.kind === "heading" && block.level === 3 ? (

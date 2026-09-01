@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import type { ReactNode } from "react";
 
 type RevealProps = {
@@ -12,15 +12,16 @@ type RevealProps = {
 
 /**
  * Fades and lifts content the first time it scrolls into view.
- * Collapses to a plain wrapper when the user prefers reduced motion.
+ *
+ * The hidden starting state has to render identically on the server and the
+ * client, so reduced motion is handled in CSS (see `[data-reveal]` in
+ * globals.css) rather than by branching here — branching leaves a hydration
+ * mismatch that React cannot patch, stranding the content at opacity 0.
  */
 export function Reveal({ children, index = 0, className }: RevealProps) {
-  const reduced = useReducedMotion();
-
-  if (reduced) return <div className={className}>{children}</div>;
-
   return (
     <motion.div
+      data-reveal
       className={className}
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}

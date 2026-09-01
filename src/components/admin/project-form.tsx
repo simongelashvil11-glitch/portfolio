@@ -63,6 +63,32 @@ export function ProjectForm({ project }: { project?: Project }) {
         <Input name="imageUrl" type="url" defaultValue={project?.imageUrl ?? ""} />
       </Field>
 
+      <Field
+        label="Logo URL"
+        hint="Small square mark shown before the title in the work list. Falls back to the first letter."
+        error={state.fieldErrors?.logoUrl}
+      >
+        <Input
+          name="logoUrl"
+          type="url"
+          defaultValue={project?.logoUrl ?? ""}
+          placeholder="https://.../logo.svg"
+        />
+      </Field>
+
+      <Field
+        label="Video URL"
+        hint="A YouTube link. Shows a thumbnail on the row that opens the video in place."
+        error={state.fieldErrors?.videoUrl}
+      >
+        <Input
+          name="videoUrl"
+          type="url"
+          defaultValue={project?.videoUrl ?? ""}
+          placeholder="https://www.youtube.com/watch?v=..."
+        />
+      </Field>
+
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Tags" hint="Comma separated." error={state.fieldErrors?.tags}>
           <Input

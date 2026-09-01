@@ -29,6 +29,18 @@ export function ProfileForm({ profile }: { profile: Profile | null }) {
       </div>
 
       <Field
+        label="Role"
+        hint="Short job title, shown under your name in the sidebar."
+        error={state.fieldErrors?.role}
+      >
+        <Input
+          name="role"
+          defaultValue={profile?.role ?? ""}
+          placeholder="Digital Marketing Specialist"
+        />
+      </Field>
+
+      <Field
         label="Headline"
         hint="The large line at the top of the page. Keep it to a sentence."
         error={state.fieldErrors?.headline}

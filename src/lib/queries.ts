@@ -3,7 +3,7 @@ import "server-only";
 import { and, asc, desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { experiences, posts, profile, projects, skills } from "@/db/schema";
+import { experiences, posts, profile, projects, skills, updates } from "@/db/schema";
 
 export async function getProfile() {
   const [row] = await db.select().from(profile).where(eq(profile.id, 1)).limit(1);
@@ -56,6 +56,14 @@ export async function getPostBySlug(slug: string) {
   return row ?? null;
 }
 
+export async function getUpdates({ all = false } = {}) {
+  return db
+    .select()
+    .from(updates)
+    .where(all ? undefined : eq(updates.published, true))
+    .orderBy(asc(updates.sortOrder), desc(updates.date));
+}
+
 /** Groups skills by category, preserving the sort order from the query. */
 export function groupSkills(rows: Awaited<ReturnType<typeof getSkills>>) {
   const groups = new Map<string, typeof rows>();
@@ -76,6 +84,16 @@ export async function getExperienceById(id: number) {
 
 export async function getProjectById(id: number) {
   const [row] = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
+  return row ?? null;
+}
+
+export async function getSkillById(id: number) {
+  const [row] = await db.select().from(skills).where(eq(skills.id, id)).limit(1);
+  return row ?? null;
+}
+
+export async function getUpdateById(id: number) {
+  const [row] = await db.select().from(updates).where(eq(updates.id, id)).limit(1);
   return row ?? null;
 }
 

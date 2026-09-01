@@ -1,61 +1,61 @@
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
-import { deleteExperience } from "@/actions/admin";
+import { deleteUpdate } from "@/actions/admin";
 import { DeleteForm } from "@/components/admin/delete-form";
 import { Card, EmptyState, PageHeading } from "@/components/admin/ui";
 import { Mark } from "@/components/mark";
 import { requireSession } from "@/lib/auth";
-import { getExperiences } from "@/lib/queries";
+import { getUpdates } from "@/lib/queries";
 import { formatPeriod } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Career" };
+export const metadata = { title: "Personal updates" };
 
-export default async function AdminExperiencePage() {
+export default async function AdminUpdatesPage() {
   await requireSession();
-  const items = await getExperiences({ all: true });
+  const items = await getUpdates({ all: true });
 
   return (
     <>
       <PageHeading
-        title="Career"
-        description="The roles listed on the about page. Click one to change its logo, dates or copy."
+        title="Personal updates"
+        description="The updates listed on the about page. Click one to change its logo, link or date."
         action={
           <Link
-            href="/admin/experience/new"
+            href="/admin/updates/new"
             className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-85"
           >
             <Plus className="size-4" />
-            Add role
+            Add update
           </Link>
         }
       />
 
       {items.length === 0 ? (
-        <EmptyState>No roles yet. Add your first one.</EmptyState>
+        <EmptyState>No updates yet. Add your first one.</EmptyState>
       ) : (
         <ul className="grid gap-3">
           {items.map((item) => (
             <li key={item.id}>
               <Card className="group flex items-start gap-4">
-                <Mark src={item.logoUrl} label={item.company} className="mt-0.5" />
-                <Link href={`/admin/experience/${item.id}`} className="min-w-0 flex-1">
-                  <p className="tnum text-xs text-faint">
-                    {formatPeriod(item.startDate)} &ndash; {formatPeriod(item.endDate)}
+                <Mark src={item.logoUrl} label={item.title} className="mt-0.5" />
+                <Link href={`/admin/updates/${item.id}`} className="min-w-0 flex-1">
+                  <p className="text-xs text-faint">
+                    {formatPeriod(item.date)}
                     {!item.published ? (
                       <span className="ml-2 uppercase tracking-widest text-accent">Draft</span>
                     ) : null}
                   </p>
                   <h2 className="mt-1 text-sm font-medium transition-colors group-hover:text-accent">
-                    {item.role} · <span className="text-muted">{item.company}</span>
+                    {item.title}
                   </h2>
                   {item.description ? (
                     <p className="mt-1 line-clamp-1 text-sm text-muted">{item.description}</p>
                   ) : null}
                 </Link>
-                <DeleteForm action={deleteExperience} id={item.id} />
+                <DeleteForm action={deleteUpdate} id={item.id} />
               </Card>
             </li>
           ))}
