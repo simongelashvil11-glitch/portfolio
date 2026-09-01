@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { Gallery } from "@/components/gallery";
 import { Reveal } from "@/components/reveal";
 import { VideoPoster } from "@/components/video";
 import { getProfile, getProjectBySlug, getProjects } from "@/lib/queries";
@@ -115,8 +116,14 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
         </Reveal>
       ) : null}
 
-      {project.description ? (
+      {project.gallery.length > 0 ? (
         <Reveal index={2}>
+          <Gallery images={project.gallery} title={project.title} />
+        </Reveal>
+      ) : null}
+
+      {project.description ? (
+        <Reveal index={3}>
           {/* Paragraphs are split on blank lines, so the admin textarea stays plain text. */}
           <div className="mt-12 grid gap-5">
             {project.description

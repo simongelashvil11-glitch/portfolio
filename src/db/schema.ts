@@ -76,6 +76,8 @@ export const projects = pgTable("projects", {
   logoUrl: text("logo_url"),
   /** YouTube link. Renders a thumbnail on the row that opens an inline player. */
   videoUrl: text("video_url"),
+  /** Extra images for the case study, shown as a grid that opens a lightbox. */
+  gallery: jsonb("gallery").$type<string[]>().default([]).notNull(),
   tags: jsonb("tags").$type<string[]>().default([]).notNull(),
   year: varchar("year", { length: 12 }),
   featured: boolean("featured").default(false).notNull(),

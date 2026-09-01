@@ -1,9 +1,10 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Play, X } from "lucide-react";
+import { Play } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+
+import { MacWindow } from "@/components/mac-window";
 
 /**
  * Pulls the video id out of the shapes a YouTube link normally arrives in:
@@ -27,103 +28,6 @@ export function youTubeId(url: string): string | null {
   } catch {
     return null;
   }
-}
-
-/**
- * The window itself — styled after the desktop the footage was probably cut
- * on. Shared by every trigger below so the popup animation stays identical
- * wherever a video is opened from.
- */
-function VideoWindow({
-  id,
-  title,
-  open,
-  onClose,
-}: {
-  id: string;
-  title: string;
-  open: boolean;
-  onClose: () => void;
-}) {
-  const reduced = useReducedMotion();
-
-  // Escape closes the window, and the page behind it stays put while open.
-  useEffect(() => {
-    if (!open) return;
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open, onClose]);
-
-  return (
-    <AnimatePresence>
-      {open ? (
-        <motion.div
-          className="fixed inset-0 z-50 grid place-items-center p-4 sm:p-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: reduced ? 0 : 0.2 }}
-        >
-          <button
-            type="button"
-            aria-label="Close video"
-            onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-md"
-          />
-
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-label={title}
-            className="relative w-full max-w-4xl overflow-hidden rounded-xl border border-white/12 bg-surface shadow-[0_30px_90px_-20px_rgb(0_0_0/0.9)]"
-            initial={{ opacity: 0, scale: reduced ? 1 : 0.96, y: reduced ? 0 : 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: reduced ? 1 : 0.97, y: reduced ? 0 : 8 }}
-            transition={{ duration: reduced ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
-          >
-            {/* Title bar */}
-            <div className="flex h-9 items-center gap-2 border-b border-white/8 bg-white/4 px-4">
-              <span className="flex gap-1.5" aria-hidden>
-                <span className="size-2.5 rounded-full bg-[#ff5f57]" />
-                <span className="size-2.5 rounded-full bg-[#febc2e]" />
-                <span className="size-2.5 rounded-full bg-[#28c840]" />
-              </span>
-              <p className="min-w-0 flex-1 truncate text-center text-xs text-white/50">{title}</p>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Close video"
-                className="text-white/40 transition-colors hover:text-white"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="aspect-video w-full bg-black">
-              <iframe
-                src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`}
-                title={title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="size-full"
-              />
-            </div>
-          </motion.div>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>
-  );
 }
 
 /** A small still beside a project row. */
@@ -155,7 +59,17 @@ export function VideoThumb({ url, title }: { url: string; title: string }) {
         </span>
       </button>
 
-      <VideoWindow id={id} title={title} open={open} onClose={() => setOpen(false)} />
+      <MacWindow open={open} title={title} onClose={() => setOpen(false)}>
+        <div className="aspect-video w-full bg-black">
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`}
+            title={title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="size-full"
+          />
+        </div>
+      </MacWindow>
     </>
   );
 }
@@ -212,7 +126,17 @@ export function VideoPoster({
         </span>
       </button>
 
-      <VideoWindow id={id} title={title} open={open} onClose={() => setOpen(false)} />
+      <MacWindow open={open} title={title} onClose={() => setOpen(false)}>
+        <div className="aspect-video w-full bg-black">
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`}
+            title={title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="size-full"
+          />
+        </div>
+      </MacWindow>
     </>
   );
 }

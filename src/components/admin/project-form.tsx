@@ -77,6 +77,19 @@ export function ProjectForm({ project }: { project?: Project }) {
       </Field>
 
       <Field
+        label="Gallery"
+        hint="One image URL per line. Shown as a grid on the case study; each opens full size."
+        error={state.fieldErrors?.gallery}
+      >
+        <Textarea
+          name="gallery"
+          rows={5}
+          defaultValue={(project?.gallery ?? []).join("\n")}
+          placeholder={"https://.../one.jpg\nhttps://.../two.jpg"}
+        />
+      </Field>
+
+      <Field
         label="Video URL"
         hint="A YouTube link. Shows a thumbnail on the row that opens the video in place."
         error={state.fieldErrors?.videoUrl}
