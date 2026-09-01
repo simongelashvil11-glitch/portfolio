@@ -36,7 +36,7 @@ export function PostForm({ post }: { post?: Post }) {
 
       <Field
         label="Content"
-        hint="Blank lines separate paragraphs. ## and ### make headings, lines starting with - make bullets."
+        hint="Blank line starts a new paragraph, a single Enter breaks the line. ## heading, ### smaller heading, - bullet, --- divider."
         error={state.fieldErrors?.content}
       >
         <Textarea name="content" rows={16} defaultValue={post?.content ?? ""} required />

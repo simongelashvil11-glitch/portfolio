@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Gallery } from "@/components/gallery";
+import { Prose } from "@/components/prose";
 import { Reveal } from "@/components/reveal";
 import { VideoPoster } from "@/components/video";
 import { getProfile, getProjectBySlug, getProjects } from "@/lib/queries";
@@ -124,17 +125,8 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
 
       {project.description ? (
         <Reveal index={3}>
-          {/* Paragraphs are split on blank lines, so the admin textarea stays plain text. */}
-          <div className="mt-12 grid gap-5">
-            {project.description
-              .split(/\n{2,}/)
-              .map((paragraph) => paragraph.trim())
-              .filter(Boolean)
-              .map((paragraph, index) => (
-                <p key={index} className="text-base leading-relaxed text-muted">
-                  {paragraph}
-                </p>
-              ))}
+          <div className="mt-12">
+            <Prose content={project.description} />
           </div>
         </Reveal>
       ) : null}

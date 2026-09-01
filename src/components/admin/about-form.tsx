@@ -30,7 +30,7 @@ export function AboutForm({ profile }: { profile: Profile | null }) {
 
       <Field
         label="Intro"
-        hint="Blank lines separate paragraphs; ## makes a heading and - makes a list. Falls back to your bio."
+        hint="Blank line starts a new paragraph, a single Enter breaks the line. ## heading, ### smaller heading, - bullet, --- divider. Falls back to your bio."
         error={state.fieldErrors?.about}
       >
         <Textarea name="about" rows={10} defaultValue={profile?.about ?? ""} />

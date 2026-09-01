@@ -40,7 +40,7 @@ export function ProjectForm({ project }: { project?: Project }) {
 
       <Field
         label="Case study"
-        hint="Optional. Blank lines separate paragraphs. Adding text here gives the project its own page instead of linking straight out."
+        hint="Optional — adding text gives the project its own page instead of linking straight out. Blank line starts a new paragraph, a single Enter breaks the line. ## heading, ### smaller heading, - bullet, --- divider."
         error={state.fieldErrors?.description}
       >
         <Textarea name="description" rows={8} defaultValue={project?.description ?? ""} />
