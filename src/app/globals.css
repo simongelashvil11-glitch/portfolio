@@ -233,6 +233,28 @@
     filter: blur(0);
     transform: none;
   }
+
+  /*
+   * A closed disclosure needs to look openable. A slow drift downward reads
+   * as "there is more below" without asking for attention the way a pulse or
+   * a colour flash would — and it stops the moment the section is open, so it
+   * is a hint rather than an ornament.
+   *
+   * It settles at rest under reduced motion: the 100% frame is the neutral
+   * position, which is where a cancelled animation lands.
+   */
+  @keyframes nudge-down {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(2.5px);
+    }
+  }
+  .nudge {
+    animation: nudge-down 2.4s ease-in-out infinite;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

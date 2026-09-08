@@ -46,12 +46,27 @@ export function CollapsibleSection({
           ) : null}
         </span>
 
-        <ChevronDown
-          className={`size-5 shrink-0 text-faint transition-transform duration-300 ease-out group-hover:text-foreground ${
-            open ? "rotate-180" : ""
-          }`}
-          aria-hidden
-        />
+        {/*
+          The circle is the same control shape used by the video player and
+          the gallery arrows, so it reads as something to press rather than a
+          decorative glyph. The nudge lives on the circle and the rotation on
+          the icon — sharing one element would mean the two transforms fought
+          over the same property.
+        */}
+        <span
+          className={`grid size-9 shrink-0 place-items-center rounded-full border transition-colors ${
+            open
+              ? "border-line bg-surface text-foreground"
+              : "border-white/15 bg-white/5 text-muted group-hover:border-white/35 group-hover:bg-white/10 group-hover:text-foreground"
+          } ${open ? "" : "nudge"}`}
+        >
+          <ChevronDown
+            className={`size-4 transition-transform duration-300 ease-out ${
+              open ? "rotate-180" : ""
+            }`}
+            aria-hidden
+          />
+        </span>
       </button>
 
       <AnimatePresence initial={false}>
