@@ -1,6 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 
+import { CollapsibleSection } from "@/components/collapsible-section";
 import { Mark } from "@/components/mark";
 import { Prose } from "@/components/prose";
 import { Reveal } from "@/components/reveal";
@@ -61,50 +62,53 @@ export default async function AboutPage() {
       {updates.length > 0 ? (
         <section className="mt-20">
           <Reveal>
-            <h2 className="text-xl font-medium tracking-display">{updatesHeading}</h2>
+            {/*
+              Scroll reveals are deliberately not used on the rows here: while
+              the section is closed they have no height to intersect with, so
+              they would sit at opacity 0. The disclosure animation carries
+              them in instead.
+            */}
+            <CollapsibleSection title={updatesHeading} count={updates.length}>
+              <ul>
+                {updates.map((update) => (
+                  <li
+                    key={update.id}
+                    className="group flex items-start gap-4 border-b border-line py-5 last:border-0"
+                  >
+                    <Mark src={update.logoUrl} label={update.title} className="mt-0.5" />
+
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base font-medium">
+                        {update.url ? (
+                          <a
+                            href={update.url}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="inline-flex items-baseline gap-1.5 transition-colors hover:text-accent"
+                          >
+                            <span className="link-underline">{update.title}</span>
+                            <ArrowUpRight className="size-3.5 shrink-0 self-center text-faint transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent" />
+                          </a>
+                        ) : (
+                          update.title
+                        )}
+                      </h3>
+
+                      {update.description ? (
+                        <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-muted">
+                          {update.description}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <span className="tnum shrink-0 pt-0.5 text-sm text-faint">
+                      {formatPeriod(update.date)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </CollapsibleSection>
           </Reveal>
-
-          <ul className="mt-8">
-            {updates.map((update, index) => (
-              <Reveal
-                key={update.id}
-                index={index}
-                className="border-b border-line last:border-0"
-              >
-                <li className="group flex items-start gap-4 py-5">
-                  <Mark src={update.logoUrl} label={update.title} className="mt-0.5" />
-
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-base font-medium">
-                      {update.url ? (
-                        <a
-                          href={update.url}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                          className="inline-flex items-baseline gap-1.5 transition-colors hover:text-accent"
-                        >
-                          <span className="link-underline">{update.title}</span>
-                          <ArrowUpRight className="size-3.5 shrink-0 self-center text-faint transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent" />
-                        </a>
-                      ) : (
-                        update.title
-                      )}
-                    </h3>
-
-                    {update.description ? (
-                      <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-muted">
-                        {update.description}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <span className="tnum shrink-0 pt-0.5 text-sm text-faint">
-                    {formatPeriod(update.date)}
-                  </span>
-                </li>
-              </Reveal>
-            ))}
-          </ul>
         </section>
       ) : null}
 
