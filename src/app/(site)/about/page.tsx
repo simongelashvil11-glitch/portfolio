@@ -72,15 +72,29 @@ export default async function AboutPage() {
             </div>
 
             {portraitUrl ? (
-              <Image
-                src={portraitUrl}
-                alt={profile?.name ?? ""}
-                width={480}
-                height={640}
-                sizes="176px"
-                priority
-                className="portrait-fade h-auto w-28 shrink-0 self-start sm:w-32 lg:w-40"
-              />
+              /*
+                The panel stretches to the height of the copy and centres the
+                photo in it, so the two columns read as blocks of equal weight
+                rather than a picture hanging off the first line.
+                It is drawn with a border and no fill on purpose. The photo's
+                own backdrop is tuned to the page colour, so any lighter fill
+                would leave that rectangle sitting visibly on top of it — and
+                the backdrop cannot be lifted to match without taking the
+                black t-shirt up with it.
+                Below `sm` the layout stacks, where a full-height panel has
+                nothing to match, so it shrinks to fit the photo instead.
+              */
+              <div className="flex w-40 shrink-0 items-center justify-center self-start rounded-2xl border border-line p-4 sm:w-44 sm:self-stretch lg:w-48">
+                <Image
+                  src={portraitUrl}
+                  alt={profile?.name ?? ""}
+                  width={480}
+                  height={640}
+                  sizes="192px"
+                  priority
+                  className="portrait-fade h-auto w-full"
+                />
+              </div>
             ) : null}
           </div>
         </Reveal>
