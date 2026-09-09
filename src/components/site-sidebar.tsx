@@ -117,8 +117,37 @@ function useActiveSection(pathname: string) {
   const select = useCallback((href: string) => {
     const sectionId = href.split("#")[1];
     if (sectionId) {
+      // Only handled here when the section is already on the page. From
+      // another route there is nothing to scroll to yet, so the navigation
+      // has to happen and the browser lands on the anchor itself.
+      if (window.location.pathname !== "/") return false;
+
+      const target = document.getElementById(sectionId);
+      if (!target) return false;
+
       setActive(sectionId);
-      return false;
+
+      /*
+       * Scrolled here rather than by following the link, because the router
+       * manages scroll on navigation too: it looks for the first page element
+       * and scrolls to that, which fought the anchor and showed up as the
+       * view snapping back before it settled.
+       *
+       * No explicit behaviour, so `scroll-behavior` decides — which keeps
+       * this instant for anyone who prefers reduced motion — and the
+       * section's own `scroll-mt` supplies the offset.
+       */
+      target.scrollIntoView({ block: "start" });
+
+      // Keeps the hash in the address bar and a history entry with it,
+      // without handing the scroll back to the router. Next integrates
+      // these with the router rather than treating them as a navigation.
+      // Skipped when it would only repeat the entry already there, so
+      // pressing the same item twice does not bury the previous page.
+      if (window.location.hash !== `#${sectionId}`) {
+        window.history.pushState(null, "", href);
+      }
+      return true;
     }
 
     // Home is the one destination the browser will not move for on its own:
@@ -128,6 +157,12 @@ function useActiveSection(pathname: string) {
       // this instant for anyone who prefers reduced motion.
       window.scrollTo({ top: 0 });
       setActive(null);
+
+      // The navigation is cancelled now that this is handled here, and with
+      // it the hash would have survived — leaving the address bar pointing at
+      // a section the reader has just scrolled away from, and a reload
+      // landing back there.
+      if (window.location.hash) window.history.pushState(null, "", "/");
       return true;
     }
 
@@ -171,6 +206,19 @@ export function SiteSidebar(props: SidebarProps) {
       document.body.style.overflow = previous;
     };
   }, [open]);
+
+  /*
+   * Closing the drawer sets state, but the effect above only releases the
+   * lock once React has flushed — which is after the click handler has
+   * already run its jump. A jump inside the drawer would therefore scroll a
+   * page that still cannot move. Released here, in the same tick as the
+   * click, so the scroll that follows lands. The effect's cleanup then
+   * restores the same value, so the two do not disagree.
+   */
+  const closeForJump = useCallback(() => {
+    setOpen(false);
+    document.body.style.overflow = "";
+  }, []);
 
   return (
     <>
@@ -239,7 +287,7 @@ export function SiteSidebar(props: SidebarProps) {
                 pathname={pathname}
                 activeSection={activeSection}
                 onSelect={select}
-                onNavigate={() => setOpen(false)}
+                onNavigate={closeForJump}
               />
             </motion.div>
           </motion.div>
@@ -361,9 +409,11 @@ function NavRow({
   return (
     <Link
       href={item.href}
-      onClick={() => {
+      onClick={(event) => {
         onNavigate?.();
-        onSelect(item.href);
+        // Cancels the router's navigation when the jump was handled here, so
+        // the two do not both try to move the page.
+        if (onSelect(item.href)) event.preventDefault();
       }}
       aria-current={active ? "page" : undefined}
       className={`flex items-center justify-between rounded-lg px-3 py-2 text-[0.9375rem] transition-colors ${
