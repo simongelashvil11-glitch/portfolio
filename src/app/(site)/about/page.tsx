@@ -1,9 +1,9 @@
 import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
+import Image from "next/image";
 
 import { CollapsibleSection } from "@/components/collapsible-section";
 import { Mark } from "@/components/mark";
-import { PortraitCard } from "@/components/portrait-card";
 import { Prose } from "@/components/prose";
 import { Reveal } from "@/components/reveal";
 import {
@@ -72,8 +72,55 @@ export default async function AboutPage() {
               <Prose content={body} />
             </div>
 
-            {portraitUrl && name ? (
-              <PortraitCard src={portraitUrl} name={name} width={637} height={955} />
+            {portraitUrl ? (
+              /*
+                The panel stretches to the height of the copy, so the two
+                columns read as blocks of equal weight rather than a picture
+                hanging off the first line, with the figure centred in it.
+                The source is cropped mid-leg, so the photo fades out over
+                that cut. See `portrait-fade` for why it is nudged down.
+                The photo is a transparent cutout, so the panel can carry a
+                fill without a picture-shaped rectangle showing on top of it.
+                The fill is what makes the silhouette read at all: the t-shirt
+                bottoms out near black, which is invisible against the page but
+                clearly separated from the panel.
+                Below `sm` the layout stacks, where a full-height panel has
+                nothing to match, so it shrinks to fit the photo instead.
+              */
+              <div className="flex w-40 shrink-0 flex-col self-start overflow-hidden rounded-2xl border border-line bg-surface sm:w-44 sm:self-stretch lg:w-48">
+                {/*
+                  Chrome borrowed from `MacWindow` — the same hairline, tint
+                  and lights — so the card reads as part of that family. It is
+                  decoration and nothing else, so it is hidden from assistive
+                  tech rather than announced as three unlabelled somethings.
+                */}
+                <div
+                  className="flex h-8 shrink-0 items-center gap-1.5 border-b border-white/8 bg-white/4 px-3"
+                  aria-hidden
+                >
+                  <span className="size-2.5 rounded-full bg-[#ff5f57]" />
+                  <span className="size-2.5 rounded-full bg-[#febc2e]" />
+                  <span className="size-2.5 rounded-full bg-[#28c840]" />
+                </div>
+
+                <div className="flex flex-1 items-center justify-center p-4">
+                  <Image
+                    src={portraitUrl}
+                    alt={profile?.name ?? ""}
+                    width={637}
+                    height={955}
+                    sizes="192px"
+                    priority
+                    className="portrait-fade h-auto w-full translate-y-[6%]"
+                  />
+                </div>
+
+                {name ? (
+                  <p className="border-t border-white/8 bg-white/4 px-3 py-2.5 text-center font-display text-[0.8125rem] tracking-display">
+                    {name}
+                  </p>
+                ) : null}
+              </div>
             ) : null}
           </div>
         </Reveal>
