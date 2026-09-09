@@ -61,8 +61,13 @@ export default async function AboutPage() {
             narrow — the intro is the point of the page, the photo is a face to
             put to it.
           */}
-          <div className="mt-8 flex flex-col-reverse gap-8 sm:flex-row sm:items-start sm:gap-10">
-            <div className="min-w-0 flex-1">
+          <div className="mt-10 flex flex-col-reverse gap-8 sm:flex-row sm:items-start sm:gap-12">
+            {/*
+              A step down from body size. The intro sits beside a small photo,
+              and at full size the two masses competed — the lighter text lets
+              the picture hold its own without being enlarged.
+            */}
+            <div className="min-w-0 flex-1 text-[0.9375rem]">
               <Prose content={body} />
             </div>
 
@@ -74,7 +79,7 @@ export default async function AboutPage() {
                 height={640}
                 sizes="176px"
                 priority
-                className="h-auto w-32 shrink-0 self-start sm:w-36 lg:w-40"
+                className="portrait-fade h-auto w-28 shrink-0 self-start sm:w-32 lg:w-40"
               />
             ) : null}
           </div>
