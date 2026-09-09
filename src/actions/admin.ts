@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { experiences, messages, posts, profile, projects, skills, updates } from "@/db/schema";
+import { experiences, messages, posts, profile, projects, skills, tools, updates } from "@/db/schema";
 import { requireSession } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
 
@@ -375,6 +375,50 @@ export async function saveSkill(_previous: FormState, formData: FormData): Promi
 export async function deleteSkill(formData: FormData) {
   await requireSession();
   await db.delete(skills).where(eq(skills.id, Number(text(formData.get("id")))));
+  revalidateSite("/admin/skills", "/about");
+}
+
+/* ------------------------------------------------------------------ */
+/* tools                                                               */
+/* ------------------------------------------------------------------ */
+
+const ToolSchema = z.object({
+  name: z.string().min(1, "Name is required.").max(100),
+  url: z.url("Enter a valid URL.").nullable(),
+  description: z.string().max(200, "Keep it to a line.").nullable(),
+  sortOrder: z.number().int(),
+});
+
+export async function saveTool(_previous: FormState, formData: FormData): Promise<FormState> {
+  await requireSession();
+
+  const id = text(formData.get("id"));
+  const parsed = ToolSchema.safeParse({
+    name: text(formData.get("name")),
+    url: nullable(formData.get("url")),
+    description: nullable(formData.get("description")),
+    sortOrder: Number(text(formData.get("sortOrder")) || 0),
+  });
+
+  if (!parsed.success) return failure(parsed.error);
+
+  if (id) {
+    await db.update(tools).set(parsed.data).where(eq(tools.id, Number(id)));
+  } else {
+    await db.insert(tools).values(parsed.data);
+  }
+
+  revalidateSite("/admin/skills", "/about");
+
+  // Same split as skills: editing has its own page and returns to the list,
+  // adding happens on the list so staying put lets the next one be typed in.
+  if (id) redirect("/admin/skills");
+  return { success: "Tool saved." };
+}
+
+export async function deleteTool(formData: FormData) {
+  await requireSession();
+  await db.delete(tools).where(eq(tools.id, Number(text(formData.get("id")))));
   revalidateSite("/admin/skills", "/about");
 }
 

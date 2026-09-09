@@ -17,16 +17,24 @@ export function CollapsibleSection({
   title,
   count,
   defaultOpen = false,
+  tone = "section",
   children,
 }: {
   title: string;
   count?: number;
   defaultOpen?: boolean;
+  /**
+   * `inline` is for a disclosure nested inside a section that already has a
+   * heading. It borrows the weight of the category labels around it and drops
+   * the circular control, which at that size would outweigh its own label.
+   */
+  tone?: "section" | "inline";
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const reduced = useReducedMotion();
   const contentId = useId();
+  const inline = tone === "inline";
 
   return (
     <>
@@ -35,14 +43,24 @@ export function CollapsibleSection({
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         aria-controls={contentId}
-        className="group flex w-full items-center justify-between gap-4 text-left"
+        className={
+          inline
+            ? "group flex items-center gap-2 text-left"
+            : "group flex w-full items-center justify-between gap-4 text-left"
+        }
       >
-        <span className="flex items-baseline gap-2.5">
-          <span className="text-xl font-medium tracking-display transition-colors group-hover:text-accent">
+        <span className={inline ? "flex items-baseline gap-2" : "flex items-baseline gap-2.5"}>
+          <span
+            className={
+              inline
+                ? "text-sm font-medium text-faint transition-colors group-hover:text-foreground"
+                : "text-xl font-medium tracking-display transition-colors group-hover:text-accent"
+            }
+          >
             {title}
           </span>
           {typeof count === "number" ? (
-            <span className="tnum text-sm text-faint">{count}</span>
+            <span className={`tnum text-faint ${inline ? "text-xs" : "text-sm"}`}>{count}</span>
           ) : null}
         </span>
 
@@ -53,20 +71,29 @@ export function CollapsibleSection({
           the icon — sharing one element would mean the two transforms fought
           over the same property.
         */}
-        <span
-          className={`grid size-9 shrink-0 place-items-center rounded-full border transition-colors ${
-            open
-              ? "border-line bg-surface text-foreground"
-              : "border-white/15 bg-white/5 text-muted group-hover:border-white/35 group-hover:bg-white/10 group-hover:text-foreground"
-          } ${open ? "" : "nudge"}`}
-        >
+        {inline ? (
           <ChevronDown
-            className={`size-4 transition-transform duration-300 ease-out ${
+            className={`size-3.5 shrink-0 text-faint transition-all duration-300 ease-out group-hover:text-foreground ${
               open ? "rotate-180" : ""
             }`}
             aria-hidden
           />
-        </span>
+        ) : (
+          <span
+            className={`grid size-9 shrink-0 place-items-center rounded-full border transition-colors ${
+              open
+                ? "border-line bg-surface text-foreground"
+                : "border-white/15 bg-white/5 text-muted group-hover:border-white/35 group-hover:bg-white/10 group-hover:text-foreground"
+            } ${open ? "" : "nudge"}`}
+          >
+            <ChevronDown
+              className={`size-4 transition-transform duration-300 ease-out ${
+                open ? "rotate-180" : ""
+              }`}
+              aria-hidden
+            />
+          </span>
+        )}
       </button>
 
       <AnimatePresence initial={false}>
@@ -80,7 +107,7 @@ export function CollapsibleSection({
             transition={{ duration: reduced ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <div className="pt-8">{children}</div>
+            <div className={inline ? "pt-4" : "pt-8"}>{children}</div>
           </motion.div>
         ) : null}
       </AnimatePresence>

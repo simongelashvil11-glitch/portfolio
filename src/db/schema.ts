@@ -134,10 +134,27 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+/*
+ * The secondary list under the Tech stack chips. Kept apart from `skills`
+ * rather than flagged inside it: a chip is a mark and a name, these are a
+ * name, a link and a line of prose, and folding both into one row would
+ * leave half its columns empty whichever kind it held.
+ */
+export const tools = pgTable("tools", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  /** Where the tool lives. The name links out to it when set. */
+  url: text("url"),
+  /** One short line. The list is a reference, not a review. */
+  description: varchar("description", { length: 200 }),
+  sortOrder: integer("sort_order").default(0).notNull(),
+});
+
 export type Profile = typeof profile.$inferSelect;
 export type Experience = typeof experiences.$inferSelect;
 export type Project = typeof projects.$inferSelect;
 export type Skill = typeof skills.$inferSelect;
+export type Tool = typeof tools.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type Update = typeof updates.$inferSelect;
 export type Message = typeof messages.$inferSelect;

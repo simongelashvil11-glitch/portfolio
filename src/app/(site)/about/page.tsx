@@ -10,6 +10,7 @@ import {
   getExperiences,
   getProfile,
   getSkills,
+  getTools,
   getUpdates,
   groupSkills,
 } from "@/lib/queries";
@@ -27,10 +28,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
-  const [profile, updates, skillRows, experiences] = await Promise.all([
+  const [profile, updates, skillRows, toolRows, experiences] = await Promise.all([
     getProfile(),
     getUpdates(),
     getSkills(),
+    getTools(),
     getExperiences(),
   ]);
 
@@ -206,6 +208,50 @@ export default async function AboutPage() {
               </Reveal>
             ))}
           </div>
+
+          {toolRows.length > 0 ? (
+            <div className="mt-10 border-t border-line pt-6">
+              {/*
+                Scroll reveals are left off the rows for the same reason as the
+                updates list: closed, they have no height to intersect with and
+                would sit at opacity 0. The disclosure carries them in instead.
+              */}
+              <Reveal>
+                <CollapsibleSection
+                  title="Additional tools"
+                  count={toolRows.length}
+                  tone="inline"
+                >
+                  <ul className="grid gap-3">
+                    {toolRows.map((tool) => (
+                      <li
+                        key={tool.id}
+                        className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5"
+                      >
+                        {tool.url ? (
+                          <a
+                            href={tool.url}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="group inline-flex items-baseline gap-1.5 text-[0.9375rem] transition-colors hover:text-accent"
+                          >
+                            <span className="link-underline">{tool.name}</span>
+                            <ArrowUpRight className="size-3 shrink-0 self-center text-faint transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent" />
+                          </a>
+                        ) : (
+                          <span className="text-[0.9375rem]">{tool.name}</span>
+                        )}
+
+                        {tool.description ? (
+                          <span className="text-sm text-muted">{tool.description}</span>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                </CollapsibleSection>
+              </Reveal>
+            </div>
+          ) : null}
         </section>
       ) : null}
 

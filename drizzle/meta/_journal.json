@@ -78,6 +78,13 @@
       "when": 1788951973926,
       "tag": "0010_ordinary_thunderbird",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788956061385,
+      "tag": "0011_vengeful_wraith",
+      "breakpoints": true
     }
   ]
 }

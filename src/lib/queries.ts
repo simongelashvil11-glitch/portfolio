@@ -3,7 +3,7 @@ import "server-only";
 import { and, asc, desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { experiences, posts, profile, projects, skills, updates } from "@/db/schema";
+import { experiences, posts, profile, projects, skills, tools, updates } from "@/db/schema";
 
 export async function getProfile() {
   const [row] = await db.select().from(profile).where(eq(profile.id, 1)).limit(1);
@@ -37,6 +37,15 @@ export async function getProjectBySlug(slug: string) {
 
 export async function getSkills() {
   return db.select().from(skills).orderBy(asc(skills.sortOrder), asc(skills.name));
+}
+
+export async function getTools() {
+  return db.select().from(tools).orderBy(asc(tools.sortOrder), asc(tools.name));
+}
+
+export async function getToolById(id: number) {
+  const [row] = await db.select().from(tools).where(eq(tools.id, id)).limit(1);
+  return row ?? null;
 }
 
 export async function getPosts({ all = false } = {}) {
