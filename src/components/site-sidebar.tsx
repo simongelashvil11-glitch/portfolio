@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Social = { label: string; url: string };
 
@@ -71,10 +71,49 @@ function useActiveSection(pathname: string) {
   const [active, setActive] = useState<string | null>(null);
   const reduced = useReducedMotion();
 
+  /*
+   * While a jump is travelling, the highlight belongs to where it is going,
+   * not to where the page currently is.
+   *
+   * Without this the spy keeps measuring the whole way: choosing Work from
+   * the top measures "not past the first section yet" for the opening frames
+   * and flicks the highlight back to Home before catching up, and choosing
+   * Contact walks it Home, Work, Contact as the scroll travels past each one.
+   */
+  const jumping = useRef(false);
+  const endJump = useRef<(() => void) | null>(null);
+
+  const beginJump = useCallback(() => {
+    endJump.current?.();
+    jumping.current = true;
+
+    let timer = 0;
+    const release = () => {
+      jumping.current = false;
+      window.removeEventListener("scrollend", release);
+      window.clearTimeout(timer);
+      endJump.current = null;
+    };
+
+    window.addEventListener("scrollend", release);
+    /*
+     * `scrollend` is not in every browser yet, and a jump with nowhere left
+     * to travel — the last section already against the end of the page —
+     * never fires one anywhere. The timer is what releases those.
+     */
+    timer = window.setTimeout(release, 1200);
+    endJump.current = release;
+  }, []);
+
+  // Nothing should be left listening if the reader leaves mid-jump.
+  useEffect(() => () => endJump.current?.(), []);
+
   useEffect(() => {
     if (pathname !== "/") return;
 
     function measure() {
+      if (jumping.current) return;
+
       const line = window.innerHeight * 0.3;
       let current: string | null = null;
 
@@ -148,6 +187,7 @@ function useActiveSection(pathname: string) {
        * Smooth is asked for here rather than set globally, so that route
        * changes still jump. The section's own `scroll-mt` sets the offset.
        */
+      beginJump();
       target.scrollIntoView({ block: "start", behavior: reduced ? "auto" : "smooth" });
       return true;
     }
@@ -155,6 +195,7 @@ function useActiveSection(pathname: string) {
     // Home is the one destination the browser will not move for on its own:
     // navigating to the URL you are already on does not scroll.
     if (href === "/" && window.location.pathname === "/") {
+      beginJump();
       window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
       setActive(null);
 
@@ -167,7 +208,7 @@ function useActiveSection(pathname: string) {
     }
 
     return false;
-  }, [reduced]);
+  }, [beginJump, reduced]);
 
   return { active: pathname === "/" ? active : null, select };
 }
