@@ -138,8 +138,9 @@
    * frame. These only ever animate `transform`, so the browser composites
    * them on the GPU and the paint happens once.
    *
-   * Alphas stay under 0.1: stacked at their most opaque they still leave
-   * white text over the sidebar above 10:1.
+   * Alpha is the only lever on how much of this reads at all, and it trades
+   * against the nav text sitting on top. See the note under `.smoke-b` for
+   * the measured ceiling.
    */
   .smoke {
     position: absolute;
@@ -147,43 +148,64 @@
     pointer-events: none;
   }
 
+  /*
+   * Placement is in the layer's own box, which is inset -30% and so runs from
+   * -30% to 130% of the viewport. The sidebar occupies 0 to 15rem of that,
+   * which lands between roughly 19% and 28% here whatever the window width —
+   * the left edge is always 18.75%, and only the right edge moves. Every blob
+   * is placed inside that band, because the content panel is opaque and smoke
+   * anywhere else is smoke nobody sees.
+   *
+   * Blobs are kept narrow for the same reason. The band is about a tenth of
+   * the box wide, so the old 38-48% blobs spanned it several times over and
+   * flattened into a wash; at this size several read as separate drifting
+   * masses inside a 15rem strip.
+   */
   .smoke-a {
     background-image:
-      radial-gradient(38% 30% at 22% 28%, rgb(120 210 180 / 0.1), transparent 70%),
-      radial-gradient(30% 26% at 72% 62%, rgb(150 140 255 / 0.09), transparent 72%);
+      radial-gradient(15% 20% at 21% 24%, rgb(120 210 180 / 0.23), transparent 70%),
+      radial-gradient(12% 17% at 27% 57%, rgb(150 140 255 / 0.21), transparent 72%),
+      radial-gradient(17% 22% at 22% 88%, rgb(90 190 210 / 0.18), transparent 70%);
     animation: smoke-a 38s ease-in-out infinite;
   }
 
+  /*
+   * The ceiling on alpha is the nav text sitting on top: `white/60` over the
+   * brightest point the smoke reaches has to stay clear of 4.5:1, which runs
+   * out around 0.06 relative luminance. The sidebar's gradient alone sits at
+   * about 0.016.
+   */
   .smoke-b {
     background-image:
-      radial-gradient(34% 28% at 62% 18%, rgb(90 180 220 / 0.08), transparent 70%),
-      radial-gradient(42% 34% at 30% 82%, rgb(200 130 230 / 0.08), transparent 72%);
+      radial-gradient(13% 18% at 26% 13%, rgb(90 180 220 / 0.2), transparent 70%),
+      radial-gradient(16% 21% at 20% 71%, rgb(200 130 230 / 0.2), transparent 72%),
+      radial-gradient(11% 15% at 28% 41%, rgb(120 210 180 / 0.17), transparent 70%);
     animation: smoke-b 53s ease-in-out infinite;
   }
 
   @keyframes smoke-a {
     0%,
     100% {
-      transform: translate3d(-4%, -2%, 0) scale(1);
+      transform: translate3d(-1.5%, -3%, 0) scale(1);
     }
     33% {
-      transform: translate3d(5%, 4%, 0) scale(1.12);
+      transform: translate3d(1.5%, 5%, 0) scale(1.12);
     }
     66% {
-      transform: translate3d(-2%, 7%, 0) scale(1.05);
+      transform: translate3d(-0.5%, 9%, 0) scale(1.05);
     }
   }
 
   @keyframes smoke-b {
     0%,
     100% {
-      transform: translate3d(3%, 5%, 0) scale(1.08);
+      transform: translate3d(1%, 6%, 0) scale(1.08);
     }
     40% {
-      transform: translate3d(-6%, -3%, 0) scale(1);
+      transform: translate3d(-2%, -4%, 0) scale(1);
     }
     75% {
-      transform: translate3d(2%, -6%, 0) scale(1.14);
+      transform: translate3d(0.5%, -8%, 0) scale(1.14);
     }
   }
 
