@@ -32,8 +32,14 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-6 lg:px-12">
-        {/* ---------- Hero ---------- */}
-        <section className="pt-20 pb-28 sm:pt-28">
+        {/*
+          ---------- Hero ----------
+          The ticker ends the hero on a full-width line, so the section's usual
+          bottom padding left the work list's rule stranded a long way under it.
+          With the ticker there the gap is halved; without it the rule sits
+          under a ragged paragraph and wants the full measure.
+        */}
+        <section className={profileRow?.ticker ? "pt-20 pb-14 sm:pt-28" : "pt-20 pb-28 sm:pt-28"}>
           <Reveal index={1}>
             <h1 className="font-display text-5xl leading-[1.05] tracking-display text-balance sm:text-7xl">
               <Greeting />
