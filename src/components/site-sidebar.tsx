@@ -15,6 +15,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { ContactWindow } from "@/components/contact-window";
+
 type Social = { label: string; url: string };
 
 type SidebarProps = {
@@ -24,7 +26,15 @@ type SidebarProps = {
   socials: Social[];
 };
 
-type NavItem = { href: string; label: string; icon: LucideIcon; shortcut: string };
+type NavItem = {
+  /** Absent on an item that opens something instead of going somewhere. */
+  href?: string;
+  label: string;
+  icon: LucideIcon;
+  shortcut: string;
+  /** Opens the contact window rather than navigating. */
+  dialog?: true;
+};
 
 const GROUPS: { heading: string | null; items: NavItem[] }[] = [
   {
@@ -41,16 +51,19 @@ const GROUPS: { heading: string | null; items: NavItem[] }[] = [
   },
   {
     heading: "Connect",
-    items: [{ href: "/#contact", label: "Contact", icon: Mail, shortcut: "4" }],
+    items: [{ label: "Contact", icon: Mail, shortcut: "4", dialog: true }],
   },
 ];
 
 const ITEMS = GROUPS.flatMap((group) => group.items);
 
-const SHORTCUTS = new Map(ITEMS.map((item) => [item.shortcut, item.href]));
+const SHORTCUTS = new Map(ITEMS.map((item) => [item.shortcut, item]));
 
 /** Section ids in document order, which breaks ties on the line below. */
-const SECTION_IDS = ITEMS.map((item) => item.href.split("#")[1]).filter(Boolean);
+const SECTION_IDS = ITEMS.flatMap((item) => {
+  const id = item.href?.split("#")[1];
+  return id ? [id] : [];
+});
 
 /**
  * Tracks which home-page section the reader is looking at, so the anchor
@@ -215,6 +228,7 @@ function useActiveSection(pathname: string) {
 
 export function SiteSidebar(props: SidebarProps) {
   const [open, setOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
   const pathname = usePathname();
   const reduced = useReducedMotion();
   const { active: activeSection, select } = useActiveSection(pathname);
@@ -229,9 +243,15 @@ export function SiteSidebar(props: SidebarProps) {
       if (target?.isContentEditable) return;
       if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
 
-      const href = SHORTCUTS.get(event.key);
-      if (!href) return;
-      if (!select(href)) window.location.assign(href);
+      const item = SHORTCUTS.get(event.key);
+      if (!item) return;
+
+      if (item.dialog) {
+        setContactOpen(true);
+        return;
+      }
+
+      if (item.href && !select(item.href)) window.location.assign(item.href);
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -270,6 +290,8 @@ export function SiteSidebar(props: SidebarProps) {
           pathname={pathname}
           activeSection={activeSection}
           onSelect={select}
+          contactOpen={contactOpen}
+          onOpenContact={() => setContactOpen(true)}
           chrome
         />
       </aside>
@@ -330,11 +352,15 @@ export function SiteSidebar(props: SidebarProps) {
                 activeSection={activeSection}
                 onSelect={select}
                 onNavigate={closeForJump}
+                contactOpen={contactOpen}
+                onOpenContact={() => setContactOpen(true)}
               />
             </motion.div>
           </motion.div>
         ) : null}
       </AnimatePresence>
+
+      <ContactWindow open={contactOpen} onClose={() => setContactOpen(false)} />
     </>
   );
 }
@@ -349,12 +375,16 @@ function SidebarBody({
   activeSection,
   onSelect,
   onNavigate,
+  contactOpen,
+  onOpenContact,
   chrome = false,
 }: SidebarProps & {
   pathname: string;
   activeSection: string | null;
   onSelect: (href: string) => boolean;
   onNavigate?: () => void;
+  contactOpen: boolean;
+  onOpenContact: () => void;
   /** Window controls. The rail only — the drawer has its own close button. */
   chrome?: boolean;
 }) {
@@ -405,13 +435,15 @@ function SidebarBody({
 
               <ul className="grid gap-0.5">
                 {group.items.map((item) => (
-                  <li key={item.href}>
+                  <li key={item.label}>
                     <NavRow
                       item={item}
                       pathname={pathname}
                       activeSection={activeSection}
                       onSelect={onSelect}
                       onNavigate={onNavigate}
+                      contactOpen={contactOpen}
+                      onOpenContact={onOpenContact}
                     />
                   </li>
                 ))}
@@ -459,52 +491,92 @@ function NavRow({
   activeSection,
   onSelect,
   onNavigate,
+  contactOpen,
+  onOpenContact,
 }: {
   item: NavItem;
   pathname: string;
   activeSection: string | null;
   onSelect: (href: string) => boolean;
   onNavigate?: () => void;
+  contactOpen: boolean;
+  onOpenContact: () => void;
 }) {
-  const sectionId = item.href.split("#")[1];
+  const sectionId = item.href?.split("#")[1];
 
   // Anchors follow the section in view. Home is the home page with no section
   // reached yet, and every other route matches itself and anything under it.
-  const active = sectionId
-    ? activeSection === sectionId
-    : item.href === "/"
-      ? pathname === "/" && activeSection === null
-      : pathname.startsWith(item.href);
+  // The window item is lit while its window is up, which is the same idea:
+  // the row shows what you are looking at.
+  const active = item.dialog
+    ? contactOpen
+    : sectionId
+      ? activeSection === sectionId
+      : item.href === "/"
+        ? pathname === "/" && activeSection === null
+        : !!item.href && pathname.startsWith(item.href);
+
   const Icon = item.icon;
 
-  return (
-    <Link
-      href={item.href}
-      onClick={(event) => {
-        onNavigate?.();
-        // Cancels the router's navigation when the jump was handled here, so
-        // the two do not both try to move the page.
-        if (onSelect(item.href)) event.preventDefault();
-      }}
-      aria-current={active ? "page" : undefined}
-      className={`flex items-center justify-between gap-3 rounded-md px-3 py-1.5 text-[0.8125rem] transition-colors ${
-        active
-          ? "bg-white/10 text-white inset-ring inset-ring-white/15"
-          : "text-white/55 hover:bg-white/6 hover:text-white"
-      }`}
-    >
+  const className = `flex w-full items-center justify-between gap-3 rounded-md px-3 py-1.5 text-[0.8125rem] transition-colors ${
+    active
+      ? "bg-white/10 text-white inset-ring inset-ring-white/15"
+      : "text-white/55 hover:bg-white/6 hover:text-white"
+  }`;
+
+  // Shared so a row looks identical whether it navigates or opens a window.
+  const inner = (
+    <>
       <span className="flex items-center gap-2.5">
         <Icon className={`size-3.5 shrink-0 ${active ? "text-white" : "text-white/35"}`} />
         {item.label}
       </span>
       {/*
         Drawn as a key rather than a loose digit. These really are shortcuts —
-        pressing the number jumps to the item — so they should look like
+        pressing the number reaches the item — so they should look like
         something you press.
       */}
       <span className="tnum grid h-[17px] min-w-[17px] place-items-center rounded border border-white/10 bg-white/5 px-1 text-[0.625rem] font-medium text-white/35">
         {item.shortcut}
       </span>
+    </>
+  );
+
+  if (item.dialog) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          // Closes the drawer first on small screens, so the window is not
+          // opened behind it.
+          onNavigate?.();
+          onOpenContact();
+        }}
+        aria-haspopup="dialog"
+        aria-expanded={active}
+        className={className}
+      >
+        {inner}
+      </button>
+    );
+  }
+
+  if (!item.href) return null;
+  const href = item.href;
+
+  return (
+    <Link
+      href={href}
+      onClick={(event) => {
+        onNavigate?.();
+        // Cancels the router's navigation when the jump was handled here, so
+        // the two do not both try to move the page.
+        if (onSelect(href)) event.preventDefault();
+      }}
+      aria-current={active ? "page" : undefined}
+      className={className}
+    >
+      {inner}
     </Link>
   );
 }

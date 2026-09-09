@@ -2,7 +2,6 @@ import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { ContactForm } from "@/components/contact-form";
 import { Greeting } from "@/components/greeting";
 import { Ticker } from "@/components/ticker";
 import { Mark } from "@/components/mark";
@@ -97,14 +96,6 @@ export default async function HomePage() {
         ) : null}
 
         {/* ---------- Experience ---------- */}
-        <Section id="contact" title="Contact">
-          <Reveal>
-            <p className="mb-6 max-w-xl text-[0.9375rem] leading-relaxed text-muted">
-              Have something in mind? Send a note and I&apos;ll reply within a couple of days.
-            </p>
-            <ContactForm />
-          </Reveal>
-        </Section>
     </main>
   );
 }
