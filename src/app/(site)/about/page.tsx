@@ -46,6 +46,7 @@ export default async function AboutPage() {
   const techIntro = profile?.techIntro?.trim();
   const careerIntro = profile?.careerIntro?.trim();
   const portraitUrl = profile?.portraitUrl?.trim();
+  const name = profile?.name?.trim();
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16 lg:px-12">
@@ -86,16 +87,31 @@ export default async function AboutPage() {
                 Below `sm` the layout stacks, where a full-height panel has
                 nothing to match, so it shrinks to fit the photo instead.
               */
-              <div className="flex w-40 shrink-0 items-center justify-center self-start rounded-2xl border border-line bg-surface p-4 sm:w-44 sm:self-stretch lg:w-48">
-                <Image
-                  src={portraitUrl}
-                  alt={profile?.name ?? ""}
-                  width={637}
-                  height={955}
-                  sizes="192px"
-                  priority
-                  className="portrait-fade h-auto w-full translate-y-[6%]"
-                />
+              <div className="flex w-40 shrink-0 flex-col self-start overflow-hidden rounded-2xl border border-line bg-surface sm:w-44 sm:self-stretch lg:w-48">
+                <div className="flex flex-1 items-center justify-center p-4">
+                  <Image
+                    src={portraitUrl}
+                    alt={profile?.name ?? ""}
+                    width={637}
+                    height={955}
+                    sizes="192px"
+                    priority
+                    className="portrait-fade h-auto w-full translate-y-[6%]"
+                  />
+                </div>
+
+                {/*
+                  The name sits on a bar that borrows the window chrome from
+                  `MacWindow` — same hairline and same tint — so the card reads
+                  as part of that family rather than a second look invented for
+                  one page. It runs edge to edge, which is why the padding
+                  moved onto the photo above it.
+                */}
+                {name ? (
+                  <p className="border-t border-white/8 bg-white/4 px-3 py-2.5 text-center font-display text-[0.8125rem] tracking-display">
+                    {name}
+                  </p>
+                ) : null}
               </div>
             ) : null}
           </div>
