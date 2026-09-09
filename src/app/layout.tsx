@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 
 import { siteUrl } from "@/lib/site-url";
 
@@ -20,11 +21,27 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    /*
+      `suppressHydrationWarning` because the script below writes `data-rail`
+      onto this element before React ever sees it, which is the whole point:
+      the palette has to be settled before anything paints, or the sidebar
+      flashes the wrong appearance on every load.
+    */
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${display.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <Script
+          id="rail-appearance"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `try{var r=localStorage.getItem("rail");document.documentElement.dataset.rail=r==="dark"?"dark":"light"}catch(e){document.documentElement.dataset.rail="light"}`,
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

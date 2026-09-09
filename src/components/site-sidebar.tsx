@@ -16,6 +16,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ContactWindow } from "@/components/contact-window";
+import { RailAppearance } from "@/components/rail-appearance";
 
 type Social = { label: string; url: string };
 
@@ -332,7 +333,7 @@ export function SiteSidebar(props: SidebarProps) {
               className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             />
             <motion.div
-              className="aurora absolute inset-y-0 left-0 w-[min(20rem,85vw)] overflow-hidden border-r border-black/10"
+              className="aurora absolute inset-y-0 left-0 w-[min(20rem,85vw)] overflow-hidden border-r border-(--rail-line)"
               initial={{ x: reduced ? 0 : "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: reduced ? 0 : "-100%" }}
@@ -342,7 +343,7 @@ export function SiteSidebar(props: SidebarProps) {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close menu"
-                className="absolute right-4 top-4 z-10 grid size-9 place-items-center rounded-lg border border-black/15 bg-black/5 text-black/70 transition-colors hover:bg-black/10 hover:text-black"
+                className="absolute right-4 top-4 z-10 grid size-9 place-items-center rounded-lg border border-(--rail-key-border) bg-(--rail-key-bg) text-(--rail-ink-strong) transition-colors hover:bg-(--rail-hover) hover:text-(--rail-ink)"
               >
                 <X className="size-4" />
               </button>
@@ -409,11 +410,11 @@ function SidebarBody({
         ) : null}
 
         <Link href="/" onClick={onNavigate} className="block px-3">
-          <span className="font-display text-[0.9375rem] font-medium leading-tight tracking-display text-neutral-900">
+          <span className="font-display text-[0.9375rem] font-medium leading-tight tracking-display text-(--rail-ink)">
             {name}
           </span>
           {role ? (
-            <span className="mt-0.5 block text-[0.6875rem] leading-relaxed text-black/45">
+            <span className="mt-0.5 block text-[0.6875rem] leading-relaxed text-(--rail-ink-mid)">
               {role}
             </span>
           ) : null}
@@ -424,11 +425,11 @@ function SidebarBody({
           a sidebar of this kind is divided, and what lets the rows sit close
           enough together to read as a list.
         */}
-        <nav className="mt-5 grid gap-5 border-t border-black/10 pt-5">
+        <nav className="mt-5 grid gap-5 border-t border-(--rail-line) pt-5">
           {GROUPS.map((group, groupIndex) => (
             <div key={group.heading ?? `group-${groupIndex}`}>
               {group.heading ? (
-                <h2 className="mb-1.5 px-3 text-[0.6875rem] font-medium text-black/55">
+                <h2 className="mb-1.5 px-3 text-[0.6875rem] font-medium text-(--rail-ink-mid)">
                   {group.heading}
                 </h2>
               ) : null}
@@ -459,10 +460,10 @@ function SidebarBody({
                     href={social.url}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="flex items-center justify-between gap-3 rounded-md px-3 py-1.5 text-[0.8125rem] text-black/60 transition-colors hover:bg-black/5 hover:text-black"
+                    className="flex items-center justify-between gap-3 rounded-md px-3 py-1.5 text-[0.8125rem] text-(--rail-ink-strong) transition-colors hover:bg-(--rail-hover) hover:text-(--rail-ink)"
                   >
                     {social.label}
-                    <ArrowUpRight className="size-3 shrink-0 text-black/30" />
+                    <ArrowUpRight className="size-3 shrink-0 text-(--rail-ink-hint)" />
                   </a>
                 </li>
               ))}
@@ -471,16 +472,18 @@ function SidebarBody({
         </nav>
       </div>
 
-      {email ? (
-        <div className="border-t border-black/10 pt-4">
+      <div className="border-t border-(--rail-line) pt-4">
+        <RailAppearance />
+
+        {email ? (
           <a
             href={`mailto:${email}`}
-            className="block break-all rounded-md px-3 py-1.5 text-[0.6875rem] text-black/60 transition-colors hover:bg-black/5 hover:text-black"
+            className="mt-2 block break-all rounded-md px-3 py-1.5 text-[0.6875rem] text-(--rail-ink-strong) transition-colors hover:bg-(--rail-hover) hover:text-(--rail-ink)"
           >
             {email}
           </a>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -520,15 +523,15 @@ function NavRow({
 
   const className = `flex w-full items-center justify-between gap-3 rounded-md px-3 py-1.5 text-[0.8125rem] transition-colors ${
     active
-      ? "bg-black/8 text-black inset-ring inset-ring-black/12"
-      : "text-black/60 hover:bg-black/5 hover:text-black"
+      ? "bg-(--rail-active) text-(--rail-ink) inset-ring inset-ring-(--rail-ring)"
+      : "text-(--rail-ink-strong) hover:bg-(--rail-hover) hover:text-(--rail-ink)"
   }`;
 
   // Shared so a row looks identical whether it navigates or opens a window.
   const inner = (
     <>
       <span className="flex items-center gap-2.5">
-        <Icon className={`size-3.5 shrink-0 ${active ? "text-black" : "text-black/40"}`} />
+        <Icon className={`size-3.5 shrink-0 ${active ? "text-(--rail-ink)" : "text-(--rail-ink-faint)"}`} />
         {item.label}
       </span>
       {/*
@@ -536,7 +539,7 @@ function NavRow({
         pressing the number reaches the item — so they should look like
         something you press.
       */}
-      <span className="tnum grid h-[17px] min-w-[17px] place-items-center rounded border border-black/15 bg-black/5 px-1 text-[0.625rem] font-medium text-black/45">
+      <span className="tnum grid h-[17px] min-w-[17px] place-items-center rounded border border-(--rail-key-border) bg-(--rail-key-bg) px-1 text-[0.625rem] font-medium text-(--rail-ink-faint)">
         {item.shortcut}
       </span>
     </>

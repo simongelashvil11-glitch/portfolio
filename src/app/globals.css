@@ -20,9 +20,62 @@
   --aurora-2: #e9e9ec;
   --aurora-3: #efeceb;
   --aurora-4: #e3e2e6;
+  --aurora-bloom: rgb(255 255 255 / 0.5);
+
+  --smoke-1: rgb(108 108 116 / 0.26);
+  --smoke-2: rgb(124 124 132 / 0.24);
+  --smoke-3: rgb(96 96 104 / 0.2);
+  --smoke-4: rgb(116 116 124 / 0.22);
+  --smoke-5: rgb(100 100 108 / 0.22);
+  --smoke-6: rgb(130 130 138 / 0.19);
+
+  /*
+   * The rail's ink and surfaces, named by the job each does rather than by
+   * its colour, so the dark set below can invert every one of them without
+   * anything in the markup having to know which appearance is showing.
+   */
+  --rail-ink: #171717;
+  --rail-ink-strong: rgb(0 0 0 / 0.6);
+  --rail-ink-mid: rgb(0 0 0 / 0.55);
+  --rail-ink-faint: rgb(0 0 0 / 0.42);
+  --rail-ink-hint: rgb(0 0 0 / 0.3);
+  --rail-line: rgb(0 0 0 / 0.1);
+  --rail-hover: rgb(0 0 0 / 0.05);
+  --rail-active: rgb(0 0 0 / 0.08);
+  --rail-ring: rgb(0 0 0 / 0.12);
+  --rail-key-bg: rgb(0 0 0 / 0.05);
+  --rail-key-border: rgb(0 0 0 / 0.15);
 
   --sidebar-width: 15rem;
 
+}
+
+/* The appearance this rail had before the light one, kept switchable. */
+[data-rail="dark"] {
+  --aurora-1: #0f2119;
+  --aurora-2: #102030;
+  --aurora-3: #1b1733;
+  --aurora-4: #26163a;
+  --aurora-bloom: rgb(180 210 255 / 0.09);
+
+  --smoke-1: rgb(120 210 180 / 0.23);
+  --smoke-2: rgb(150 140 255 / 0.21);
+  --smoke-3: rgb(90 190 210 / 0.18);
+  --smoke-4: rgb(90 180 220 / 0.2);
+  --smoke-5: rgb(200 130 230 / 0.2);
+  --smoke-6: rgb(120 210 180 / 0.17);
+
+  --rail-ink: #ffffff;
+  --rail-ink-strong: rgb(255 255 255 / 0.55);
+  --rail-ink-mid: rgb(255 255 255 / 0.35);
+  --rail-ink-faint: rgb(255 255 255 / 0.35);
+  --rail-ink-hint: rgb(255 255 255 / 0.25);
+  --rail-line: rgb(255 255 255 / 0.08);
+  --rail-hover: rgb(255 255 255 / 0.06);
+  --rail-active: rgb(255 255 255 / 0.1);
+  --rail-ring: rgb(255 255 255 / 0.15);
+  --rail-key-bg: rgb(255 255 255 / 0.05);
+  --rail-key-border: rgb(255 255 255 / 0.1);
 }
 
 @theme inline {
@@ -128,8 +181,8 @@
     inset: -20%;
     background-image: radial-gradient(
       52% 40% at 50% 40%,
-      rgb(255 255 255 / 0.5) 0%,
-      rgb(255 255 255 / 0) 72%
+      var(--aurora-bloom) 0%,
+      transparent 72%
     );
     animation: aurora-bloom 19s ease-in-out infinite;
     pointer-events: none;
@@ -170,9 +223,9 @@
    */
   .smoke-a {
     background-image:
-      radial-gradient(15% 20% at 21% 24%, rgb(108 108 116 / 0.26), transparent 70%),
-      radial-gradient(12% 17% at 27% 57%, rgb(124 124 132 / 0.24), transparent 72%),
-      radial-gradient(17% 22% at 22% 88%, rgb(96 96 104 / 0.2), transparent 70%);
+      radial-gradient(15% 20% at 21% 24%, var(--smoke-1), transparent 70%),
+      radial-gradient(12% 17% at 27% 57%, var(--smoke-2), transparent 72%),
+      radial-gradient(17% 22% at 22% 88%, var(--smoke-3), transparent 70%);
     animation: smoke-a 38s ease-in-out infinite;
   }
 
@@ -184,9 +237,9 @@
    */
   .smoke-b {
     background-image:
-      radial-gradient(13% 18% at 26% 13%, rgb(116 116 124 / 0.22), transparent 70%),
-      radial-gradient(16% 21% at 20% 71%, rgb(100 100 108 / 0.22), transparent 72%),
-      radial-gradient(11% 15% at 28% 41%, rgb(130 130 138 / 0.19), transparent 70%);
+      radial-gradient(13% 18% at 26% 13%, var(--smoke-4), transparent 70%),
+      radial-gradient(16% 21% at 20% 71%, var(--smoke-5), transparent 72%),
+      radial-gradient(11% 15% at 28% 41%, var(--smoke-6), transparent 70%);
     animation: smoke-b 53s ease-in-out infinite;
   }
 
