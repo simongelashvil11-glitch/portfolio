@@ -195,7 +195,14 @@ export default async function AboutPage() {
           </Reveal>
 
           <ol className="mt-8">
-            {experiences.map((item, index) => (
+            {experiences.map((item, index) => {
+              const period = (
+                <>
+                  {formatPeriod(item.startDate)} &ndash; {formatPeriod(item.endDate)}
+                </>
+              );
+
+              return (
               <Reveal
                 key={item.id}
                 index={index}
@@ -222,6 +229,16 @@ export default async function AboutPage() {
                       )}
                     </h3>
 
+                    {/*
+                      Narrow screens put the dates on their own line. Held in
+                      a column beside the text they cost about a third of the
+                      row, which squeezed the description to a few words a
+                      line and made long role titles wrap around them.
+                    */}
+                    <span className="tnum mt-1 block text-sm text-faint sm:hidden">
+                      {period}
+                    </span>
+
                     {item.description ? (
                       <div className="mt-2 text-[0.9375rem]">
                         <Prose content={item.description} />
@@ -229,12 +246,13 @@ export default async function AboutPage() {
                     ) : null}
                   </div>
 
-                  <span className="tnum shrink-0 pt-0.5 text-sm text-faint">
-                    {formatPeriod(item.startDate)} &ndash; {formatPeriod(item.endDate)}
+                  <span className="tnum hidden shrink-0 pt-0.5 text-sm text-faint sm:block">
+                    {period}
                   </span>
                 </li>
               </Reveal>
-            ))}
+              );
+            })}
           </ol>
         </section>
       ) : null}
