@@ -37,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           id="rail-appearance"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
-            __html: `try{var r=localStorage.getItem("rail");document.documentElement.dataset.rail=r==="dark"?"dark":"light"}catch(e){document.documentElement.dataset.rail="light"}`,
+            __html: `try{var r=localStorage.getItem("rail");document.documentElement.dataset.rail=r==="light"?"light":"dark"}catch(e){document.documentElement.dataset.rail="dark"}`,
           }}
         />
         {children}

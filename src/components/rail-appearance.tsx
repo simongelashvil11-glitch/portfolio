@@ -21,12 +21,12 @@ export const RAIL_STORAGE_KEY = "rail";
 const listeners = new Set<() => void>();
 
 function readRail(): Rail {
-  return document.documentElement.dataset.rail === "dark" ? "dark" : "light";
+  return document.documentElement.dataset.rail === "light" ? "light" : "dark";
 }
 
-/** The server has no DOM to read, and light is what `:root` renders. */
+/** The server has no DOM to read, and dark is what `:root` renders. */
 function readRailOnServer(): Rail {
-  return "light";
+  return "dark";
 }
 
 function subscribe(listener: () => void) {
