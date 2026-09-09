@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="S">
+  <!--
+    A light tile rather than a dark one. At 16px in a browser tab the icon has
+    to survive both light and dark browser chrome, and dark-on-light reads in
+    either, where a dark tile disappears into a dark tab strip.
+
+    The letter is text rather than a traced path so it stays crisp at every
+    size and matches the interface face. A letter degrades gracefully if the
+    stack falls through — any sans-serif S is still an S.
+  -->
+  <rect width="64" height="64" rx="14" fill="#fafafa" />
+  <text
+    x="32"
+    y="34"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+    font-size="42"
+    font-weight="600"
+    fill="#121212"
+  >S</text>
+</svg>
