@@ -325,31 +325,6 @@
   }
 
   /*
-   * The portrait card drifts instead of sitting still — the whole card, so
-   * the photo and the bars above and below it move as one object rather than
-   * the picture sliding around inside its own frame.
-   *
-   * Only `transform` animates, so this composites and never repaints. The
-   * travel is small on purpose: it should read as the card being weightless,
-   * not as something sliding.
-   *
-   * The 100% frame is the neutral position, which is where a cancelled
-   * animation lands, so it settles square under reduced motion.
-   */
-  @keyframes card-float {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-7px);
-    }
-  }
-  .card-float {
-    animation: card-float 6.5s ease-in-out infinite;
-  }
-
-  /*
    * A closed disclosure needs to look openable. A slow drift downward reads
    * as "there is more below" without asking for attention the way a pulse or
    * a colour flash would — and it stops the moment the section is open, so it
