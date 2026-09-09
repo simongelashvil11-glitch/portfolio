@@ -16,10 +16,10 @@
    * background — it should read as the same surface catching a little light,
    * not as a coloured panel bolted to the side.
    */
-  --aurora-1: #0f2119;
-  --aurora-2: #102030;
-  --aurora-3: #1b1733;
-  --aurora-4: #26163a;
+  --aurora-1: #f4f3f1;
+  --aurora-2: #e9e9ec;
+  --aurora-3: #efeceb;
+  --aurora-4: #e3e2e6;
 
   --sidebar-width: 15rem;
 
@@ -128,8 +128,8 @@
     inset: -20%;
     background-image: radial-gradient(
       52% 40% at 50% 40%,
-      rgb(180 210 255 / 0.09) 0%,
-      rgb(180 210 255 / 0) 72%
+      rgb(255 255 255 / 0.5) 0%,
+      rgb(255 255 255 / 0) 72%
     );
     animation: aurora-bloom 19s ease-in-out infinite;
     pointer-events: none;
@@ -170,23 +170,23 @@
    */
   .smoke-a {
     background-image:
-      radial-gradient(15% 20% at 21% 24%, rgb(120 210 180 / 0.23), transparent 70%),
-      radial-gradient(12% 17% at 27% 57%, rgb(150 140 255 / 0.21), transparent 72%),
-      radial-gradient(17% 22% at 22% 88%, rgb(90 190 210 / 0.18), transparent 70%);
+      radial-gradient(15% 20% at 21% 24%, rgb(108 108 116 / 0.26), transparent 70%),
+      radial-gradient(12% 17% at 27% 57%, rgb(124 124 132 / 0.24), transparent 72%),
+      radial-gradient(17% 22% at 22% 88%, rgb(96 96 104 / 0.2), transparent 70%);
     animation: smoke-a 38s ease-in-out infinite;
   }
 
   /*
-   * The ceiling on alpha is the nav text sitting on top: `white/60` over the
-   * brightest point the smoke reaches has to stay clear of 4.5:1, which runs
-   * out around 0.06 relative luminance. The sidebar's gradient alone sits at
-   * about 0.016.
+   * The ceiling on alpha is the nav text sitting on top. On this light ground
+   * the text is dark, so the constraint runs the other way from the dark
+   * palette: the smoke has to stay light enough for near-black labels to
+   * clear 4.5:1 against the darkest patch it reaches.
    */
   .smoke-b {
     background-image:
-      radial-gradient(13% 18% at 26% 13%, rgb(90 180 220 / 0.2), transparent 70%),
-      radial-gradient(16% 21% at 20% 71%, rgb(200 130 230 / 0.2), transparent 72%),
-      radial-gradient(11% 15% at 28% 41%, rgb(120 210 180 / 0.17), transparent 70%);
+      radial-gradient(13% 18% at 26% 13%, rgb(116 116 124 / 0.22), transparent 70%),
+      radial-gradient(16% 21% at 20% 71%, rgb(100 100 108 / 0.22), transparent 72%),
+      radial-gradient(11% 15% at 28% 41%, rgb(130 130 138 / 0.19), transparent 70%);
     animation: smoke-b 53s ease-in-out infinite;
   }
 

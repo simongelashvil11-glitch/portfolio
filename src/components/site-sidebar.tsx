@@ -332,7 +332,7 @@ export function SiteSidebar(props: SidebarProps) {
               className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             />
             <motion.div
-              className="aurora absolute inset-y-0 left-0 w-[min(20rem,85vw)] overflow-hidden border-r border-white/8"
+              className="aurora absolute inset-y-0 left-0 w-[min(20rem,85vw)] overflow-hidden border-r border-black/10"
               initial={{ x: reduced ? 0 : "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: reduced ? 0 : "-100%" }}
@@ -342,7 +342,7 @@ export function SiteSidebar(props: SidebarProps) {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close menu"
-                className="absolute right-4 top-4 z-10 grid size-9 place-items-center rounded-lg border border-white/10 bg-white/5 text-white/75 transition-colors hover:bg-white/10 hover:text-white"
+                className="absolute right-4 top-4 z-10 grid size-9 place-items-center rounded-lg border border-black/15 bg-black/5 text-black/70 transition-colors hover:bg-black/10 hover:text-black"
               >
                 <X className="size-4" />
               </button>
@@ -409,11 +409,11 @@ function SidebarBody({
         ) : null}
 
         <Link href="/" onClick={onNavigate} className="block px-3">
-          <span className="font-display text-[0.9375rem] font-medium leading-tight tracking-display text-white">
+          <span className="font-display text-[0.9375rem] font-medium leading-tight tracking-display text-neutral-900">
             {name}
           </span>
           {role ? (
-            <span className="mt-0.5 block text-[0.6875rem] leading-relaxed text-white/40">
+            <span className="mt-0.5 block text-[0.6875rem] leading-relaxed text-black/45">
               {role}
             </span>
           ) : null}
@@ -424,11 +424,11 @@ function SidebarBody({
           a sidebar of this kind is divided, and what lets the rows sit close
           enough together to read as a list.
         */}
-        <nav className="mt-5 grid gap-5 border-t border-white/8 pt-5">
+        <nav className="mt-5 grid gap-5 border-t border-black/10 pt-5">
           {GROUPS.map((group, groupIndex) => (
             <div key={group.heading ?? `group-${groupIndex}`}>
               {group.heading ? (
-                <h2 className="mb-1.5 px-3 text-[0.6875rem] font-medium text-white/30">
+                <h2 className="mb-1.5 px-3 text-[0.6875rem] font-medium text-black/55">
                   {group.heading}
                 </h2>
               ) : null}
@@ -459,10 +459,10 @@ function SidebarBody({
                     href={social.url}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="flex items-center justify-between gap-3 rounded-md px-3 py-1.5 text-[0.8125rem] text-white/55 transition-colors hover:bg-white/6 hover:text-white"
+                    className="flex items-center justify-between gap-3 rounded-md px-3 py-1.5 text-[0.8125rem] text-black/60 transition-colors hover:bg-black/5 hover:text-black"
                   >
                     {social.label}
-                    <ArrowUpRight className="size-3 shrink-0 text-white/25" />
+                    <ArrowUpRight className="size-3 shrink-0 text-black/30" />
                   </a>
                 </li>
               ))}
@@ -472,10 +472,10 @@ function SidebarBody({
       </div>
 
       {email ? (
-        <div className="border-t border-white/8 pt-4">
+        <div className="border-t border-black/10 pt-4">
           <a
             href={`mailto:${email}`}
-            className="block break-all rounded-md px-3 py-1.5 text-[0.6875rem] text-white/35 transition-colors hover:bg-white/6 hover:text-white"
+            className="block break-all rounded-md px-3 py-1.5 text-[0.6875rem] text-black/60 transition-colors hover:bg-black/5 hover:text-black"
           >
             {email}
           </a>
@@ -520,15 +520,15 @@ function NavRow({
 
   const className = `flex w-full items-center justify-between gap-3 rounded-md px-3 py-1.5 text-[0.8125rem] transition-colors ${
     active
-      ? "bg-white/10 text-white inset-ring inset-ring-white/15"
-      : "text-white/55 hover:bg-white/6 hover:text-white"
+      ? "bg-black/8 text-black inset-ring inset-ring-black/12"
+      : "text-black/60 hover:bg-black/5 hover:text-black"
   }`;
 
   // Shared so a row looks identical whether it navigates or opens a window.
   const inner = (
     <>
       <span className="flex items-center gap-2.5">
-        <Icon className={`size-3.5 shrink-0 ${active ? "text-white" : "text-white/35"}`} />
+        <Icon className={`size-3.5 shrink-0 ${active ? "text-black" : "text-black/40"}`} />
         {item.label}
       </span>
       {/*
@@ -536,7 +536,7 @@ function NavRow({
         pressing the number reaches the item — so they should look like
         something you press.
       */}
-      <span className="tnum grid h-[17px] min-w-[17px] place-items-center rounded border border-white/10 bg-white/5 px-1 text-[0.625rem] font-medium text-white/35">
+      <span className="tnum grid h-[17px] min-w-[17px] place-items-center rounded border border-black/15 bg-black/5 px-1 text-[0.625rem] font-medium text-black/45">
         {item.shortcut}
       </span>
     </>
