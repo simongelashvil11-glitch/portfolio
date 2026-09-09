@@ -69,6 +69,7 @@ const SECTION_IDS = ITEMS.map((item) => item.href.split("#")[1]).filter(Boolean)
  */
 function useActiveSection(pathname: string) {
   const [active, setActive] = useState<string | null>(null);
+  const reduced = useReducedMotion();
 
   useEffect(() => {
     if (pathname !== "/") return;
@@ -128,34 +129,33 @@ function useActiveSection(pathname: string) {
       setActive(sectionId);
 
       /*
+       * The address bar is updated before the scroll starts, not after, so
+       * that anything the router does in response to the history change
+       * cannot land on top of a scroll already under way. Skipped when it
+       * would only repeat the entry already there, so pressing the same item
+       * twice does not bury the previous page.
+       */
+      if (window.location.hash !== `#${sectionId}`) {
+        window.history.pushState(null, "", href);
+      }
+
+      /*
        * Scrolled here rather than by following the link, because the router
        * manages scroll on navigation too: it looks for the first page element
        * and scrolls to that, which fought the anchor and showed up as the
        * view snapping back before it settled.
        *
-       * No explicit behaviour, so `scroll-behavior` decides — which keeps
-       * this instant for anyone who prefers reduced motion — and the
-       * section's own `scroll-mt` supplies the offset.
+       * Smooth is asked for here rather than set globally, so that route
+       * changes still jump. The section's own `scroll-mt` sets the offset.
        */
-      target.scrollIntoView({ block: "start" });
-
-      // Keeps the hash in the address bar and a history entry with it,
-      // without handing the scroll back to the router. Next integrates
-      // these with the router rather than treating them as a navigation.
-      // Skipped when it would only repeat the entry already there, so
-      // pressing the same item twice does not bury the previous page.
-      if (window.location.hash !== `#${sectionId}`) {
-        window.history.pushState(null, "", href);
-      }
+      target.scrollIntoView({ block: "start", behavior: reduced ? "auto" : "smooth" });
       return true;
     }
 
     // Home is the one destination the browser will not move for on its own:
     // navigating to the URL you are already on does not scroll.
     if (href === "/" && window.location.pathname === "/") {
-      // No explicit behaviour, so `scroll-behavior` decides — which keeps
-      // this instant for anyone who prefers reduced motion.
-      window.scrollTo({ top: 0 });
+      window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
       setActive(null);
 
       // The navigation is cancelled now that this is handled here, and with
@@ -167,7 +167,7 @@ function useActiveSection(pathname: string) {
     }
 
     return false;
-  }, []);
+  }, [reduced]);
 
   return { active: pathname === "/" ? active : null, select };
 }

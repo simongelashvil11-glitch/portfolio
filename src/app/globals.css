@@ -46,7 +46,13 @@
 @layer base {
   html {
     color-scheme: dark;
-    scroll-behavior: smooth;
+    /*
+     * Deliberately not `scroll-behavior: smooth`. It applies to every
+     * programmatic scroll, including the router's own jump to the top on a
+     * route change — which then animates, so following a link looked like
+     * the page sliding home before the new route appeared. The sidebar asks
+     * for smooth scrolling explicitly on the one jump that wants it.
+     */
     /* Keeps anchored sections clear of the mobile bar. */
     scroll-padding-top: 5rem;
   }
@@ -342,10 +348,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
   /*
    * Scroll reveals start hidden via an inline style so the server and client
    * markup match. `!important` beats that inline style, so anyone who prefers
