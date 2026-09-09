@@ -75,10 +75,10 @@ export default async function AboutPage() {
               /*
                 The panel stretches to the height of the copy, so the two
                 columns read as blocks of equal weight rather than a picture
-                hanging off the first line. The photo stands on the floor of
-                the panel: the source is cropped mid-leg, and letting that cut
-                land on the panel edge hides it, where centring the figure
-                would leave it hanging in mid-air.
+                hanging off the first line, with the figure centred in it.
+                The source is cropped mid-leg, so that cut is visible rather
+                than landing on the panel edge — kept deliberately, a fade
+                over it was tried and read as the figure dissolving.
                 The photo is a transparent cutout, so the panel can carry a
                 fill without a picture-shaped rectangle showing on top of it.
                 The fill is what makes the silhouette read at all: the t-shirt
@@ -87,7 +87,7 @@ export default async function AboutPage() {
                 Below `sm` the layout stacks, where a full-height panel has
                 nothing to match, so it shrinks to fit the photo instead.
               */
-              <div className="flex w-40 shrink-0 items-end justify-center self-start overflow-hidden rounded-2xl border border-line bg-surface px-3 pt-6 sm:w-44 sm:self-stretch lg:w-48">
+              <div className="flex w-40 shrink-0 items-center justify-center self-start rounded-2xl border border-line bg-surface p-4 sm:w-44 sm:self-stretch lg:w-48">
                 <Image
                   src={portraitUrl}
                   alt={profile?.name ?? ""}
