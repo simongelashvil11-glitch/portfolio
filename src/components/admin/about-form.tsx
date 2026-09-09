@@ -29,6 +29,14 @@ export function AboutForm({ profile }: { profile: Profile | null }) {
       </Field>
 
       <Field
+        label="Portrait"
+        hint="Shown beside the intro, small. A full https:// address, or a path like /portrait.png for a file in the public folder."
+        error={state.fieldErrors?.portraitUrl}
+      >
+        <Input name="portraitUrl" defaultValue={profile?.portraitUrl ?? ""} placeholder="/portrait.png" />
+      </Field>
+
+      <Field
         label="Intro"
         hint="Blank line starts a new paragraph, a single Enter breaks the line. ## heading, ### smaller heading, - bullet, --- divider. Falls back to your bio."
         error={state.fieldErrors?.about}

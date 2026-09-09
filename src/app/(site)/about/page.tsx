@@ -1,5 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
+import Image from "next/image";
 
 import { CollapsibleSection } from "@/components/collapsible-section";
 import { Mark } from "@/components/mark";
@@ -44,6 +45,7 @@ export default async function AboutPage() {
   const careerHeading = profile?.careerHeading?.trim() || "Career";
   const techIntro = profile?.techIntro?.trim();
   const careerIntro = profile?.careerIntro?.trim();
+  const portraitUrl = profile?.portraitUrl?.trim();
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16 lg:px-12">
@@ -53,8 +55,28 @@ export default async function AboutPage() {
 
       {body ? (
         <Reveal index={1}>
-          <div className="mt-8">
-            <Prose content={body} />
+          {/*
+            Column-reverse on small screens puts the portrait above the intro
+            rather than orphaning it at the end of the copy. It is deliberately
+            narrow — the intro is the point of the page, the photo is a face to
+            put to it.
+          */}
+          <div className="mt-8 flex flex-col-reverse gap-8 sm:flex-row sm:items-start sm:gap-10">
+            <div className="min-w-0 flex-1">
+              <Prose content={body} />
+            </div>
+
+            {portraitUrl ? (
+              <Image
+                src={portraitUrl}
+                alt={profile?.name ?? ""}
+                width={480}
+                height={640}
+                sizes="176px"
+                priority
+                className="h-auto w-32 shrink-0 self-start sm:w-36 lg:w-40"
+              />
+            ) : null}
           </div>
         </Reveal>
       ) : null}

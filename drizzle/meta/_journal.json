@@ -64,6 +64,13 @@
       "when": 1788292723379,
       "tag": "0008_unknown_karen_page",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788946118033,
+      "tag": "0009_exotic_radioactive_man",
+      "breakpoints": true
     }
   ]
 }

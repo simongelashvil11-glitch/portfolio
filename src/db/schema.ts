@@ -33,6 +33,8 @@ export const profile = pgTable("profile", {
    * in the page itself, so a blank field never renders an empty heading.
    */
   aboutTitle: varchar("about_title", { length: 120 }),
+  /** Portrait shown beside the about intro. A URL, or a path in /public. */
+  portraitUrl: text("portrait_url"),
   /** Long-form copy for the about page. Same small Markdown subset as posts. */
   about: text("about"),
   updatesHeading: varchar("updates_heading", { length: 120 }),

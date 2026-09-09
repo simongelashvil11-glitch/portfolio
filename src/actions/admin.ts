@@ -114,6 +114,15 @@ export async function saveProfile(_previous: FormState, formData: FormData): Pro
 
 const AboutSchema = z.object({
   aboutTitle: z.string().max(120).nullable(),
+  // Either a full URL or a root-relative path, so a file dropped into
+  // /public works without hosting it anywhere.
+  portraitUrl: z
+    .string()
+    .refine(
+      (value) => /^https?:\/\//i.test(value) || value.startsWith("/"),
+      "Use a full https:// address, or a path like /portrait.png",
+    )
+    .nullable(),
   about: z.string().nullable(),
   updatesHeading: z.string().max(120).nullable(),
   techHeading: z.string().max(120).nullable(),
@@ -130,6 +139,7 @@ export async function saveAboutPage(
 
   const parsed = AboutSchema.safeParse({
     aboutTitle: nullable(formData.get("aboutTitle")),
+    portraitUrl: nullable(formData.get("portraitUrl")),
     about: nullable(formData.get("about")),
     updatesHeading: nullable(formData.get("updatesHeading")),
     techHeading: nullable(formData.get("techHeading")),
