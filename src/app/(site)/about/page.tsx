@@ -90,7 +90,7 @@ export default async function AboutPage() {
                 <Image
                   src={portraitUrl}
                   alt={profile?.name ?? ""}
-                  width={782}
+                  width={637}
                   height={955}
                   sizes="192px"
                   priority
