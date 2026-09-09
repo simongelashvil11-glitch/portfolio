@@ -1,8 +1,8 @@
 /**
  * The scrolling line between the greeting and the work list.
  *
- * Words alternate filled and outlined, on no background at all. See
- * `.ticker-outline` and `.ticker-fade` for why there is no card around it.
+ * Every word is outlined, on no background at all. See `.ticker-outline` and
+ * `.ticker-fade` for why there is no card around it.
  *
  * The movement is a CSS animation rather than a script — nothing here runs
  * per frame, and nothing measures the DOM.
@@ -32,13 +32,8 @@ export function Ticker({ text }: { text: string | null | undefined }) {
 
   const itemPx = (phrase.length + 3) * CHAR_PX;
 
-  /*
-   * Enough copies to cover the column, plus one so no gap opens at the seam.
-   * Rounded up to an even number: fill and outline alternate by index, and an
-   * odd count would butt two filled words together where the halves meet.
-   */
-  const needed = Math.ceil(STRIP_PX / itemPx) + 1;
-  const perHalf = Math.min(8, Math.max(2, needed + (needed % 2)));
+  /* Enough copies to cover the column, plus one so no gap opens at the seam. */
+  const perHalf = Math.min(8, Math.max(2, Math.ceil(STRIP_PX / itemPx) + 1));
   const duration = Math.min(90, Math.max(12, Math.round((perHalf * itemPx) / PX_PER_SECOND)));
 
   return (
@@ -59,7 +54,7 @@ export function Ticker({ text }: { text: string | null | undefined }) {
           <div key={half} className="flex shrink-0 items-center">
             {Array.from({ length: perHalf }, (_, index) => (
               <span key={index} className="flex shrink-0 items-center">
-                <span className={index % 2 === 1 ? "ticker-outline" : undefined}>{phrase}</span>
+                <span className="ticker-outline">{phrase}</span>
                 <span className="px-6 text-base text-faint">&bull;</span>
               </span>
             ))}
