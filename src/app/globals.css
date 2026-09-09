@@ -235,6 +235,20 @@
   }
 
   /*
+   * The source is cropped mid-leg. Fading the last third dissolves that cut
+   * instead of ending the figure on a hard horizontal line.
+   *
+   * The fade costs the figure its optical centre: the eye stops at roughly
+   * where the mask reaches a third opacity, well above the element's real
+   * bottom, so a box centred by layout still reads as sitting high. The
+   * nudge below puts the visible mass back on the panel's centre line.
+   */
+  .portrait-fade {
+    -webkit-mask-image: linear-gradient(to bottom, #000 66%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 66%, transparent 100%);
+  }
+
+  /*
    * A closed disclosure needs to look openable. A slow drift downward reads
    * as "there is more below" without asking for attention the way a pulse or
    * a colour flash would — and it stops the moment the section is open, so it

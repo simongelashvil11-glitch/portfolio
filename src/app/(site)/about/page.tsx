@@ -76,9 +76,8 @@ export default async function AboutPage() {
                 The panel stretches to the height of the copy, so the two
                 columns read as blocks of equal weight rather than a picture
                 hanging off the first line, with the figure centred in it.
-                The source is cropped mid-leg, so that cut is visible rather
-                than landing on the panel edge — kept deliberately, a fade
-                over it was tried and read as the figure dissolving.
+                The source is cropped mid-leg, so the photo fades out over
+                that cut. See `portrait-fade` for why it is nudged down.
                 The photo is a transparent cutout, so the panel can carry a
                 fill without a picture-shaped rectangle showing on top of it.
                 The fill is what makes the silhouette read at all: the t-shirt
@@ -95,7 +94,7 @@ export default async function AboutPage() {
                   height={955}
                   sizes="192px"
                   priority
-                  className="h-auto w-full"
+                  className="portrait-fade h-auto w-full translate-y-[6%]"
                 />
               </div>
             ) : null}
