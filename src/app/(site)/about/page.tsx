@@ -89,7 +89,7 @@ export default async function AboutPage() {
                 Below `sm` the layout stacks, where a full-height panel has
                 nothing to match, so it shrinks to fit the photo instead.
               */
-              <div className="flex w-40 shrink-0 flex-col self-start overflow-hidden rounded-2xl border border-line bg-surface sm:w-44 sm:self-stretch lg:w-48">
+              <div className="card-float flex w-40 shrink-0 flex-col self-start overflow-hidden rounded-2xl border border-line bg-surface sm:w-44 sm:self-stretch lg:w-48">
                 {/*
                   Chrome borrowed from `MacWindow` — the same hairline, tint
                   and lights — so the card reads as part of that family. It is
