@@ -23,10 +23,6 @@
 
   --sidebar-width: 15rem;
 
-  /* Sidebar ticker — sampled from the layered sticker lettering it quotes. */
-  --ticker-cream: #fdfce8;
-  --ticker-pink: #ef4a9b;
-  --ticker-blue: #2b9ce8;
 }
 
 @theme inline {
@@ -276,46 +272,30 @@
   }
 
   /*
-   * The sidebar ticker.
+   * The ticker.
    *
-   * The offset outline has to be a second copy of the glyphs, not a shadow:
-   * a text-shadow fills the letter, and there is no way to ask one for an
-   * outline only. So each word paints twice — a blue-stroked copy shifted
-   * down and left, then the pink one over it.
+   * Alternating filled and outlined words, on nothing. There is no card and
+   * no rule around it: the page is a dark field with hairlines used sparingly,
+   * and the work list below already opens with one, so a boxed strip here read
+   * as a sticker pasted onto a different site.
    *
-   * Both copies are absolutely positioned, which is what orders them: the
-   * element's own text is transparent and does nothing but hold the layout
-   * box and stay readable to a screen reader, while the two pseudo-elements
-   * paint after it in tree order, pink last.
-   *
-   * Stroke and offset are in pixels rather than `em`. At this size an `em`
-   * stroke lands under a pixel and the outline disappears.
+   * The stroke is 1px against roughly 32px type, near enough to the 3% of cap
+   * height that outlined lettering of this kind normally uses. Any lighter and
+   * it drops below a pixel and stops rendering evenly.
    */
-  .ticker-word {
-    position: relative;
-    display: inline-block;
-    padding-right: 0.7em;
+  .ticker-outline {
     color: transparent;
-    white-space: pre;
+    -webkit-text-stroke: 1px rgb(255 255 255 / 0.34);
   }
 
-  .ticker-word::before,
-  .ticker-word::after {
-    content: attr(data-text);
-    position: absolute;
-    left: 0;
-    top: 0;
-    white-space: pre;
-  }
-
-  .ticker-word::before {
-    transform: translate(-2px, 2px);
-    color: var(--ticker-cream);
-    -webkit-text-stroke: 1px var(--ticker-blue);
-  }
-
-  .ticker-word::after {
-    color: var(--ticker-pink);
+  /*
+   * Both ends dissolve rather than being cut off, so the line reads as passing
+   * through the column instead of running inside a hidden box. Same masking
+   * idea as the portrait, turned on its side.
+   */
+  .ticker-fade {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
   }
 
   /*
