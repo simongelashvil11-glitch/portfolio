@@ -73,26 +73,29 @@ export default async function AboutPage() {
 
             {portraitUrl ? (
               /*
-                The panel stretches to the height of the copy and centres the
-                photo in it, so the two columns read as blocks of equal weight
-                rather than a picture hanging off the first line.
-                It is drawn with a border and no fill on purpose. The photo's
-                own backdrop is tuned to the page colour, so any lighter fill
-                would leave that rectangle sitting visibly on top of it — and
-                the backdrop cannot be lifted to match without taking the
-                black t-shirt up with it.
+                The panel stretches to the height of the copy, so the two
+                columns read as blocks of equal weight rather than a picture
+                hanging off the first line. The photo stands on the floor of
+                the panel: the source is cropped mid-leg, and letting that cut
+                land on the panel edge hides it, where centring the figure
+                would leave it hanging in mid-air.
+                The photo is a transparent cutout, so the panel can carry a
+                fill without a picture-shaped rectangle showing on top of it.
+                The fill is what makes the silhouette read at all: the t-shirt
+                bottoms out near black, which is invisible against the page but
+                clearly separated from the panel.
                 Below `sm` the layout stacks, where a full-height panel has
                 nothing to match, so it shrinks to fit the photo instead.
               */
-              <div className="flex w-40 shrink-0 items-center justify-center self-start rounded-2xl border border-line p-4 sm:w-44 sm:self-stretch lg:w-48">
+              <div className="flex w-40 shrink-0 items-end justify-center self-start overflow-hidden rounded-2xl border border-line bg-surface px-3 pt-6 sm:w-44 sm:self-stretch lg:w-48">
                 <Image
                   src={portraitUrl}
                   alt={profile?.name ?? ""}
-                  width={480}
-                  height={640}
+                  width={782}
+                  height={955}
                   sizes="192px"
                   priority
-                  className="portrait-fade h-auto w-full"
+                  className="h-auto w-full"
                 />
               </div>
             ) : null}

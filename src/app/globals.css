@@ -235,18 +235,6 @@
   }
 
   /*
-   * The portrait is cropped from a studio shot whose backdrop already matches
-   * the page, so the only thing giving away the frame is the bottom edge,
-   * where the body is cut off by a hard horizontal line. Fading the last
-   * fifth lets the figure dissolve into the page instead of sitting in an
-   * invisible box — the same trick as the crop itself, finished properly.
-   */
-  .portrait-fade {
-    -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
-    mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
-  }
-
-  /*
    * A closed disclosure needs to look openable. A slow drift downward reads
    * as "there is more below" without asking for attention the way a pulse or
    * a colour flash would — and it stops the moment the section is open, so it
