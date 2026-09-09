@@ -74,6 +74,18 @@ export function ProfileForm({ profile }: { profile: Profile | null }) {
         </Field>
       </div>
 
+      <Field
+        label="Sidebar ticker"
+        hint="Scrolling strip on the home page, between the greeting and Selected work. Leave blank to hide it."
+        error={state.fieldErrors?.ticker}
+      >
+        <Input
+          name="ticker"
+          defaultValue={profile?.ticker ?? ""}
+          placeholder="Open for freelance work"
+        />
+      </Field>
+
       <Field label="Résumé URL" error={state.fieldErrors?.resumeUrl}>
         <Input name="resumeUrl" type="url" defaultValue={profile?.resumeUrl ?? ""} />
       </Field>

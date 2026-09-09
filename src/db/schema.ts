@@ -28,6 +28,8 @@ export const profile = pgTable("profile", {
   location: varchar("location", { length: 120 }),
   email: varchar("email", { length: 255 }),
   availability: varchar("availability", { length: 120 }),
+  /** Scrolling strip above the email in the sidebar. Blank hides the strip. */
+  ticker: varchar("ticker", { length: 200 }),
   /*
    * The about page. Headings are nullable and fall back to sensible defaults
    * in the page itself, so a blank field never renders an empty heading.

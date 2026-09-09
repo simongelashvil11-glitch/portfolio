@@ -71,6 +71,13 @@
       "when": 1788946118033,
       "tag": "0009_exotic_radioactive_man",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788951973926,
+      "tag": "0010_ordinary_thunderbird",
+      "breakpoints": true
     }
   ]
 }

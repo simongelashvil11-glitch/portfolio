@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { ContactForm } from "@/components/contact-form";
 import { Greeting } from "@/components/greeting";
+import { Ticker } from "@/components/ticker";
 import { Mark } from "@/components/mark";
 import { Reveal } from "@/components/reveal";
 import { VideoThumb } from "@/components/video";
@@ -57,6 +58,14 @@ export default async function HomePage() {
                 >
                   Résumé
                 </a>
+              </div>
+            </Reveal>
+          ) : null}
+
+          {profileRow?.ticker ? (
+            <Reveal index={4}>
+              <div className="mt-16">
+                <Ticker text={profileRow.ticker} />
               </div>
             </Reveal>
           ) : null}

@@ -22,6 +22,11 @@
   --aurora-4: #26163a;
 
   --sidebar-width: 15rem;
+
+  /* Sidebar ticker — sampled from the layered sticker lettering it quotes. */
+  --ticker-cream: #fdfce8;
+  --ticker-pink: #ef4a9b;
+  --ticker-blue: #2b9ce8;
 }
 
 @theme inline {
@@ -268,6 +273,69 @@
   .portrait-fade {
     -webkit-mask-image: linear-gradient(to bottom, #000 66%, transparent 100%);
     mask-image: linear-gradient(to bottom, #000 66%, transparent 100%);
+  }
+
+  /*
+   * The sidebar ticker.
+   *
+   * The offset outline has to be a second copy of the glyphs, not a shadow:
+   * a text-shadow fills the letter, and there is no way to ask one for an
+   * outline only. So each word paints twice — a blue-stroked copy shifted
+   * down and left, then the pink one over it.
+   *
+   * Both copies are absolutely positioned, which is what orders them: the
+   * element's own text is transparent and does nothing but hold the layout
+   * box and stay readable to a screen reader, while the two pseudo-elements
+   * paint after it in tree order, pink last.
+   *
+   * Stroke and offset are in pixels rather than `em`. At this size an `em`
+   * stroke lands under a pixel and the outline disappears.
+   */
+  .ticker-word {
+    position: relative;
+    display: inline-block;
+    padding-right: 0.7em;
+    color: transparent;
+    white-space: pre;
+  }
+
+  .ticker-word::before,
+  .ticker-word::after {
+    content: attr(data-text);
+    position: absolute;
+    left: 0;
+    top: 0;
+    white-space: pre;
+  }
+
+  .ticker-word::before {
+    transform: translate(-2px, 2px);
+    color: var(--ticker-cream);
+    -webkit-text-stroke: 1px var(--ticker-blue);
+  }
+
+  .ticker-word::after {
+    color: var(--ticker-pink);
+  }
+
+  /*
+   * The track holds the same run of words twice, so travelling exactly half
+   * its width lands on an identical frame and the loop has no seam. Duration
+   * is set per instance, from the length of the text, so a long phrase does
+   * not race past faster than a short one.
+   */
+  .ticker-track {
+    display: flex;
+    width: max-content;
+    animation-name: ticker-scroll;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  @keyframes ticker-scroll {
+    to {
+      transform: translateX(-50%);
+    }
   }
 
   /*
