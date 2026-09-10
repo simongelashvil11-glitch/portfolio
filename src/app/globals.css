@@ -55,11 +55,24 @@
 
 /* The light rail, chosen from the control above the email. */
 [data-rail="light"] {
-  --aurora-1: #f4f3f1;
-  --aurora-2: #e9e9ec;
-  --aurora-3: #efeceb;
-  --aurora-4: #e3e2e6;
-  --aurora-bloom: rgb(255 255 255 / 0.5);
+  /*
+   * These carry hue rather than lightness. The drift animates the gradient's
+   * position, so what reads as movement is the stops differing from one
+   * another — and four near-neutral greys, however far apart in lightness,
+   * slide past looking like nothing at all. The dark set gets away with a
+   * narrow lightness range for exactly this reason: its stops are green,
+   * blue and violet. So these are too, held at the same pale lightness.
+   */
+  --aurora-1: #f7eeda;
+  --aurora-2: #d6e5f8;
+  --aurora-3: #e9dcf8;
+  --aurora-4: #d9f0e3;
+
+  /*
+   * A soft shadow, not a highlight. The bloom breathes on its own clock, and
+   * white over a near-white ground breathes invisibly.
+   */
+  --aurora-bloom: rgb(146 156 186 / 0.26);
 
   --smoke-1: rgb(108 108 116 / 0.26);
   --smoke-2: rgb(124 124 132 / 0.24);
