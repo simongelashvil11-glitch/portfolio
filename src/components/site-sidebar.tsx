@@ -293,7 +293,6 @@ export function SiteSidebar(props: SidebarProps) {
           onSelect={select}
           contactOpen={contactOpen}
           onOpenContact={() => setContactOpen(true)}
-          chrome
         />
       </aside>
 
@@ -378,7 +377,6 @@ function SidebarBody({
   onNavigate,
   contactOpen,
   onOpenContact,
-  chrome = false,
 }: SidebarProps & {
   pathname: string;
   activeSection: string | null;
@@ -386,29 +384,10 @@ function SidebarBody({
   onNavigate?: () => void;
   contactOpen: boolean;
   onOpenContact: () => void;
-  /** Window controls. The rail only — the drawer has its own close button. */
-  chrome?: boolean;
 }) {
   return (
     <div className="relative flex h-full flex-col justify-between gap-6 overflow-y-auto px-4 py-6">
       <div>
-        {/*
-          The lights are what make the whole page read as a window rather than
-          a site with a menu down one side, and they are the same ones used by
-          `MacWindow` and the portrait card, so it is one vocabulary rather
-          than three. Decoration, so hidden from assistive tech rather than
-          announced as three unlabelled somethings.
-
-          Sized and spaced as the real ones are: 12px across, 8px apart.
-        */}
-        {chrome ? (
-          <div className="mb-7 flex items-center gap-2 px-1.5" aria-hidden>
-            <span className="size-3 rounded-full bg-[#ff5f57]" />
-            <span className="size-3 rounded-full bg-[#febc2e]" />
-            <span className="size-3 rounded-full bg-[#28c840]" />
-          </div>
-        ) : null}
-
         <Link href="/" onClick={onNavigate} className="block px-3">
           <span className="font-display text-[0.9375rem] font-medium leading-tight tracking-display text-(--rail-ink)">
             {name}
