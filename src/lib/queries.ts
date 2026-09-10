@@ -1,14 +1,20 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { and, asc, desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { experiences, posts, profile, projects, skills, tools, updates } from "@/db/schema";
 
-export async function getProfile() {
+/**
+ * Cached for the life of a request: the shell, the page and the document
+ * title all want the profile, and none of them should cost a query of its own.
+ */
+export const getProfile = cache(async () => {
   const [row] = await db.select().from(profile).where(eq(profile.id, 1)).limit(1);
   return row ?? null;
-}
+});
 
 export async function getExperiences({ all = false } = {}) {
   return db

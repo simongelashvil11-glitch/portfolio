@@ -14,7 +14,7 @@ export const revalidate = 60;
  */
 export default async function SiteLayout({ children }: LayoutProps<"/">) {
   const profile = await getProfile();
-  const name = profile?.name ?? "Portfolio";
+  const name = profile?.name ?? "Simon Gelashvili";
 
   return (
     <div className="flex min-h-full flex-1 flex-col lg:pl-(--sidebar-width)">

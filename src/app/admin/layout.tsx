@@ -7,6 +7,7 @@ import { AdminNav } from "@/components/admin/admin-nav";
 import { db } from "@/db";
 import { messages } from "@/db/schema";
 import { getSession } from "@/lib/auth";
+import { getProfile } from "@/lib/queries";
 
 export const metadata: Metadata = {
   title: { default: "Admin", template: "%s — Admin" },
@@ -24,12 +25,14 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     .from(messages)
     .where(eq(messages.read, false));
 
+  const profile = await getProfile();
+
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-8 md:flex-row md:py-12">
       <aside className="md:w-52 md:shrink-0">
         <div className="mb-6 flex items-center justify-between md:mb-8 md:block">
           <Link href="/" className="font-display text-xl tracking-display hover:text-accent">
-            Portfolio
+            {profile?.name ?? "Simon Gelashvili"}
           </Link>
           <p className="mt-1 hidden truncate font-mono text-xs text-faint md:block">
             {session.email}
