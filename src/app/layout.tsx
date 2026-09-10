@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 
 import { siteUrl } from "@/lib/site-url";
 
@@ -33,9 +32,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} ${display.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <Script
-          id="rail-appearance"
-          strategy="beforeInteractive"
+        {/*
+          A plain script, not `next/script`. `beforeInteractive` sounds like
+          the right strategy and is not: it never reaches the server HTML for
+          an inline script, so it is injected by the client runtime and runs
+          after the page has already painted — which is the flash it was
+          supposed to prevent. Rendered here it is in the markup, first thing
+          inside the body, and runs while the rest is still being parsed.
+        */}
+        <script
           dangerouslySetInnerHTML={{
             __html: `try{var r=localStorage.getItem("rail");document.documentElement.dataset.rail=r==="light"?"light":"dark"}catch(e){document.documentElement.dataset.rail="dark"}`,
           }}
