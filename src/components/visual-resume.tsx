@@ -122,19 +122,6 @@ const STYLES = `
   --wash-3: rgba(205, 226, 248, 0.75);
 }
 
-/*
- * On milk the photo sits on its own dark ground rather than on the card.
- *
- * The portrait is a cutout, and its matte was built by thresholding a studio
- * backdrop: good enough to be invisible against the dark site, but stepped
- * around the hair, which milk shows up mercilessly. Putting the ground back
- * under it makes it a photograph in a frame instead of a shape cut out badly,
- * and the fade at the mid-leg crop has something to fade into again.
- */
-.vr.is-light .vr-photo-wrap {
-  background: #17181c;
-  padding: 3mm 2.5mm 0;
-}
 
 .vr * { box-sizing: border-box; }
 .vr p { margin: 0; }
