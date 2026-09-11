@@ -136,13 +136,7 @@ const STYLES = `
  * a name bar below, the photo fading out over the mid-leg crop of the source.
  */
 .vr-card {
-  width: 38mm;
-  /*
-   * Tall enough that the whole figure fits. Left to the height of the column
-   * beside it, the photo area came out shorter than the picture and cropped
-   * the pointing hand away.
-   */
-  min-height: 62mm;
+  width: 46mm;
   flex: none;
   display: flex;
   flex-direction: column;
@@ -162,21 +156,21 @@ const STYLES = `
 }
 .vr-light { width: 1.9mm; height: 1.9mm; border-radius: 50%; }
 /*
- * Contained, so the whole picture is always inside the frame whatever height
- * the card ends up. Sized to the width before, it overflowed and the card
- * clipped it — and the fade then removed the bottom third on top of that,
- * which is where the hand is.
+ * A photograph in a frame, not a cutout.
+ *
+ * The earlier portrait was lifted off a near-black backdrop that matched the
+ * black t-shirt, so no matte could reliably tell the two apart — every attempt
+ * cost either the edge of the hair or a piece of an arm. This picture is shot
+ * on a pale ground instead and needs nothing done to it: on the light sheet
+ * its own backdrop sits within a couple of values of the card, and on the dark
+ * one it reads as a print in a window. Cutting it out would be worse there,
+ * since the shirt would vanish into the page.
+ *
+ * The frame is square because the picture is, so it is shown whole — no crop,
+ * no fade, nothing of the subject lost.
  */
-.vr-photo-wrap { flex: 1; display: flex; padding: 2.5mm 2.5mm 0; min-height: 0; }
-.vr-photo {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: 50% 100%;
-  /* Only the last sliver softens, so the mid-leg crop is not a hard rule. */
-  -webkit-mask-image: linear-gradient(to bottom, #000 92%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 92%, transparent 100%);
-}
+.vr-photo-wrap { aspect-ratio: 1 / 1; overflow: hidden; }
+.vr-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
 .vr-cardname {
   border-top: 0.3mm solid var(--chrome-line);
   background: var(--chrome);
@@ -288,6 +282,13 @@ const STYLES = `
 }
 `;
 
+/*
+ * This document's own photograph, rather than the cutout the site uses. Kept
+ * separate on purpose: the about page wants a figure with no background, and
+ * these want a picture with one.
+ */
+const PHOTO = "/portrait-source.jpg";
+
 export async function VisualResume({ tone }: { tone: Tone }) {
   const [profile, experiences, skillRows, tools, projects] = await Promise.all([
     getProfile(),
@@ -298,7 +299,6 @@ export async function VisualResume({ tone }: { tone: Tone }) {
   ]);
 
   const skillGroups = groupSkills(skillRows);
-  const portraitUrl = profile?.portraitUrl?.trim();
 
   const contacts: { href: string; text: string }[] = [
     { href: siteUrl, text: prettyUrl(siteUrl) },
@@ -323,7 +323,7 @@ export async function VisualResume({ tone }: { tone: Tone }) {
 
       <main className={tone === "light" ? "vr is-light" : "vr"}>
         <header className="vr-head">
-          {portraitUrl ? (
+          {PHOTO ? (
             <div className="vr-card">
               <div className="vr-chrome" aria-hidden>
                 <span className="vr-light" style={{ background: "#ff5f57" }} />
@@ -333,7 +333,7 @@ export async function VisualResume({ tone }: { tone: Tone }) {
 
               <div className="vr-photo-wrap">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="vr-photo" src={portraitUrl} alt={profile?.name ?? ""} />
+                <img className="vr-photo" src={PHOTO} alt={profile?.name ?? ""} />
               </div>
 
               {profile?.name ? <div className="vr-cardname">{profile.name}</div> : null}
