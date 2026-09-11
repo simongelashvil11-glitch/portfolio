@@ -188,7 +188,13 @@ const STYLES = `
  * crop, no fade, nothing of the subject lost — and the card is wider to give
  * it presence now that nothing is hidden.
  */
-.vr.is-light .vr-card { width: 46mm; min-height: 0; }
+/*
+ * Width, here, sets the height: the frame is square, so the picture is as tall
+ * as the card is wide. This width is the one that makes it match the figure on
+ * the dark sheet — 52.2mm across the card leaves 51.6mm inside the border,
+ * which is exactly the height of the photo area over there.
+ */
+.vr.is-light .vr-card { width: 52.2mm; min-height: 0; }
 .vr.is-light .vr-photo-wrap { flex: none; display: block; aspect-ratio: 1 / 1; padding: 0; overflow: hidden; }
 .vr.is-light .vr-photo {
   object-fit: cover;
