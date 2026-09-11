@@ -29,8 +29,6 @@ const BULLET = /^[-*•]\s+/;
  * the one before it. Entries wrap mid-sentence in the database, and splitting
  * on every newline broke those in half — the site's prose formatter treats a
  * lone newline as a break inside the same item for the same reason.
- *
- * A description written as plain prose still shows, as a single point.
  */
 function toPoints(description: string | null): string[] {
   if (!description) return [];
@@ -69,8 +67,17 @@ export default async function ResumePage() {
   ]);
 
   const skillGroups = groupSkills(skillRows);
-  const name = profile?.name ?? "";
-  const contact = [profile?.role, profile?.location].filter(Boolean).join(" · ");
+
+  const contactLine = [
+    profile?.email,
+    ...(profile?.socials ?? []).map((social) => prettyUrl(social.url)),
+  ].filter(Boolean);
+
+  const bioParagraphs = (profile?.bio ?? "")
+    .replace(/\r\n?/g, "\n")
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
 
   return (
     <>
@@ -78,224 +85,208 @@ export default async function ResumePage() {
         dangerouslySetInnerHTML={{
           __html: `
 /*
- * A print document, so it is measured in millimetres and points rather than
- * in the site's tokens — those are built for a dark screen, and every one of
- * them would have to be overridden here.
+ * Built to be read by a machine first and a person second.
  *
- * The page keeps the site's face and its restraint: one neutral ink, hairline
- * rules, generous letter-spacing on the small labels. Only the ground flips.
+ * Every choice here that looks plain is deliberate:
+ *
+ * - One column. Applicant tracking systems commonly read straight across a
+ *   page, so a two-column layout interleaves the columns into nonsense. This
+ *   is the single biggest thing that breaks a parsed résumé.
+ * - A locally installed face, not the site's web font. Chrome cannot embed a
+ *   web font into a PDF as a font program and falls back to Type 3 glyph
+ *   outlines, which carry no reliable text layer. A system face is embedded
+ *   properly and the words survive extraction.
+ * - Ordinary section headings — Summary, Experience, Skills, Projects — since
+ *   parsers look for those words to decide what each block is.
+ * - No panels, boxes or pills. Anything that reads as a table or a text frame
+ *   is a place where extraction can reorder or drop content.
+ *
+ * What is left of the site's look is what costs nothing to keep: the light
+ * ground, hairline rules, letter-spaced labels and one neutral ink.
  */
 @page { size: A4; margin: 0; }
 
 .cv {
   --ink: #14151a;
-  --muted: #454a53;
-  --faint: #868c95;
-  --line: #e4e6ea;
-  --panel: #f6f7f9;
+  --muted: #3f444c;
+  --faint: #7c828b;
+  --line: #d9dce1;
 
   box-sizing: border-box;
   width: 210mm;
   min-height: 297mm;
   margin: 0 auto;
-  padding: 13mm 14mm;
+  padding: 11mm 13mm;
   background: #fff;
   color: var(--ink);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 9pt;
-  line-height: 1.45;
-  /* The panels and rules are the design, not decoration, so they must print. */
+  font-family: "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 9.1pt;
+  line-height: 1.36;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
 
 .cv * { box-sizing: border-box; }
+.cv p { margin: 0; }
 
-.cv-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10mm; }
-.cv-name { font-size: 21pt; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; margin: 0; }
-.cv-role { margin: 1.5mm 0 0; font-size: 9.5pt; color: var(--muted); }
-.cv-tagline { margin: 3mm 0 0; font-size: 10pt; color: var(--ink); max-width: 108mm; }
-
-.cv-contact { text-align: right; font-size: 8.5pt; color: var(--muted); line-height: 1.7; white-space: nowrap; }
-.cv-contact a { color: inherit; text-decoration: none; }
-.cv-badge {
-  display: inline-block; margin-bottom: 1.5mm; padding: 0.8mm 2.4mm;
-  border: 0.3mm solid var(--line); border-radius: 2mm;
-  background: var(--panel); font-size: 7.5pt; color: var(--muted);
+.cv-name {
+  margin: 0;
+  font-size: 19pt;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
 }
-
-.cv-rule { height: 0.3mm; background: var(--line); margin: 6mm 0 5mm; }
-
-.cv-body { display: grid; grid-template-columns: 1.5fr 1fr; gap: 9mm; }
+.cv-title { margin-top: 1mm; font-size: 10.2pt; color: var(--muted); }
+.cv-contact { margin-top: 1.4mm; font-size: 8.9pt; color: var(--muted); }
+.cv-contact a { color: inherit; text-decoration: none; }
 
 .cv-h2 {
-  margin: 0 0 3mm; font-size: 7.5pt; font-weight: 600;
-  letter-spacing: 0.13em; text-transform: uppercase; color: var(--faint);
-}
-.cv-col > section + section { margin-top: 6mm; }
-
-.cv-role-block + .cv-role-block { margin-top: 4mm; }
-.cv-role-head { display: flex; justify-content: space-between; align-items: baseline; gap: 4mm; }
-.cv-role-title { font-size: 9.5pt; font-weight: 600; }
-.cv-role-org { font-weight: 400; color: var(--muted); }
-.cv-dates { font-size: 8pt; color: var(--faint); white-space: nowrap; font-variant-numeric: tabular-nums; }
-
-.cv-points { margin: 1.5mm 0 0; padding: 0; list-style: none; }
-.cv-points li { position: relative; padding-left: 3.5mm; color: var(--muted); font-size: 8.5pt; }
-.cv-points li + li { margin-top: 1mm; }
-.cv-points li::before {
-  content: ""; position: absolute; left: 0; top: 1.55mm;
-  width: 1mm; height: 1mm; border-radius: 50%; background: #c3c7ce;
+  margin: 4.8mm 0 2.1mm;
+  padding-bottom: 1mm;
+  border-bottom: 0.3mm solid var(--line);
+  font-size: 8.2pt;
+  font-weight: 700;
+  /*
+   * No letter-spacing. Chrome splits a tracked word into separate text runs
+   * and an extractor rejoins them with a space — "EXPERIENCE" came out as
+   * "E XPERIENCE", and a section heading is exactly the string a parser looks
+   * for to work out what the block beneath it is.
+   */
+  text-transform: uppercase;
+  color: var(--faint);
 }
 
-.cv-group + .cv-group { margin-top: 2.5mm; }
-.cv-group-name { font-size: 7.5pt; font-weight: 600; color: var(--faint); letter-spacing: 0.04em; }
-.cv-group-items { margin-top: 0.8mm; color: var(--muted); font-size: 8.5pt; }
-
-.cv-work + .cv-work { margin-top: 3mm; }
-.cv-work-name { font-size: 8.5pt; font-weight: 600; }
-.cv-work-note { margin-top: 0.5mm; color: var(--muted); font-size: 8pt; }
-
-.cv-aside {
-  margin-top: 4mm; padding: 3mm;
-  border: 0.3mm solid var(--line); border-radius: 2.5mm; background: var(--panel);
-  font-size: 7.5pt; color: var(--muted);
+.cv-entry + .cv-entry { margin-top: 2.6mm; }
+.cv-entry-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6mm;
+}
+.cv-entry-title { font-size: 9.7pt; font-weight: 600; }
+.cv-entry-org { font-weight: 400; color: var(--muted); }
+.cv-entry-dates {
+  font-size: 8.9pt;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
-/* On screen it sits on the site's dark ground; give it a page to sit on. */
+/*
+ * The bullet is written into the text, not left to the CSS list marker, which
+ * never reached the text layer at all: extraction came back with no bullet
+ * characters anywhere — and a bullet is one of the cues a parser uses to tell
+ * a list of achievements from a paragraph. The hanging indent keeps wrapped
+ * lines aligned under the first word rather than under the marker.
+ */
+.cv-points { margin: 1.2mm 0 0; padding: 0 0 0 4.2mm; list-style: none; }
+.cv-points li {
+  margin-top: 0.6mm;
+  color: var(--muted);
+  text-indent: -4.2mm;
+}
+
+.cv-line { margin-top: 1.2mm; color: var(--muted); }
+.cv-line:first-of-type { margin-top: 0; }
+.cv-label { font-weight: 600; color: var(--ink); }
+
+.cv-summary p + p { margin-top: 1.6mm; }
+.cv-summary { color: var(--muted); }
+
 @media screen {
   body { background: #22242a; }
-  .cv { margin: 8mm auto; box-shadow: 0 2mm 12mm rgb(0 0 0 / 0.45); border-radius: 1.5mm; }
+  .cv { margin: 8mm auto; box-shadow: 0 2mm 12mm rgb(0 0 0 / 0.45); }
 }
 @media print {
   body { background: #fff; }
-  .cv { margin: 0; box-shadow: none; border-radius: 0; }
+  .cv { margin: 0; box-shadow: none; }
 }
 `,
         }}
       />
 
       <main className="cv">
-        <header className="cv-head">
-          <div>
-            <h1 className="cv-name">{name}</h1>
-            {contact ? <p className="cv-role">{contact}</p> : null}
-            {profile?.headline ? <p className="cv-tagline">{profile.headline}</p> : null}
-          </div>
+        <h1 className="cv-name">{profile?.name}</h1>
 
-          <div className="cv-contact">
-            {profile?.availability ? (
-              <div>
-                <span className="cv-badge">{profile.availability}</span>
-              </div>
-            ) : null}
-            {profile?.email ? (
-              <div>
-                <a href={`mailto:${profile.email}`}>{profile.email}</a>
-              </div>
-            ) : null}
-            {(profile?.socials ?? []).map((social) => (
-              <div key={social.url}>
-                <a href={social.url}>{prettyUrl(social.url)}</a>
-              </div>
+        {profile?.role || profile?.location ? (
+          <p className="cv-title">
+            {[profile?.role, profile?.location].filter(Boolean).join(" — ")}
+          </p>
+        ) : null}
+
+        {contactLine.length > 0 ? (
+          <p className="cv-contact">{contactLine.join("  |  ")}</p>
+        ) : null}
+
+        {bioParagraphs.length > 0 ? (
+          <>
+            <h2 className="cv-h2">Summary</h2>
+            <div className="cv-summary">
+              {bioParagraphs.map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))}
+            </div>
+          </>
+        ) : null}
+
+        {experiences.length > 0 ? (
+          <>
+            <h2 className="cv-h2">Experience</h2>
+            {experiences.map((item) => {
+              const points = toPoints(item.description);
+              return (
+                <div key={item.id} className="cv-entry">
+                  <div className="cv-entry-head">
+                    <div className="cv-entry-title">
+                      {item.role}
+                      <span className="cv-entry-org">, {item.company}</span>
+                    </div>
+                    <div className="cv-entry-dates">
+                      {formatPeriod(item.startDate)} &ndash; {formatPeriod(item.endDate)}
+                    </div>
+                  </div>
+
+                  {points.length > 0 ? (
+                    <ul className="cv-points">
+                      {points.map((point, index) => (
+                        <li key={index}>{"•  "}{point}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              );
+            })}
+          </>
+        ) : null}
+
+        {skillGroups.length > 0 ? (
+          <>
+            <h2 className="cv-h2">Skills</h2>
+            {skillGroups.map((group) => (
+              <p key={group.category} className="cv-line">
+                <span className="cv-label">{group.category}: </span>
+                {group.items.map((skill) => skill.name).join(", ")}
+              </p>
             ))}
-          </div>
-        </header>
-
-        <div className="cv-rule" />
-
-        <div className="cv-body">
-          <div className="cv-col">
-            {profile?.bio ? (
-              <section>
-                <h2 className="cv-h2">Profile</h2>
-                {profile.bio
-                  .replace(/\r\n?/g, "\n")
-                  .split(/\n{2,}/)
-                  .map((paragraph) => paragraph.trim())
-                  .filter(Boolean)
-                  .map((paragraph, index) => (
-                    <p
-                      key={index}
-                      style={{
-                        margin: index === 0 ? 0 : "2mm 0 0",
-                        color: "var(--muted)",
-                        fontSize: "8.5pt",
-                      }}
-                    >
-                      {paragraph}
-                    </p>
-                  ))}
-              </section>
+            {tools.length > 0 ? (
+              <p className="cv-line">
+                <span className="cv-label">Also uses: </span>
+                {tools.map((tool) => tool.name).join(", ")}
+              </p>
             ) : null}
+          </>
+        ) : null}
 
-            {experiences.length > 0 ? (
-              <section>
-                <h2 className="cv-h2">Experience</h2>
-                {experiences.map((item) => {
-                  const points = toPoints(item.description);
-                  return (
-                    <div key={item.id} className="cv-role-block">
-                      <div className="cv-role-head">
-                        <div className="cv-role-title">
-                          {item.role}
-                          <span className="cv-role-org"> · {item.company}</span>
-                        </div>
-                        <div className="cv-dates">
-                          {formatPeriod(item.startDate)} &ndash; {formatPeriod(item.endDate)}
-                        </div>
-                      </div>
-
-                      {points.length > 0 ? (
-                        <ul className="cv-points">
-                          {points.map((point, index) => (
-                            <li key={index}>{point}</li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </section>
-            ) : null}
-          </div>
-
-          <div className="cv-col">
-            {skillGroups.length > 0 ? (
-              <section>
-                <h2 className="cv-h2">Toolkit</h2>
-                {skillGroups.map((group) => (
-                  <div key={group.category} className="cv-group">
-                    <div className="cv-group-name">{group.category}</div>
-                    <div className="cv-group-items">
-                      {group.items.map((skill) => skill.name).join(", ")}
-                    </div>
-                  </div>
-                ))}
-
-                {tools.length > 0 ? (
-                  <div className="cv-aside">
-                    Also uses {tools.map((tool) => tool.name).join(", ")}.
-                  </div>
-                ) : null}
-              </section>
-            ) : null}
-
-            {projects.length > 0 ? (
-              <section>
-                <h2 className="cv-h2">Selected work</h2>
-                {projects.map((project) => (
-                  <div key={project.id} className="cv-work">
-                    <div className="cv-work-name">{project.title}</div>
-                    {project.summary ? (
-                      <div className="cv-work-note">{project.summary}</div>
-                    ) : null}
-                  </div>
-                ))}
-              </section>
-            ) : null}
-          </div>
-        </div>
+        {projects.length > 0 ? (
+          <>
+            <h2 className="cv-h2">Projects</h2>
+            {projects.map((project) => (
+              <p key={project.id} className="cv-line">
+                <span className="cv-label">{project.title}. </span>
+                {project.summary}
+              </p>
+            ))}
+          </>
+        ) : null}
       </main>
     </>
   );
