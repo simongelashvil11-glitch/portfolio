@@ -8,6 +8,7 @@ import {
   getTools,
   groupSkills,
 } from "@/lib/queries";
+import { siteUrl } from "@/lib/site-url";
 import { formatPeriod } from "@/lib/utils";
 
 export const revalidate = 60;
@@ -68,10 +69,24 @@ export default async function ResumePage() {
 
   const skillGroups = groupSkills(skillRows);
 
-  const contactLine = [
-    profile?.email,
-    ...(profile?.socials ?? []).map((social) => prettyUrl(social.url)),
-  ].filter(Boolean);
+  /*
+   * The site first, then the email, then the professional profiles.
+   *
+   * Instagram is left off. It stays in the sidebar on the site itself; this
+   * is the version that goes to employers.
+   *
+   * The address comes from `siteUrl`, which resolves to the deployed domain
+   * in production and to localhost in development — so this document has to
+   * be printed from the live site, not from a dev server, or it advertises
+   * localhost. The page is identical either way; only this line differs.
+   */
+  const contacts: { href: string; text: string }[] = [
+    { href: siteUrl, text: prettyUrl(siteUrl) },
+    ...(profile?.email ? [{ href: `mailto:${profile.email}`, text: profile.email }] : []),
+    ...(profile?.socials ?? [])
+      .filter((social) => !/instagram/i.test(social.label) && !/instagram/i.test(social.url))
+      .map((social) => ({ href: social.url, text: prettyUrl(social.url) })),
+  ];
 
   const bioParagraphs = (profile?.bio ?? "")
     .replace(/\r\n?/g, "\n")
@@ -213,8 +228,20 @@ export default async function ResumePage() {
           </p>
         ) : null}
 
-        {contactLine.length > 0 ? (
-          <p className="cv-contact">{contactLine.join("  |  ")}</p>
+        {contacts.length > 0 ? (
+          /*
+           * Linked, and safe to be: what a parser reads is the text layer, and
+           * the text here is the address itself. A link only costs a résumé
+           * when it hides the address behind a word.
+           */
+          <p className="cv-contact">
+            {contacts.map((item, index) => (
+              <span key={item.href}>
+                {index > 0 ? "  |  " : null}
+                <a href={item.href}>{item.text}</a>
+              </span>
+            ))}
+          </p>
         ) : null}
 
         {bioParagraphs.length > 0 ? (
