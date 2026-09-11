@@ -137,6 +137,12 @@ const STYLES = `
  */
 .vr-card {
   width: 38mm;
+  /*
+   * Tall enough that the whole figure fits. Left to the height of the column
+   * beside it, the photo area came out shorter than the picture and cropped
+   * the pointing hand away.
+   */
+  min-height: 62mm;
   flex: none;
   display: flex;
   flex-direction: column;
@@ -155,13 +161,21 @@ const STYLES = `
   background: var(--chrome);
 }
 .vr-light { width: 1.9mm; height: 1.9mm; border-radius: 50%; }
-.vr-photo-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2.5mm; }
+/*
+ * Contained, so the whole picture is always inside the frame whatever height
+ * the card ends up. Sized to the width before, it overflowed and the card
+ * clipped it — and the fade then removed the bottom third on top of that,
+ * which is where the hand is.
+ */
+.vr-photo-wrap { flex: 1; display: flex; padding: 2.5mm 2.5mm 0; min-height: 0; }
 .vr-photo {
   width: 100%;
-  height: auto;
-  transform: translateY(6%);
-  -webkit-mask-image: linear-gradient(to bottom, #000 66%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 66%, transparent 100%);
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 100%;
+  /* Only the last sliver softens, so the mid-leg crop is not a hard rule. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 92%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 92%, transparent 100%);
 }
 .vr-cardname {
   border-top: 0.3mm solid var(--chrome-line);
