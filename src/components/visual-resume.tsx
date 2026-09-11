@@ -136,7 +136,13 @@ const STYLES = `
  * a name bar below, the photo fading out over the mid-leg crop of the source.
  */
 .vr-card {
-  width: 46mm;
+  width: 38mm;
+  /*
+   * Tall enough that the whole figure fits. Left to the height of the column
+   * beside it, the photo area came out shorter than the picture and cropped
+   * the pointing hand away.
+   */
+  min-height: 62mm;
   flex: none;
   display: flex;
   flex-direction: column;
@@ -156,21 +162,41 @@ const STYLES = `
 }
 .vr-light { width: 1.9mm; height: 1.9mm; border-radius: 50%; }
 /*
- * A photograph in a frame, not a cutout.
- *
- * The earlier portrait was lifted off a near-black backdrop that matched the
- * black t-shirt, so no matte could reliably tell the two apart — every attempt
- * cost either the edge of the hair or a piece of an arm. This picture is shot
- * on a pale ground instead and needs nothing done to it: on the light sheet
- * its own backdrop sits within a couple of values of the card, and on the dark
- * one it reads as a print in a window. Cutting it out would be worse there,
- * since the shirt would vanish into the page.
- *
- * The frame is square because the picture is, so it is shown whole — no crop,
- * no fade, nothing of the subject lost.
+ * The dark sheet shows the site's cutout: a figure with no background, which
+ * is what a dark card wants. Contained rather than cropped to fit, so the
+ * whole figure is inside the frame whatever height the card ends up, with a
+ * sliver of fade at the very bottom to soften the mid-leg cut.
  */
-.vr-photo-wrap { aspect-ratio: 1 / 1; overflow: hidden; }
-.vr-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vr-photo-wrap { flex: 1; display: flex; padding: 2.5mm 2.5mm 0; min-height: 0; }
+.vr-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 100%;
+  -webkit-mask-image: linear-gradient(to bottom, #000 92%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 92%, transparent 100%);
+}
+
+/*
+ * The light sheet shows a photograph in a frame instead.
+ *
+ * The cutout was lifted off a near-black backdrop that matched the black
+ * t-shirt, so no matte could reliably tell the two apart, and on milk every
+ * flaw in it showed. The picture used here is shot on a pale ground and needs
+ * nothing done to it: its own backdrop sits within a couple of values of the
+ * card. The frame is square because the picture is, so it is shown whole — no
+ * crop, no fade, nothing of the subject lost — and the card is wider to give
+ * it presence now that nothing is hidden.
+ */
+.vr.is-light .vr-card { width: 46mm; min-height: 0; }
+.vr.is-light .vr-photo-wrap { flex: none; display: block; aspect-ratio: 1 / 1; padding: 0; overflow: hidden; }
+.vr.is-light .vr-photo {
+  object-fit: cover;
+  object-position: 50% 50%;
+  display: block;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
 .vr-cardname {
   border-top: 0.3mm solid var(--chrome-line);
   background: var(--chrome);
@@ -283,11 +309,11 @@ const STYLES = `
 `;
 
 /*
- * This document's own photograph, rather than the cutout the site uses. Kept
- * separate on purpose: the about page wants a figure with no background, and
- * these want a picture with one.
+ * Two pictures, because the two sheets want different things. Dark takes the
+ * site's cutout, a figure with no background. Light takes the photograph,
+ * whose own pale ground disappears into the card.
  */
-const PHOTO = "/portrait-source.jpg";
+const PHOTO_LIGHT = "/portrait-source.jpg";
 
 export async function VisualResume({ tone }: { tone: Tone }) {
   const [profile, experiences, skillRows, tools, projects] = await Promise.all([
@@ -299,6 +325,7 @@ export async function VisualResume({ tone }: { tone: Tone }) {
   ]);
 
   const skillGroups = groupSkills(skillRows);
+  const photo = tone === "light" ? PHOTO_LIGHT : profile?.portraitUrl?.trim();
 
   const contacts: { href: string; text: string }[] = [
     { href: siteUrl, text: prettyUrl(siteUrl) },
@@ -323,7 +350,7 @@ export async function VisualResume({ tone }: { tone: Tone }) {
 
       <main className={tone === "light" ? "vr is-light" : "vr"}>
         <header className="vr-head">
-          {PHOTO ? (
+          {photo ? (
             <div className="vr-card">
               <div className="vr-chrome" aria-hidden>
                 <span className="vr-light" style={{ background: "#ff5f57" }} />
@@ -333,7 +360,7 @@ export async function VisualResume({ tone }: { tone: Tone }) {
 
               <div className="vr-photo-wrap">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="vr-photo" src={PHOTO} alt={profile?.name ?? ""} />
+                <img className="vr-photo" src={photo} alt={profile?.name ?? ""} />
               </div>
 
               {profile?.name ? <div className="vr-cardname">{profile.name}</div> : null}
