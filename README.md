@@ -19,6 +19,18 @@ A portfolio site with a database-backed admin dashboard, built to deploy on Verc
 | `/writing/[slug]`  | Post                                                             |
 | `/admin`           | Dashboard, grouped by the page each section feeds                |
 
+Unlisted document pages, which render to the files in `public/`. They read the
+same rows the site does, so they cannot drift from it — see `NOTES.md` before
+exporting, as they must be printed from the deployed site rather than localhost.
+
+| Route                   | Exports                                        |
+| ----------------------- | ---------------------------------------------- |
+| `/resume`               | `resume.pdf` — plain, built to survive an ATS  |
+| `/visual-resume`        | `visual-resume.pdf` — designed, dark           |
+| `/visual-resume-light`  | `visual-resume-light.pdf` — designed, light    |
+| `/linkedin-cover`       | `linkedin-cover.png` (+ `@2x`) — 1584x396      |
+| `/linkedin-cover-light` | `linkedin-cover-light.png` (+ `@2x`)           |
+
 Public pages share one shell in `src/app/(site)/layout.tsx`: a fixed gradient
 sidebar with the content as an inset panel beside it.
 
