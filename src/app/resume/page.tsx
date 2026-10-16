@@ -151,12 +151,12 @@ export default async function ResumePage() {
   width: 210mm;
   min-height: 297mm;
   margin: 0 auto;
-  padding: 11mm 13mm;
+  padding: 8mm 10mm 6mm;
   background: #fff;
   color: var(--ink);
   font-family: "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
-  font-size: 9.1pt;
-  line-height: 1.36;
+  font-size: 8pt;
+  line-height: 1.23;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -166,20 +166,20 @@ export default async function ResumePage() {
 
 .cv-name {
   margin: 0;
-  font-size: 19pt;
+  font-size: 17pt;
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.15;
 }
-.cv-title { margin-top: 1mm; font-size: 10.2pt; color: var(--muted); }
-.cv-contact { margin-top: 1.4mm; font-size: 8.9pt; color: var(--muted); }
+.cv-title { margin-top: 0.6mm; font-size: 9.4pt; color: var(--muted); }
+.cv-contact { margin-top: 1mm; font-size: 8.2pt; color: var(--muted); }
 .cv-contact a { color: inherit; text-decoration: none; }
 
 .cv-h2 {
-  margin: 4.8mm 0 2.1mm;
-  padding-bottom: 1mm;
+  margin: 3.4mm 0 1.6mm;
+  padding-bottom: 0.8mm;
   border-bottom: 0.3mm solid var(--line);
-  font-size: 8.2pt;
+  font-size: 7.8pt;
   font-weight: 700;
   /*
    * No letter-spacing. Chrome splits a tracked word into separate text runs
@@ -191,17 +191,17 @@ export default async function ResumePage() {
   color: var(--faint);
 }
 
-.cv-entry + .cv-entry { margin-top: 2.6mm; }
+.cv-entry + .cv-entry { margin-top: 1.9mm; }
 .cv-entry-head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 6mm;
 }
-.cv-entry-title { font-size: 9.7pt; font-weight: 600; }
+.cv-entry-title { font-size: 8.9pt; font-weight: 600; }
 .cv-entry-org { font-weight: 400; color: var(--muted); }
 .cv-entry-dates {
-  font-size: 8.9pt;
+  font-size: 8.2pt;
   color: var(--muted);
   white-space: nowrap;
 }
@@ -213,18 +213,18 @@ export default async function ResumePage() {
  * a list of achievements from a paragraph. The hanging indent keeps wrapped
  * lines aligned under the first word rather than under the marker.
  */
-.cv-points { margin: 1.2mm 0 0; padding: 0 0 0 4.2mm; list-style: none; }
+.cv-points { margin: 0.8mm 0 0; padding: 0 0 0 3.8mm; list-style: none; }
 .cv-points li {
-  margin-top: 0.6mm;
+  margin-top: 0.35mm;
   color: var(--muted);
-  text-indent: -4.2mm;
+  text-indent: -3.8mm;
 }
 
-.cv-line { margin-top: 1.2mm; color: var(--muted); }
+.cv-line { margin-top: 0.8mm; color: var(--muted); }
 .cv-line:first-of-type { margin-top: 0; }
 .cv-label { font-weight: 600; color: var(--ink); }
 
-.cv-summary p + p { margin-top: 1.6mm; }
+.cv-summary p + p { margin-top: 1mm; }
 .cv-summary { color: var(--muted); }
 
 @media screen {
