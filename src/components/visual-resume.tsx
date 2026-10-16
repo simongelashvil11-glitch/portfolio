@@ -41,6 +41,60 @@ function toPoints(description: string | null): string[] {
   return points;
 }
 
+/** "Label: the rest" — short, and no sentence inside it, or it is not a label. */
+const LABEL = /^([^:.]{3,60}):\s+(.+)$/;
+
+function Point({ text }: { text: string }) {
+  const match = LABEL.exec(text);
+  if (!match) return <>{text}</>;
+  return (
+    <>
+      <span className="vr-point-label">{match[1]}:</span> {match[2]}
+    </>
+  );
+}
+
+/*
+ * Shrinks the body until both columns end inside the sheet.
+ *
+ * The rows are edited in the admin and only ever get longer, and the sheet is
+ * one page by design, so it fits itself rather than waiting for a redesign.
+ * `zoom` rather than a font size: the sizes below are set in points per role,
+ * and zoom scales them all together while the columns still fill their width.
+ * Measured in rendered coordinates, which zoom is already applied to.
+ *
+ * Runs straight away, again once the web font arrives (it changes every line
+ * length), and before printing.
+ */
+const FIT_SCRIPT = `
+(function () {
+  var sheet = document.currentScript && document.currentScript.previousElementSibling;
+  if (!sheet) return;
+  function fit() {
+    var body = sheet.querySelector(".vr-body");
+    if (!body) return;
+    var limit = body.getBoundingClientRect().bottom;
+    var cols = body.querySelectorAll(".vr-col");
+    function overflows() {
+      for (var i = 0; i < cols.length; i++) {
+        if (cols[i].getBoundingClientRect().bottom > limit + 0.5) return true;
+      }
+      return false;
+    }
+    var zoom = 1;
+    body.style.zoom = "";
+    while (zoom > 0.7 && overflows()) {
+      zoom = Math.round((zoom - 0.01) * 100) / 100;
+      body.style.zoom = String(zoom);
+    }
+  }
+  fit();
+  if (document.fonts) document.fonts.ready.then(fit);
+  window.addEventListener("load", fit);
+  window.addEventListener("beforeprint", fit);
+})();
+`;
+
 function prettyUrl(url: string): string {
   return url
     .replace(/^https?:\/\//, "")
@@ -81,11 +135,19 @@ const STYLES = `
   --wash-2: rgba(150, 140, 255, 0.2);
   --wash-3: rgba(90, 180, 220, 0.15);
 
+  /*
+   * One sheet, exactly. A fixed height rather than a minimum, so the sheet is
+   * a page and never a page and a bit; the fit script below shrinks the body
+   * text when the database holds more than the page does.
+   */
   box-sizing: border-box;
   width: 210mm;
-  min-height: 297mm;
+  height: 297mm;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   margin: 0 auto;
-  padding: 11mm 12mm;
+  padding: 9mm 11mm 7mm;
   background:
     radial-gradient(58% 32% at 14% 0%, var(--wash-1), transparent 72%),
     radial-gradient(54% 30% at 78% 1%, var(--wash-2), transparent 74%),
@@ -93,8 +155,8 @@ const STYLES = `
     var(--bg);
   color: var(--ink);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
-  font-size: 8.4pt;
-  line-height: 1.42;
+  font-size: 7.8pt;
+  line-height: 1.36;
   letter-spacing: -0.006em;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
@@ -129,20 +191,24 @@ const STYLES = `
 
 /* ---------- header ---------- */
 
-.vr-head { display: flex; gap: 7mm; align-items: stretch; }
+/*
+ * Kept short. Once the experience grew to a page and a half, the header was
+ * the one place with height to give back that did not cost a word.
+ */
+.vr-head { display: flex; gap: 6mm; align-items: stretch; flex: none; }
 
 /*
  * The portrait keeps the card it has on the about page: window chrome above,
  * a name bar below, the photo fading out over the mid-leg crop of the source.
  */
 .vr-card {
-  width: 38mm;
+  width: 30mm;
   /*
    * Tall enough that the whole figure fits. Left to the height of the column
    * beside it, the photo area came out shorter than the picture and cropped
    * the pointing hand away.
    */
-  min-height: 62mm;
+  min-height: 49mm;
   flex: none;
   display: flex;
   flex-direction: column;
@@ -191,10 +257,10 @@ const STYLES = `
 /*
  * Width, here, sets the height: the frame is square, so the picture is as tall
  * as the card is wide. This width is the one that makes it match the figure on
- * the dark sheet — 52.2mm across the card leaves 51.6mm inside the border,
- * which is exactly the height of the photo area over there.
+ * the dark sheet — 38.4mm across the card leaves 37.8mm inside the border,
+ * which is the height of the photo area over there.
  */
-.vr.is-light .vr-card { width: 52.2mm; min-height: 0; }
+.vr.is-light .vr-card { width: 38.4mm; min-height: 0; }
 .vr.is-light .vr-photo-wrap { flex: none; display: block; aspect-ratio: 1 / 1; padding: 0; overflow: hidden; }
 .vr.is-light .vr-photo {
   object-fit: cover;
@@ -213,12 +279,12 @@ const STYLES = `
 }
 
 .vr-intro { flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
-.vr-name { margin: 0; font-size: 25pt; font-weight: 600; line-height: 1.02; letter-spacing: -0.025em; }
-.vr-role { margin-top: 1.6mm; font-size: 9pt; color: var(--faint); letter-spacing: 0.02em; }
-.vr-tagline { margin-top: 3mm; font-size: 11pt; line-height: 1.3; letter-spacing: -0.015em; }
-.vr-bio { margin-top: 2.4mm; color: var(--muted); font-size: 8.2pt; }
+.vr-name { margin: 0; font-size: 21pt; font-weight: 600; line-height: 1.02; letter-spacing: -0.025em; }
+.vr-role { margin-top: 1.2mm; font-size: 8.4pt; color: var(--faint); letter-spacing: 0.02em; }
+.vr-tagline { margin-top: 2.2mm; font-size: 10pt; line-height: 1.3; letter-spacing: -0.015em; }
+.vr-bio { margin-top: 1.6mm; color: var(--muted); font-size: 7.8pt; }
 
-.vr-contacts { margin-top: 3.4mm; display: flex; flex-wrap: wrap; gap: 1.6mm; }
+.vr-contacts { margin-top: 2.6mm; display: flex; flex-wrap: wrap; gap: 1.6mm; }
 .vr-chip {
   border: 0.3mm solid var(--line);
   border-radius: 10mm;
@@ -230,33 +296,48 @@ const STYLES = `
 
 /* ---------- body ---------- */
 
-.vr-rule { height: 0.3mm; background: var(--line); margin: 6mm 0 5mm; }
-.vr-body { display: grid; grid-template-columns: 1.42fr 1fr; gap: 8mm; }
+.vr-rule { height: 0.3mm; background: var(--line); margin: 4.5mm 0 4mm; flex: none; }
+
+/*
+ * The experience is the long column, so it takes the larger share. The body
+ * takes whatever height the header and footer leave; the fit script measures
+ * it against that.
+ */
+.vr-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 2.05fr 1fr;
+  gap: 6mm;
+  align-items: start;
+}
 
 .vr-h2 {
-  margin: 0 0 3mm;
+  margin: 0 0 2.4mm;
   font-size: 7pt;
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--faint);
 }
-.vr-col > section + section { margin-top: 6mm; }
+.vr-col > section + section { margin-top: 5mm; }
 
-.vr-job + .vr-job { margin-top: 3.4mm; }
+.vr-job + .vr-job { margin-top: 2.8mm; }
 .vr-job-head { display: flex; justify-content: space-between; align-items: baseline; gap: 4mm; }
 .vr-job-title { font-size: 9pt; font-weight: 600; letter-spacing: -0.01em; }
 .vr-job-org { font-weight: 400; color: var(--muted); }
 .vr-job-dates { font-size: 7.4pt; color: var(--faint); white-space: nowrap; }
 
-.vr-points { margin: 1.4mm 0 0; padding: 0; list-style: none; }
-.vr-points li { position: relative; padding-left: 3.2mm; color: var(--muted); }
-.vr-points li + li { margin-top: 0.9mm; }
+.vr-points { margin: 1.1mm 0 0; padding: 0; list-style: none; }
+.vr-points li { position: relative; padding-left: 3mm; color: var(--muted); }
+.vr-points li + li { margin-top: 0.7mm; }
+/* The "Label:" a point opens with, so a dense list can be read by its labels. */
+.vr-point-label { color: var(--ink); font-weight: 500; }
 .vr-points li::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 1.45mm;
+  top: 0.62em;
   width: 0.9mm;
   height: 0.9mm;
   border-radius: 50%;
@@ -291,13 +372,14 @@ const STYLES = `
 
 /* ---------- work ---------- */
 
-.vr-work + .vr-work { margin-top: 2.6mm; }
-.vr-work-name { font-size: 8.2pt; font-weight: 600; }
-.vr-work-note { margin-top: 0.5mm; color: var(--muted); font-size: 7.6pt; }
+.vr-work + .vr-work { margin-top: 2.2mm; }
+.vr-work-name { font-size: 7.9pt; font-weight: 600; }
+.vr-work-note { margin-top: 0.4mm; color: var(--muted); font-size: 7.3pt; }
 
 .vr-foot {
-  margin-top: 6mm;
-  padding-top: 3mm;
+  flex: none;
+  margin-top: 4mm;
+  padding-top: 2.6mm;
   border-top: 0.3mm solid var(--line);
   display: flex;
   justify-content: space-between;
@@ -397,7 +479,8 @@ export async function VisualResume({ tone }: { tone: Tone }) {
 
         <div className="vr-rule" />
 
-        <div className="vr-body">
+        {/* The fit script sets `zoom` here before React hydrates. */}
+        <div className="vr-body" suppressHydrationWarning>
           <div className="vr-col">
             <section>
               <h2 className="vr-h2">Experience</h2>
@@ -418,7 +501,9 @@ export async function VisualResume({ tone }: { tone: Tone }) {
                     {points.length > 0 ? (
                       <ul className="vr-points">
                         {points.map((point, index) => (
-                          <li key={index}>{point}</li>
+                          <li key={index}>
+                            <Point text={point} />
+                          </li>
                         ))}
                       </ul>
                     ) : null}
@@ -476,6 +561,8 @@ export async function VisualResume({ tone }: { tone: Tone }) {
           <span>{prettyUrl(siteUrl)}</span>
         </div>
       </main>
+      {/* Straight after the sheet: it finds the sheet as its previous sibling. */}
+      <script dangerouslySetInnerHTML={{ __html: FIT_SCRIPT }} />
     </>
   );
 }
