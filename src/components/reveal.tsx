@@ -23,13 +23,13 @@ export function Reveal({ children, index = 0, className }: RevealProps) {
     <motion.div
       data-reveal
       className={className}
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 8 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
       transition={{
-        duration: 0.6,
+        duration: 0.35,
         delay: Math.min(index, 6) * 0.06,
-        ease: [0.22, 1, 0.36, 1],
+        ease: [0, 0, 0, 1],
       }}
     >
       {children}

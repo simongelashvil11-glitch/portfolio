@@ -1,120 +1,98 @@
 @import "tailwindcss";
 
+/*
+ * Fluent 2, web light theme.
+ *
+ * Every value below is a Fluent token, taken from @fluentui/tokens rather
+ * than eyeballed: the neutral greys, the web brand ramp, the stroke and shadow
+ * recipes. The names on the left are the jobs the site already uses them for,
+ * so the markup keeps saying `text-muted` and `border-line` and the palette
+ * underneath is Fluent's.
+ *
+ * Light only. The chrome is Fluent's pale grey, content sits on white.
+ */
 :root {
-  /* Monochrome. Pure white on charcoal, neutral greys for hierarchy. */
-  --background: #121212;
-  --surface: #1b1b1b;
-  --foreground: #ffffff;
-  --muted: #b3b3b3;
-  --faint: #7c7c7c;
-  --line: #2a2a2a;
-  --accent: #ffffff;
-  --accent-soft: #202020;
+  --background: #ffffff; /* colorNeutralBackground1 — content */
+  --canvas: #f0f0f0; /* colorNeutralBackground4 — app chrome and nav */
+  --surface: #f5f5f5; /* colorNeutralBackground3 — tiles, tags, hovers */
+  --surface-alt: #fafafa; /* colorNeutralBackground2 */
+  --foreground: #242424; /* colorNeutralForeground1 */
+  --muted: #424242; /* colorNeutralForeground2 */
+  --faint: #616161; /* colorNeutralForeground3 */
+  --line: #e0e0e0; /* colorNeutralStroke2 */
+  --line-strong: #d1d1d1; /* colorNeutralStroke1 */
+  --line-accessible: #616161; /* colorNeutralStrokeAccessible */
+  --accent: #0f6cbd; /* colorBrandBackground — brand 80 */
+  --accent-hover: #115ea3; /* brand 70 */
+  --accent-pressed: #0c3b5e; /* brand 40 */
+  --accent-soft: #ebf3fc; /* colorBrandBackground2 — brand 160 */
+  --danger: #b10e1c; /* colorPaletteRedForeground1 */
 
   /*
-   * Sidebar gradient. Deliberately kept within a few points of the page
-   * background — it should read as the same surface catching a little light,
-   * not as a coloured panel bolted to the side.
+   * The shell's colour, from the Fluent 2 Web kit's cover: a pale blue base
+   * drifting to pink-lilac, with a sky-blue glow up top and a pink one low on
+   * the left. Sampled from the cover image, not invented.
    */
-  --aurora-1: #0f2119;
-  --aurora-2: #102030;
-  --aurora-3: #1b1733;
-  --aurora-4: #26163a;
-  --aurora-bloom: rgb(180 210 255 / 0.09);
+  --shell-top: #ecf0ff;
+  --shell-mid: #eef2ff;
+  --shell-bottom: #f7effc;
+  --shell-glow-blue: rgb(219 233 254 / 0.95);
+  --shell-glow-pink: rgb(243 208 247 / 0.8);
+  --lavender: #7f85f5; /* the cover's periwinkle buttons */
 
-  --smoke-1: rgb(120 210 180 / 0.23);
-  --smoke-2: rgb(150 140 255 / 0.21);
-  --smoke-3: rgb(90 190 210 / 0.18);
-  --smoke-4: rgb(90 180 220 / 0.2);
-  --smoke-5: rgb(200 130 230 / 0.2);
-  --smoke-6: rgb(120 210 180 / 0.17);
+  /* shadow2 / shadow4 / shadow8 / shadow16 / shadow64, Fluent's two-layer recipe. */
+  --shadow-2: 0 0 2px rgb(0 0 0 / 0.12), 0 1px 2px rgb(0 0 0 / 0.14);
+  --shadow-4: 0 0 2px rgb(0 0 0 / 0.12), 0 2px 4px rgb(0 0 0 / 0.14);
+  --shadow-8: 0 0 2px rgb(0 0 0 / 0.12), 0 4px 8px rgb(0 0 0 / 0.14);
+  --shadow-16: 0 0 2px rgb(0 0 0 / 0.12), 0 8px 16px rgb(0 0 0 / 0.14);
+  --shadow-64: 0 0 8px rgb(0 0 0 / 0.12), 0 32px 64px rgb(0 0 0 / 0.14);
 
-  /*
-   * The rail's ink and surfaces, named by the job each does rather than by
-   * its colour, so the light set below can invert every one of them without
-   * anything in the markup having to know which appearance is showing.
-   *
-   * Dark is the default, so it lives here: it is what renders before any
-   * script has run and what the server sends.
-   */
-  --rail-ink: #ffffff;
-  --rail-ink-strong: rgb(255 255 255 / 0.55);
-  --rail-ink-mid: rgb(255 255 255 / 0.35);
-  --rail-ink-faint: rgb(255 255 255 / 0.35);
-  --rail-ink-hint: rgb(255 255 255 / 0.25);
-  --rail-line: rgb(255 255 255 / 0.08);
-  --rail-hover: rgb(255 255 255 / 0.06);
-  --rail-active: rgb(255 255 255 / 0.1);
-  --rail-ring: rgb(255 255 255 / 0.15);
-  --rail-key-bg: rgb(255 255 255 / 0.05);
-  --rail-key-border: rgb(255 255 255 / 0.1);
+  /* Fluent NavDrawer width. */
+  --sidebar-width: 16.25rem;
 
-  --sidebar-width: 15rem;
-
-}
-
-/* The light rail, chosen from the control above the email. */
-[data-rail="light"] {
-  /*
-   * These carry hue rather than lightness. The drift animates the gradient's
-   * position, so what reads as movement is the stops differing from one
-   * another — and four near-neutral greys, however far apart in lightness,
-   * slide past looking like nothing at all. The dark set gets away with a
-   * narrow lightness range for exactly this reason: its stops are green,
-   * blue and violet. So these are too, held at the same pale lightness.
-   */
-  --aurora-1: #f7eeda;
-  --aurora-2: #d6e5f8;
-  --aurora-3: #e9dcf8;
-  --aurora-4: #d9f0e3;
-
-  /*
-   * A soft shadow, not a highlight. The bloom breathes on its own clock, and
-   * white over a near-white ground breathes invisibly.
-   */
-  --aurora-bloom: rgb(146 156 186 / 0.26);
-
-  --smoke-1: rgb(108 108 116 / 0.26);
-  --smoke-2: rgb(124 124 132 / 0.24);
-  --smoke-3: rgb(96 96 104 / 0.2);
-  --smoke-4: rgb(116 116 124 / 0.22);
-  --smoke-5: rgb(100 100 108 / 0.22);
-  --smoke-6: rgb(130 130 138 / 0.19);
-
-  --rail-ink: #171717;
-  --rail-ink-strong: rgb(0 0 0 / 0.6);
-  --rail-ink-mid: rgb(0 0 0 / 0.55);
-  --rail-ink-faint: rgb(0 0 0 / 0.42);
-  --rail-ink-hint: rgb(0 0 0 / 0.3);
-  --rail-line: rgb(0 0 0 / 0.1);
-  --rail-hover: rgb(0 0 0 / 0.05);
-  --rail-active: rgb(0 0 0 / 0.08);
-  --rail-ring: rgb(0 0 0 / 0.12);
-  --rail-key-bg: rgb(0 0 0 / 0.05);
-  --rail-key-border: rgb(0 0 0 / 0.15);
+  /* fontFamilyBase. Segoe UI where it is installed, the platform face elsewhere. */
+  --font-fluent: "Segoe UI Variable Text", "Segoe UI", "Segoe UI Web (West European)", -apple-system,
+    BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-canvas: var(--canvas);
   --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-faint: var(--faint);
   --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-line-accessible: var(--line-accessible);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-pressed: var(--accent-pressed);
   --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-lavender: var(--lavender);
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-display: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  --shadow-fluent-2: var(--shadow-2);
+  --shadow-fluent-4: var(--shadow-4);
+  --shadow-fluent-8: var(--shadow-8);
+  --shadow-fluent-16: var(--shadow-16);
+  --shadow-fluent-64: var(--shadow-64);
 
-  /* Large sans headings want a little negative tracking to look even. */
-  --tracking-display: -0.011em;
+  --font-sans: var(--font-fluent);
+  --font-mono: Consolas, "Courier New", Courier, monospace;
+  --font-display: var(--font-fluent);
+
+  /* Fluent's display sizes carry no extra tracking. */
+  --tracking-display: 0em;
+
+  /* curveDecelerateMid — Fluent's easing for things arriving. */
+  --ease-fluent: cubic-bezier(0, 0, 0, 1);
 }
 
 @layer base {
   html {
-    color-scheme: dark;
+    color-scheme: light;
     /*
      * Deliberately not `scroll-behavior: smooth`. It applies to every
      * programmatic scroll, including the router's own jump to the top on a
@@ -127,22 +105,25 @@
   }
 
   body {
-    background-color: var(--background);
+    background-color: var(--canvas);
     color: var(--foreground);
     font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 20px;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
   ::selection {
-    background-color: var(--foreground);
-    color: var(--background);
+    background-color: #cfe4fa; /* brand 150 */
+    color: var(--foreground);
   }
 
+  /* Fluent's focus indicator: a 2px dark ring, inset from the corner radius. */
   :focus-visible {
     outline: 2px solid var(--foreground);
-    outline-offset: 3px;
-    border-radius: 2px;
+    outline-offset: 1px;
+    border-radius: 4px;
   }
 
   /* Tabular figures keep date columns from jittering. */
@@ -152,18 +133,224 @@
   }
 }
 
+@layer components {
+  /*
+   * Buttons, after Fluent's Button: 32px tall, 4px corners, semibold 14px.
+   * Primary is brand-filled; secondary is white with a neutral stroke; subtle
+   * has no chrome until hovered.
+   */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition:
+      background-color 100ms var(--ease-fluent),
+      border-color 100ms var(--ease-fluent),
+      color 100ms var(--ease-fluent);
+  }
+  .btn svg {
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .btn:disabled {
+    background-color: var(--surface);
+    border-color: var(--line);
+    color: #bdbdbd;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background-color: var(--accent);
+    color: #ffffff;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--accent-hover);
+  }
+  .btn-primary:active:not(:disabled) {
+    background-color: var(--accent-pressed);
+  }
+  .btn-secondary {
+    background-color: var(--background);
+    border-color: var(--line-strong);
+    color: var(--foreground);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background-color: var(--surface);
+    border-color: #c7c7c7;
+  }
+  .btn-secondary:active:not(:disabled) {
+    background-color: #e0e0e0;
+    border-color: #b3b3b3;
+  }
+  .btn-subtle {
+    background-color: transparent;
+    color: var(--muted);
+  }
+  .btn-subtle:hover:not(:disabled) {
+    background-color: var(--surface);
+    color: var(--foreground);
+  }
+  .btn-icon {
+    min-width: 32px;
+    padding: 5px;
+  }
+
+  /*
+   * Input and Textarea, after Fluent's: white field, neutral stroke with a
+   * darker bottom edge, and a brand underline that grows in on focus.
+   */
+  .field {
+    width: 100%;
+    min-height: 32px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--line-strong);
+    border-bottom-color: var(--line-accessible);
+    background-color: var(--background);
+    color: var(--foreground);
+    font-size: 14px;
+    line-height: 20px;
+    transition:
+      border-color 100ms var(--ease-fluent),
+      box-shadow 200ms var(--ease-fluent);
+  }
+  .field::placeholder {
+    color: #707070; /* colorNeutralForeground4 */
+  }
+  .field:hover {
+    border-color: #c7c7c7;
+    border-bottom-color: var(--muted);
+  }
+  .field:focus {
+    outline: none;
+    border-bottom-color: var(--accent);
+    box-shadow: inset 0 -1px 0 var(--accent);
+  }
+  .field[aria-invalid="true"] {
+    border-color: var(--danger);
+  }
+
+  /*
+   * Card, after Fluent's: white, 8px corners, a hairline stroke at rest and
+   * shadow4 on hover when the card is interactive.
+   */
+  .card {
+    background-color: var(--background);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .card-interactive {
+    transition:
+      box-shadow 150ms var(--ease-fluent),
+      border-color 150ms var(--ease-fluent);
+  }
+  .card-interactive:hover {
+    border-color: transparent;
+    box-shadow: var(--shadow-8);
+  }
+
+  /* Tag, after Fluent's: neutral fill, 4px corners. */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 28px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background-color: var(--surface);
+    border: 1px solid transparent;
+    color: var(--foreground);
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  /* Link, after Fluent's: brand-coloured, underlined on hover. */
+  .fluent-link {
+    color: var(--accent-hover);
+    text-underline-offset: 2px;
+  }
+  .fluent-link:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+  }
+}
+
 @layer utilities {
+  /*
+   * The app chrome around the white page: the cover's gradient. Painted on a
+   * fixed layer behind everything, so the sidebar and the frame around the
+   * panel read as one surface and it never scrolls away.
+   */
+  .shell-bg {
+    overflow: hidden;
+    isolation: isolate;
+    background: linear-gradient(180deg, var(--shell-top) 0%, var(--shell-mid) 45%, var(--shell-bottom) 100%);
+  }
+
+  /*
+   * The two glows drift past each other and trade places, so the chrome
+   * shifts from pink to blue and back. Each is its own layer and only its
+   * `transform` animates, so the browser moves a finished picture on the GPU
+   * instead of repainting a gradient every frame. `alternate` makes the
+   * return trip the same path backwards, so there is no seam in the loop.
+   *
+   * Under reduced motion the global rule stops it on its first frame, which
+   * is the static layout the cover shows.
+   */
+  .shell-bg::before,
+  .shell-bg::after {
+    content: "";
+    position: absolute;
+    inset: -30%;
+    z-index: -1;
+    pointer-events: none;
+    will-change: transform;
+  }
+  .shell-bg::before {
+    background: radial-gradient(38% 30% at 25% 78%, var(--shell-glow-pink), transparent 70%);
+    animation: shell-pink 14s ease-in-out infinite alternate;
+  }
+  .shell-bg::after {
+    background: radial-gradient(38% 30% at 75% 22%, var(--shell-glow-blue), transparent 70%);
+    animation: shell-blue 14s ease-in-out infinite alternate;
+  }
+
+  @keyframes shell-pink {
+    from {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    to {
+      transform: translate3d(22%, -48%, 0) scale(1.15);
+    }
+  }
+  @keyframes shell-blue {
+    from {
+      transform: translate3d(0, 0, 0) scale(1.1);
+    }
+    to {
+      transform: translate3d(-22%, 48%, 0) scale(1);
+    }
+  }
+
   .text-balance {
     text-wrap: balance;
   }
 
-  /* Animated underline used on inline and nav links. */
+  /* Underline that draws in on hover, used on quiet inline links. */
   .link-underline {
     background-image: linear-gradient(currentColor, currentColor);
     background-size: 0% 1px;
     background-position: 0 100%;
     background-repeat: no-repeat;
-    transition: background-size 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: background-size 0.3s var(--ease-fluent);
   }
   .link-underline:hover,
   .link-underline:focus-visible {
@@ -171,248 +358,16 @@
   }
 
   /*
-   * The shell's living background: a wide multi-stop gradient drifting
-   * across itself, with a soft bloom breathing on a different clock so the
-   * two never line up the same way twice. The stops carry real colour —
-   * green through teal to violet — but at a luminance low enough that white
-   * over them still clears 14:1, leaving the panel beside it neutral.
-   */
-  .aurora {
-    background-image: linear-gradient(
-      165deg,
-      var(--aurora-1) 0%,
-      var(--aurora-2) 30%,
-      var(--aurora-3) 58%,
-      var(--aurora-4) 80%,
-      var(--aurora-1) 100%
-    );
-    background-size: 280% 280%;
-    background-position: 0% 0%;
-    animation: aurora-drift 26s ease-in-out infinite;
-  }
-
-  .aurora::after {
-    content: "";
-    position: absolute;
-    inset: -20%;
-    background-image: radial-gradient(
-      52% 40% at 50% 40%,
-      var(--aurora-bloom) 0%,
-      transparent 72%
-    );
-    animation: aurora-bloom 19s ease-in-out infinite;
-    pointer-events: none;
-  }
-
-  /*
-   * Smoke. Two banks of soft radial blobs drifting over the gradient on
-   * mismatched clocks, so they pass through each other instead of moving as
-   * one sheet — that parallax is what reads as depth rather than a texture.
-   *
-   * The softness comes from the gradients' own alpha falloff rather than a
-   * blur filter, which would have to re-rasterise the whole viewport every
-   * frame. These only ever animate `transform`, so the browser composites
-   * them on the GPU and the paint happens once.
-   *
-   * Alpha is the only lever on how much of this reads at all, and it trades
-   * against the nav text sitting on top. See the note under `.smoke-b` for
-   * the measured ceiling.
-   */
-  .smoke {
-    position: absolute;
-    inset: -30%;
-    pointer-events: none;
-  }
-
-  /*
-   * Placement is in the layer's own box, which is inset -30% and so runs from
-   * -30% to 130% of the viewport. The sidebar occupies 0 to 15rem of that,
-   * which lands between roughly 19% and 28% here whatever the window width —
-   * the left edge is always 18.75%, and only the right edge moves. Every blob
-   * is placed inside that band, because the content panel is opaque and smoke
-   * anywhere else is smoke nobody sees.
-   *
-   * Blobs are kept narrow for the same reason. The band is about a tenth of
-   * the box wide, so the old 38-48% blobs spanned it several times over and
-   * flattened into a wash; at this size several read as separate drifting
-   * masses inside a 15rem strip.
-   */
-  .smoke-a {
-    background-image:
-      radial-gradient(15% 20% at 21% 24%, var(--smoke-1), transparent 70%),
-      radial-gradient(12% 17% at 27% 57%, var(--smoke-2), transparent 72%),
-      radial-gradient(17% 22% at 22% 88%, var(--smoke-3), transparent 70%);
-    animation: smoke-a 38s ease-in-out infinite;
-  }
-
-  /*
-   * The ceiling on alpha is the nav text sitting on top. On this light ground
-   * the text is dark, so the constraint runs the other way from the dark
-   * palette: the smoke has to stay light enough for near-black labels to
-   * clear 4.5:1 against the darkest patch it reaches.
-   */
-  .smoke-b {
-    background-image:
-      radial-gradient(13% 18% at 26% 13%, var(--smoke-4), transparent 70%),
-      radial-gradient(16% 21% at 20% 71%, var(--smoke-5), transparent 72%),
-      radial-gradient(11% 15% at 28% 41%, var(--smoke-6), transparent 70%);
-    animation: smoke-b 53s ease-in-out infinite;
-  }
-
-  @keyframes smoke-a {
-    0%,
-    100% {
-      transform: translate3d(-1.5%, -3%, 0) scale(1);
-    }
-    33% {
-      transform: translate3d(1.5%, 5%, 0) scale(1.12);
-    }
-    66% {
-      transform: translate3d(-0.5%, 9%, 0) scale(1.05);
-    }
-  }
-
-  @keyframes smoke-b {
-    0%,
-    100% {
-      transform: translate3d(1%, 6%, 0) scale(1.08);
-    }
-    40% {
-      transform: translate3d(-2%, -4%, 0) scale(1);
-    }
-    75% {
-      transform: translate3d(0.5%, -8%, 0) scale(1.14);
-    }
-  }
-
-  @keyframes aurora-drift {
-    0%,
-    100% {
-      background-position: 0% 0%;
-    }
-    35% {
-      background-position: 100% 30%;
-    }
-    65% {
-      background-position: 60% 100%;
-    }
-  }
-
-  @keyframes aurora-bloom {
-    0%,
-    100% {
-      transform: translate3d(-8%, -6%, 0) scale(1);
-      opacity: 0.7;
-    }
-    50% {
-      transform: translate3d(9%, 8%, 0) scale(1.18);
-      opacity: 1;
-    }
-  }
-
-  /*
    * The greeting only resolves once the visitor's local hour is known, so it
-   * always arrives a beat after paint. It settles in rather than snapping on:
-   * blur and lift falling away together, on the easing the rest of the site
-   * uses for motion.
+   * always arrives a beat after paint. It fades in rather than snapping on.
    */
   .greeting-in {
     display: inline-block;
     opacity: 0;
-    filter: blur(12px);
-    transform: translateY(0.12em) scale(0.985);
-    transition:
-      opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
-      filter 0.75s cubic-bezier(0.22, 1, 0.36, 1),
-      transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: opacity 0.3s var(--ease-fluent);
   }
   .greeting-in[data-ready="true"] {
     opacity: 1;
-    filter: blur(0);
-    transform: none;
-  }
-
-  /*
-   * The source is cropped mid-leg. Fading the last third dissolves that cut
-   * instead of ending the figure on a hard horizontal line.
-   *
-   * The fade costs the figure its optical centre: the eye stops at roughly
-   * where the mask reaches a third opacity, well above the element's real
-   * bottom, so a box centred by layout still reads as sitting high. The
-   * nudge below puts the visible mass back on the panel's centre line.
-   */
-  .portrait-fade {
-    -webkit-mask-image: linear-gradient(to bottom, #000 66%, transparent 100%);
-    mask-image: linear-gradient(to bottom, #000 66%, transparent 100%);
-  }
-
-  /*
-   * The ticker.
-   *
-   * Outlined words on nothing. There is no card and no rule around it: the
-   * page is a dark field with hairlines used sparingly, and the work list
-   * below already opens with one, so a boxed strip here read as a sticker
-   * pasted onto a different site.
-   *
-   * The stroke is 1px against roughly 32px type, near enough to the 3% of cap
-   * height that outlined lettering of this kind normally uses. Any lighter and
-   * it drops below a pixel and stops rendering evenly.
-   */
-  .ticker-outline {
-    color: transparent;
-    -webkit-text-stroke: 1px rgb(255 255 255 / 0.34);
-  }
-
-  /*
-   * Both ends dissolve rather than being cut off, so the line reads as passing
-   * through the column instead of running inside a hidden box. Same masking
-   * idea as the portrait, turned on its side.
-   */
-  .ticker-fade {
-    -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
-    mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
-  }
-
-  /*
-   * The track holds the same run of words twice, so travelling exactly half
-   * its width lands on an identical frame and the loop has no seam. Duration
-   * is set per instance, from the length of the text, so a long phrase does
-   * not race past faster than a short one.
-   */
-  .ticker-track {
-    display: flex;
-    width: max-content;
-    animation-name: ticker-scroll;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-  }
-
-  @keyframes ticker-scroll {
-    to {
-      transform: translateX(-50%);
-    }
-  }
-
-  /*
-   * A closed disclosure needs to look openable. A slow drift downward reads
-   * as "there is more below" without asking for attention the way a pulse or
-   * a colour flash would — and it stops the moment the section is open, so it
-   * is a hint rather than an ornament.
-   *
-   * It settles at rest under reduced motion: the 100% frame is the neutral
-   * position, which is where a cancelled animation lands.
-   */
-  @keyframes nudge-down {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(2.5px);
-    }
-  }
-  .nudge {
-    animation: nudge-down 2.4s ease-in-out infinite;
   }
 }
 

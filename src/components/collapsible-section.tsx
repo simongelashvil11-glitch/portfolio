@@ -1,11 +1,13 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useId, useState, type ReactNode } from "react";
 
+import { ChevronDown } from "@/components/fluent-icons";
+
 /**
- * A section that starts closed and opens on click.
+ * A section that starts closed and opens on click, after Fluent's Accordion:
+ * a full-width header row with the chevron leading, the title and a count.
  *
  * The count sits next to the heading on purpose: a closed section with no
  * hint of what is inside reads as decoration and never gets clicked.
@@ -17,24 +19,18 @@ export function CollapsibleSection({
   title,
   count,
   defaultOpen = false,
-  tone = "section",
   children,
 }: {
   title: string;
   count?: number;
   defaultOpen?: boolean;
-  /**
-   * `inline` is for a disclosure nested inside a section that already has a
-   * heading. It borrows the weight of the category labels around it and drops
-   * the circular control, which at that size would outweigh its own label.
-   */
+  /** Kept for callers; both tones now share Fluent's accordion header. */
   tone?: "section" | "inline";
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const reduced = useReducedMotion();
   const contentId = useId();
-  const inline = tone === "inline";
 
   return (
     <>
@@ -43,57 +39,15 @@ export function CollapsibleSection({
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         aria-controls={contentId}
-        className={
-          inline
-            ? "group flex items-center gap-2 text-left"
-            : "group flex w-full items-center justify-between gap-4 text-left"
-        }
+        className="-mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center gap-2 rounded-[4px] px-2 text-left transition-colors hover:bg-surface"
       >
-        <span className={inline ? "flex items-baseline gap-2" : "flex items-baseline gap-2.5"}>
-          <span
-            className={
-              inline
-                ? "text-sm font-medium text-faint transition-colors group-hover:text-foreground"
-                : "text-xl font-medium tracking-display transition-colors group-hover:text-accent"
-            }
-          >
-            {title}
-          </span>
-          {typeof count === "number" ? (
-            <span className={`tnum text-faint ${inline ? "text-xs" : "text-sm"}`}>{count}</span>
-          ) : null}
-        </span>
-
-        {/*
-          The circle is the same control shape used by the video player and
-          the gallery arrows, so it reads as something to press rather than a
-          decorative glyph. The nudge lives on the circle and the rotation on
-          the icon — sharing one element would mean the two transforms fought
-          over the same property.
-        */}
-        {inline ? (
-          <ChevronDown
-            className={`size-3.5 shrink-0 text-faint transition-all duration-300 ease-out group-hover:text-foreground ${
-              open ? "rotate-180" : ""
-            }`}
-            aria-hidden
-          />
-        ) : (
-          <span
-            className={`grid size-9 shrink-0 place-items-center rounded-full border transition-colors ${
-              open
-                ? "border-line bg-surface text-foreground"
-                : "border-white/15 bg-white/5 text-muted group-hover:border-white/35 group-hover:bg-white/10 group-hover:text-foreground"
-            } ${open ? "" : "nudge"}`}
-          >
-            <ChevronDown
-              className={`size-4 transition-transform duration-300 ease-out ${
-                open ? "rotate-180" : ""
-              }`}
-              aria-hidden
-            />
-          </span>
-        )}
+        <ChevronDown
+          className={`size-5 shrink-0 text-muted transition-transform duration-200 ${open ? "" : "-rotate-90"}`}
+        />
+        <span className="text-base font-semibold leading-[22px]">{title}</span>
+        {typeof count === "number" ? (
+          <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-semibold text-muted">{count}</span>
+        ) : null}
       </button>
 
       <AnimatePresence initial={false}>
@@ -104,10 +58,10 @@ export function CollapsibleSection({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: reduced ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: reduced ? 0 : 0.25, ease: [0, 0, 0, 1] }}
             className="overflow-hidden"
           >
-            <div className={inline ? "pt-4" : "pt-8"}>{children}</div>
+            <div className="pb-2 pt-3">{children}</div>
           </motion.div>
         ) : null}
       </AnimatePresence>

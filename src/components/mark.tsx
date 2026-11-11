@@ -25,7 +25,7 @@ export function Mark({
 }) {
   const small = size === "sm";
   const shell = cn(
-    "grid shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-surface transition-colors group-hover:border-white/20",
+    "grid shrink-0 place-items-center overflow-hidden rounded-[4px] border border-line bg-background",
     small ? "size-7" : "size-9",
   );
 

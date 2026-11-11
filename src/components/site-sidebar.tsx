@@ -1,22 +1,22 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import {
-  ArrowUpRight,
-  Home,
-  Layers,
-  Mail,
-  Menu,
-  User,
-  X,
-  type LucideIcon,
-} from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { ContactWindow } from "@/components/contact-window";
-import { RailAppearance } from "@/components/rail-appearance";
+import { ContactWindow, OPEN_CONTACT } from "@/components/contact-window";
+import {
+  Briefcase,
+  Dismiss,
+  Home,
+  Mail,
+  Navigation,
+  Open,
+  Person,
+  type FluentIcon,
+} from "@/components/fluent-icons";
 
 type Social = { label: string; url: string };
 
@@ -24,6 +24,7 @@ type SidebarProps = {
   name: string;
   role: string | null;
   email: string | null;
+  portraitUrl: string | null;
   socials: Social[];
 };
 
@@ -31,7 +32,7 @@ type NavItem = {
   /** Absent on an item that opens something instead of going somewhere. */
   href?: string;
   label: string;
-  icon: LucideIcon;
+  icon: FluentIcon;
   shortcut: string;
   /** Opens the contact window rather than navigating. */
   dialog?: true;
@@ -39,16 +40,13 @@ type NavItem = {
 
 const GROUPS: { heading: string | null; items: NavItem[] }[] = [
   {
-    // The home page and the sections within it.
+    // The pages. One list, as Fluent's nav drawer opens with its main items.
     heading: null,
     items: [
       { href: "/", label: "Home", icon: Home, shortcut: "1" },
-      { href: "/#work", label: "Work", icon: Layers, shortcut: "2" },
+      { href: "/#work", label: "Work", icon: Briefcase, shortcut: "2" },
+      { href: "/about", label: "About", icon: Person, shortcut: "3" },
     ],
-  },
-  {
-    heading: null,
-    items: [{ href: "/about", label: "About", icon: User, shortcut: "3" }],
   },
   {
     heading: "Connect",
@@ -234,8 +232,8 @@ export function SiteSidebar(props: SidebarProps) {
   const reduced = useReducedMotion();
   const { active: activeSection, select } = useActiveSection(pathname);
 
-  // The number badges are real: pressing one jumps to that section. Ignored
-  // while the visitor is typing, so the contact form still behaves.
+  // The number keys reach their items: press 2 for Work. Ignored while the
+  // visitor is typing, so the contact form still behaves.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -258,6 +256,14 @@ export function SiteSidebar(props: SidebarProps) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [select]);
+
+  // Buttons elsewhere on the page ask for the contact dialog by event, since
+  // the dialog's state lives here with the nav item that also opens it.
+  useEffect(() => {
+    const openContact = () => setContactOpen(true);
+    window.addEventListener(OPEN_CONTACT, openContact);
+    return () => window.removeEventListener(OPEN_CONTACT, openContact);
+  }, []);
 
   // A locked body keeps the page behind the drawer from scrolling away.
   useEffect(() => {
@@ -284,7 +290,7 @@ export function SiteSidebar(props: SidebarProps) {
 
   return (
     <>
-      {/* ---------- Desktop rail ---------- */}
+      {/* ---------- Desktop nav drawer ---------- */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-(--sidebar-width) lg:block">
         <SidebarBody
           {...props}
@@ -296,25 +302,25 @@ export function SiteSidebar(props: SidebarProps) {
         />
       </aside>
 
-      {/* ---------- Mobile bar ---------- */}
-      <div className="sticky top-0 z-40 border-b border-white/8 bg-background/80 backdrop-blur-md lg:hidden">
-        <div className="relative flex h-14 items-center justify-between px-5">
-          <Link href="/" className="font-display text-lg tracking-display">
-            {props.name}
-          </Link>
+      {/* ---------- Mobile app bar ---------- */}
+      <div className="sticky top-0 z-40 border-b border-line bg-background lg:hidden">
+        <div className="flex h-12 items-center gap-2 px-2">
           <button
             type="button"
             onClick={() => setOpen(true)}
-            aria-label="Open menu"
+            aria-label="Open navigation"
             aria-expanded={open}
-            className="grid size-9 place-items-center rounded-lg border border-white/10 bg-white/5 text-white/75 transition-colors hover:bg-white/10 hover:text-white"
+            className="btn btn-subtle btn-icon"
           >
-            <Menu className="size-4" />
+            <Navigation />
           </button>
+          <Link href="/" className="text-base font-semibold">
+            {props.name}
+          </Link>
         </div>
       </div>
 
-      {/* ---------- Mobile drawer ---------- */}
+      {/* ---------- Mobile nav drawer (overlay) ---------- */}
       <AnimatePresence>
         {open ? (
           <motion.div
@@ -327,24 +333,24 @@ export function SiteSidebar(props: SidebarProps) {
           >
             <button
               type="button"
-              aria-label="Close menu"
+              aria-label="Close navigation"
               onClick={() => setOpen(false)}
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/40"
             />
             <motion.div
-              className="aurora absolute inset-y-0 left-0 w-[min(20rem,85vw)] overflow-hidden border-r border-(--rail-line)"
+              className="absolute inset-y-0 left-0 shell-bg w-[min(18rem,85vw)] shadow-fluent-64"
               initial={{ x: reduced ? 0 : "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: reduced ? 0 : "-100%" }}
-              transition={{ duration: reduced ? 0 : 0.35, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: reduced ? 0 : 0.3, ease: [0, 0, 0, 1] }}
             >
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                aria-label="Close menu"
-                className="absolute right-4 top-4 z-10 grid size-9 place-items-center rounded-lg border border-(--rail-key-border) bg-(--rail-key-bg) text-(--rail-ink-strong) transition-colors hover:bg-(--rail-hover) hover:text-(--rail-ink)"
+                aria-label="Close navigation"
+                className="btn btn-subtle btn-icon absolute right-2 top-2 z-10"
               >
-                <X className="size-4" />
+                <Dismiss />
               </button>
               <SidebarBody
                 {...props}
@@ -365,11 +371,16 @@ export function SiteSidebar(props: SidebarProps) {
   );
 }
 
-/** The rail and the drawer show identical content, so it lives in one place. */
+/** Row metrics shared by every item in the drawer, after Fluent's NavItem. */
+const ROW =
+  "relative flex min-h-10 w-full items-center gap-2.5 rounded-[4px] px-2.5 py-2 text-left text-sm transition-colors duration-100";
+
+/** The drawer on desktop and the overlay on phones show the same content. */
 function SidebarBody({
   name,
   role,
   email,
+  portraitUrl,
   socials,
   pathname,
   activeSection,
@@ -386,52 +397,48 @@ function SidebarBody({
   onOpenContact: () => void;
 }) {
   return (
-    <div className="relative flex h-full flex-col justify-between gap-6 overflow-y-auto px-4 py-6">
-      <div>
-        <Link href="/" onClick={onNavigate} className="block px-3">
-          <span className="font-display text-[0.9375rem] font-medium leading-tight tracking-display text-(--rail-ink)">
-            {name}
-          </span>
-          {role ? (
-            <span className="mt-0.5 block text-[0.6875rem] leading-relaxed text-(--rail-ink-mid)">
-              {role}
-            </span>
-          ) : null}
-        </Link>
+    <div className="flex h-full flex-col overflow-y-auto px-2 pb-3 pt-4">
+      {/* ---------- Header: the owner, as a Persona ---------- */}
+      <Link
+        href="/"
+        onClick={onNavigate}
+        className="mx-1 flex items-center gap-3 rounded-[4px] p-1.5 transition-colors hover:bg-white/60"
+      >
+        <Avatar name={name} src={portraitUrl} />
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-semibold">{name}</span>
+          {role ? <span className="block truncate text-xs text-faint">{role}</span> : null}
+        </span>
+      </Link>
 
-        {/*
-          Hairlines rather than wide gaps to separate the groups, which is how
-          a sidebar of this kind is divided, and what lets the rows sit close
-          enough together to read as a list.
-        */}
-        <nav className="mt-5 grid gap-5 border-t border-(--rail-line) pt-5">
-          {GROUPS.map((group, groupIndex) => (
-            <div key={group.heading ?? `group-${groupIndex}`}>
-              {group.heading ? (
-                <h2 className="mb-1.5 px-3 text-[0.6875rem] font-medium text-(--rail-ink-mid)">
-                  {group.heading}
-                </h2>
-              ) : null}
+      <nav aria-label="Main" className="mt-5 grid gap-5">
+        {GROUPS.map((group, groupIndex) => (
+          <div key={group.heading ?? `group-${groupIndex}`}>
+            {group.heading ? (
+              <h2 className="px-2.5 pb-1 text-xs font-semibold text-faint">{group.heading}</h2>
+            ) : null}
 
-              <ul className="grid gap-0.5">
-                {group.items.map((item) => (
-                  <li key={item.label}>
-                    <NavRow
-                      item={item}
-                      pathname={pathname}
-                      activeSection={activeSection}
-                      onSelect={onSelect}
-                      onNavigate={onNavigate}
-                      contactOpen={contactOpen}
-                      onOpenContact={onOpenContact}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+            <ul className="grid gap-0.5">
+              {group.items.map((item) => (
+                <li key={item.label}>
+                  <NavRow
+                    item={item}
+                    pathname={pathname}
+                    activeSection={activeSection}
+                    onSelect={onSelect}
+                    onNavigate={onNavigate}
+                    contactOpen={contactOpen}
+                    onOpenContact={onOpenContact}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
 
-          {socials.length > 0 ? (
+        {socials.length > 0 ? (
+          <div>
+            <h2 className="px-2.5 pb-1 text-xs font-semibold text-faint">Elsewhere</h2>
             <ul className="grid gap-0.5">
               {socials.map((social) => (
                 <li key={social.url}>
@@ -439,31 +446,54 @@ function SidebarBody({
                     href={social.url}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="flex items-center justify-between gap-3 rounded-md px-3 py-1.5 text-[0.8125rem] text-(--rail-ink-strong) transition-colors hover:bg-(--rail-hover) hover:text-(--rail-ink)"
+                    className={`${ROW} text-muted hover:bg-white/60 hover:text-foreground`}
                   >
+                    <Open className="size-5 shrink-0" />
                     {social.label}
-                    <ArrowUpRight className="size-3 shrink-0 text-(--rail-ink-hint)" />
                   </a>
                 </li>
               ))}
             </ul>
-          ) : null}
-        </nav>
-      </div>
-
-      <div className="border-t border-(--rail-line) pt-4">
-        <RailAppearance />
-
-        {email ? (
-          <a
-            href={`mailto:${email}`}
-            className="mt-2 block break-all rounded-md px-3 py-1.5 text-[0.6875rem] text-(--rail-ink-strong) transition-colors hover:bg-(--rail-hover) hover:text-(--rail-ink)"
-          >
-            {email}
-          </a>
+          </div>
         ) : null}
-      </div>
+      </nav>
+
+      {email ? (
+        <a
+          href={`mailto:${email}`}
+          className="mt-auto block truncate rounded-[4px] px-2.5 py-2 text-xs text-faint transition-colors hover:bg-white/60 hover:text-foreground"
+        >
+          {email}
+        </a>
+      ) : null}
     </div>
+  );
+}
+
+/**
+ * Fluent's Avatar: a circle holding the photo, or initials on a brand tint
+ * when there is no photo.
+ */
+function Avatar({ name, src }: { name: string; src: string | null }) {
+  if (src) {
+    return (
+      <span className="relative size-9 shrink-0 overflow-hidden rounded-full bg-surface">
+        <Image src={src} alt="" fill sizes="36px" className="object-cover object-top" />
+      </span>
+    );
+  }
+
+  const initials = name
+    .split(/\s+/)
+    .map((part) => part.charAt(0))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft text-sm font-semibold text-accent-hover">
+      {initials}
+    </span>
   );
 }
 
@@ -488,7 +518,7 @@ function NavRow({
 
   // Anchors follow the section in view. Home is the home page with no section
   // reached yet, and every other route matches itself and anything under it.
-  // The window item is lit while its window is up, which is the same idea:
+  // The dialog item is lit while its dialog is up, which is the same idea:
   // the row shows what you are looking at.
   const active = item.dialog
     ? contactOpen
@@ -500,27 +530,23 @@ function NavRow({
 
   const Icon = item.icon;
 
-  const className = `flex w-full items-center justify-between gap-3 rounded-md px-3 py-1.5 text-[0.8125rem] transition-colors ${
+  /*
+   * Fluent's selected NavItem: a filled icon, semibold label, a darker fill
+   * and the brand-coloured indicator bar on its leading edge.
+   */
+  const className = `${ROW} ${
     active
-      ? "bg-(--rail-active) text-(--rail-ink) inset-ring inset-ring-(--rail-ring)"
-      : "text-(--rail-ink-strong) hover:bg-(--rail-hover) hover:text-(--rail-ink)"
+      ? "bg-white/80 font-semibold text-foreground shadow-fluent-2"
+      : "text-muted hover:bg-white/60 hover:text-foreground"
   }`;
 
-  // Shared so a row looks identical whether it navigates or opens a window.
   const inner = (
     <>
-      <span className="flex items-center gap-2.5">
-        <Icon className={`size-3.5 shrink-0 ${active ? "text-(--rail-ink)" : "text-(--rail-ink-faint)"}`} />
-        {item.label}
-      </span>
-      {/*
-        Drawn as a key rather than a loose digit. These really are shortcuts —
-        pressing the number reaches the item — so they should look like
-        something you press.
-      */}
-      <span className="tnum grid h-[17px] min-w-[17px] place-items-center rounded border border-(--rail-key-border) bg-(--rail-key-bg) px-1 text-[0.625rem] font-medium text-(--rail-ink-faint)">
-        {item.shortcut}
-      </span>
+      {active ? (
+        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-lavender" aria-hidden />
+      ) : null}
+      <Icon filled={active} className={`size-5 shrink-0 ${active ? "text-lavender" : ""}`} />
+      {item.label}
     </>
   );
 
@@ -529,7 +555,7 @@ function NavRow({
       <button
         type="button"
         onClick={() => {
-          // Closes the drawer first on small screens, so the window is not
+          // Closes the drawer first on small screens, so the dialog is not
           // opened behind it.
           onNavigate?.();
           onOpenContact();

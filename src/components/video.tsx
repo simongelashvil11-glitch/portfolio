@@ -1,40 +1,49 @@
 "use client";
 
-import { Play } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
-import { MacWindow } from "@/components/mac-window";
+import { Dialog } from "@/components/dialog";
+import { Play } from "@/components/fluent-icons";
+import { youTubeId } from "@/lib/youtube";
 
-/**
- * Pulls the video id out of the shapes a YouTube link normally arrives in:
- * watch?v=, youtu.be/, /embed/, /shorts/ and /live/.
- */
-export function youTubeId(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.replace(/^www\./, "");
-
-    if (host === "youtu.be") return parsed.pathname.slice(1).split("/")[0] || null;
-    if (!host.endsWith("youtube.com") && !host.endsWith("youtube-nocookie.com")) return null;
-
-    const fromQuery = parsed.searchParams.get("v");
-    if (fromQuery) return fromQuery;
-
-    const [, segment, id] = parsed.pathname.split("/");
-    if (["embed", "shorts", "live", "v"].includes(segment) && id) return id;
-
-    return null;
-  } catch {
-    return null;
-  }
+/** The player, in the site's dialog. */
+function Player({ id, title, open, onClose }: { id: string; title: string; open: boolean; onClose: () => void }) {
+  return (
+    <Dialog open={open} title={title} onClose={onClose}>
+      <div className="aspect-video w-full overflow-hidden rounded-[4px] bg-black">
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`}
+          title={title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="size-full"
+        />
+      </div>
+    </Dialog>
+  );
 }
 
-/** A small still beside a project row. */
-export function VideoThumb({ url, title }: { url: string; title: string }) {
+/** Fluent's round play control: white, shadowed, a filled brand glyph. */
+function PlayBadge({ large = false }: { large?: boolean }) {
+  return (
+    <span
+      className={`grid place-items-center rounded-full bg-white text-accent shadow-fluent-8 transition-transform duration-150 group-hover/video:scale-105 ${
+        large ? "size-16 text-[28px]" : "size-11 text-[20px]"
+      }`}
+    >
+      <Play filled className="translate-x-px" />
+    </span>
+  );
+}
+
+/**
+ * The preview at the top of a work card: the video's still, which plays in
+ * the dialog. Sits above the card's own link so the two do not compete.
+ */
+export function VideoCardPreview({ url, title, posterUrl }: { url: string; title: string; posterUrl?: string | null }) {
   const [open, setOpen] = useState(false);
   const id = youTubeId(url);
-
   if (!id) return null;
 
   return (
@@ -43,33 +52,20 @@ export function VideoThumb({ url, title }: { url: string; title: string }) {
         type="button"
         onClick={() => setOpen(true)}
         aria-label={`Play video: ${title}`}
-        className="group/video relative aspect-video w-20 shrink-0 overflow-hidden rounded-md border border-white/10 bg-surface transition-colors hover:border-white/30 sm:w-24"
+        className="group/video relative z-10 block aspect-video w-full overflow-hidden bg-surface"
       >
         <Image
-          src={`https://i.ytimg.com/vi/${id}/mqdefault.jpg`}
+          src={posterUrl ?? `https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
           alt=""
           fill
-          sizes="96px"
-          className="object-cover opacity-70 transition-opacity duration-300 group-hover/video:opacity-100"
+          sizes="(max-width: 640px) 100vw, 480px"
+          className="object-cover"
         />
-        <span className="absolute inset-0 grid place-items-center">
-          <span className="grid size-6 place-items-center rounded-full bg-black/55 backdrop-blur-sm transition-transform duration-300 group-hover/video:scale-110">
-            <Play className="size-3 translate-x-px fill-white text-white" />
-          </span>
+        <span className="absolute inset-0 grid place-items-center bg-black/10 transition-colors group-hover/video:bg-black/20">
+          <PlayBadge />
         </span>
       </button>
-
-      <MacWindow open={open} title={title} onClose={() => setOpen(false)}>
-        <div className="aspect-video w-full bg-black">
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`}
-            title={title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="size-full"
-          />
-        </div>
-      </MacWindow>
+      <Player id={id} title={title} open={open} onClose={() => setOpen(false)} />
     </>
   );
 }
@@ -104,39 +100,22 @@ export function VideoPoster({
         type="button"
         onClick={() => setOpen(true)}
         aria-label={`Play video: ${title}`}
-        className="group/poster relative mt-10 block aspect-video w-full overflow-hidden rounded-xl border border-line bg-surface transition-colors hover:border-white/20"
+        className="group/video relative block aspect-video w-full overflow-hidden rounded-[8px] bg-surface"
       >
         <Image
           src={poster}
           alt=""
           fill
-          sizes="(max-width: 768px) 100vw, 768px"
+          sizes="(max-width: 1024px) 100vw, 960px"
           priority
           onError={() => setFallback(true)}
-          className="object-cover transition-transform duration-500 ease-out group-hover/poster:scale-[1.02]"
+          className="object-cover"
         />
-
-        {/* Keeps the play control readable over a bright frame. */}
-        <span className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-
-        <span className="absolute inset-0 grid place-items-center">
-          <span className="grid size-16 place-items-center rounded-full border border-white/25 bg-black/45 backdrop-blur-sm transition-transform duration-300 group-hover/poster:scale-110">
-            <Play className="size-6 translate-x-0.5 fill-white text-white" />
-          </span>
+        <span className="absolute inset-0 grid place-items-center bg-black/10 transition-colors group-hover/video:bg-black/20">
+          <PlayBadge large />
         </span>
       </button>
-
-      <MacWindow open={open} title={title} onClose={() => setOpen(false)}>
-        <div className="aspect-video w-full bg-black">
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`}
-            title={title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="size-full"
-          />
-        </div>
-      </MacWindow>
+      <Player id={id} title={title} open={open} onClose={() => setOpen(false)} />
     </>
   );
 }

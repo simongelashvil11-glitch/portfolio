@@ -74,15 +74,15 @@ export function Prose({ content }: { content: string }) {
   const blocks = parse(content);
 
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-3">
       {blocks.map((block, index) => (
         <Fragment key={index}>
           {block.kind === "heading" && block.level === 2 ? (
-            <h2 className="mt-6 font-display text-2xl tracking-display">{block.text}</h2>
+            <h2 className="mt-4 text-xl font-semibold leading-7">{block.text}</h2>
           ) : null}
 
           {block.kind === "heading" && block.level === 3 ? (
-            <h3 className="mt-4 text-lg font-medium">{block.text}</h3>
+            <h3 className="mt-2 text-base font-semibold leading-[22px]">{block.text}</h3>
           ) : null}
 
           {block.kind === "divider" ? (
@@ -90,11 +90,11 @@ export function Prose({ content }: { content: string }) {
           ) : null}
 
           {block.kind === "list" ? (
-            <ul className="grid gap-2">
+            <ul className="grid gap-1.5">
               {block.items.map((item) => (
                 <li
                   key={item}
-                  className="relative pl-4 leading-relaxed text-muted before:absolute before:left-0 before:top-3 before:size-1 before:rounded-full before:bg-accent"
+                  className="relative pl-4 leading-normal text-muted before:absolute before:left-1 before:top-[0.6em] before:size-1 before:rounded-full before:bg-faint"
                 >
                   {item}
                 </li>
@@ -103,7 +103,7 @@ export function Prose({ content }: { content: string }) {
           ) : null}
 
           {block.kind === "paragraph" ? (
-            <p className="leading-relaxed text-muted">
+            <p className="leading-normal text-muted">
               {block.text.split("\n").map((line, lineIndex, lines) => (
                 <Fragment key={lineIndex}>
                   {line}

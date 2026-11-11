@@ -244,27 +244,22 @@ const STYLES = `
 }
 
 /*
- * The light sheet shows a photograph in a frame instead.
+ * Both sheets show a photograph in a frame.
  *
- * The cutout was lifted off a near-black backdrop that matched the black
- * t-shirt, so no matte could reliably tell the two apart, and on milk every
- * flaw in it showed. The picture used here is shot on a pale ground and needs
- * nothing done to it: its own backdrop sits within a couple of values of the
- * card. The frame is square because the picture is, so it is shown whole — no
- * crop, no fade, nothing of the subject lost — and the card is wider to give
- * it presence now that nothing is hidden.
+ * The cutout the dark sheet used to show was lifted off a backdrop that
+ * matched the black t-shirt, and every matte left a flaw. The current picture
+ * is shot on white and needs nothing done to it: in a square frame it reads
+ * as a clean photo on either sheet. Anchored to the top, so the square takes
+ * the head and the pointing hand and lets the waist go.
+ *
+ * Width, here, sets the height: the frame is square, so the picture is as
+ * tall as the card is wide.
  */
-/*
- * Width, here, sets the height: the frame is square, so the picture is as tall
- * as the card is wide. This width is the one that makes it match the figure on
- * the dark sheet — 38.4mm across the card leaves 37.8mm inside the border,
- * which is the height of the photo area over there.
- */
-.vr.is-light .vr-card { width: 38.4mm; min-height: 0; }
-.vr.is-light .vr-photo-wrap { flex: none; display: block; aspect-ratio: 1 / 1; padding: 0; overflow: hidden; }
-.vr.is-light .vr-photo {
+.vr .vr-card { width: 38.4mm; min-height: 0; }
+.vr .vr-photo-wrap { flex: none; display: block; aspect-ratio: 1 / 1; padding: 0; overflow: hidden; }
+.vr .vr-photo {
   object-fit: cover;
-  object-position: 50% 50%;
+  object-position: 50% 0%;
   display: block;
   -webkit-mask-image: none;
   mask-image: none;
@@ -397,11 +392,10 @@ const STYLES = `
 `;
 
 /*
- * Two pictures, because the two sheets want different things. Dark takes the
- * site's cutout, a figure with no background. Light takes the photograph,
- * whose own pale ground disappears into the card.
+ * The photograph on white, for both sheets. A JPEG of the same crop the site
+ * uses, so the printed sheets stay small.
  */
-const PHOTO_LIGHT = "/portrait-source.jpg";
+const PHOTO = "/portrait-2026-11.jpg";
 
 export async function VisualResume({ tone }: { tone: Tone }) {
   const [profile, experiences, skillRows, tools, projects] = await Promise.all([
@@ -413,7 +407,7 @@ export async function VisualResume({ tone }: { tone: Tone }) {
   ]);
 
   const skillGroups = groupSkills(skillRows);
-  const photo = tone === "light" ? PHOTO_LIGHT : profile?.portraitUrl?.trim();
+  const photo = PHOTO;
 
   const contacts: { href: string; text: string }[] = [
     { href: siteUrl, text: prettyUrl(siteUrl) },

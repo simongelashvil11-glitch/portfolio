@@ -1,172 +1,205 @@
-import { ArrowUpRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode } from "react";
 
+import { ContactButton } from "@/components/contact-window";
+import { Document, Mail } from "@/components/fluent-icons";
 import { Greeting } from "@/components/greeting";
-import { Ticker } from "@/components/ticker";
 import { Mark } from "@/components/mark";
 import { Reveal } from "@/components/reveal";
-import { VideoThumb } from "@/components/video";
+import { VideoCardPreview } from "@/components/video";
 import type { Project } from "@/db/schema";
 import { getProfile, getProjects } from "@/lib/queries";
+import { youTubeId } from "@/lib/youtube";
 
 export const revalidate = 60;
 
 const FALLBACK = {
   name: "Your Name",
-  role: null,
+  role: null as string | null,
   headline: "Digital marketing specialist.",
   bio: "Add your profile in the admin dashboard to replace this placeholder text.",
-  location: null,
-  email: null,
-  availability: null,
-  resumeUrl: null,
-  socials: [] as { label: string; url: string }[],
+  ticker: null as string | null,
+  availability: null as string | null,
+  portraitUrl: null as string | null,
+  resumeUrl: null as string | null,
 };
+
+/** "Digital marketing • Content production" becomes a row of tags. */
+function topics(ticker: string | null): string[] {
+  return (ticker ?? "")
+    .split(/[•·|]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 
 export default async function HomePage() {
   const [profileRow, projects] = await Promise.all([getProfile(), getProjects()]);
-
   const profile = profileRow ?? FALLBACK;
+  const tags = topics(profile.ticker);
+  const portrait = profile.portraitUrl?.trim();
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-6 lg:px-12">
-        {/*
-          ---------- Hero ----------
-          The ticker ends the hero on a full-width line, so the section's usual
-          bottom padding left the work list's rule stranded a long way under it.
-          With the ticker there the gap is halved; without it the rule sits
-          under a ragged paragraph and wants the full measure.
-        */}
-        <section className={profileRow?.ticker ? "pt-20 pb-14 sm:pt-28" : "pt-20 pb-28 sm:pt-28"}>
-          <Reveal index={1}>
-            <h1 className="font-display text-5xl leading-[1.05] tracking-display text-balance sm:text-7xl">
+    <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10 lg:px-10 lg:py-12">
+      {/* ---------- Page header ---------- */}
+      <section className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_15rem]">
+        <div>
+          <Reveal>
+            <p className="text-sm text-faint">
               <Greeting />
+            </p>
+            {/* Fluent's Large Title: 40/52 semibold. */}
+            <h1 className="mt-2 text-[28px] font-semibold leading-9 text-balance sm:text-[40px] sm:leading-[52px]">
+              {profile.headline}
             </h1>
           </Reveal>
 
-          <Reveal index={2}>
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-balance sm:text-xl">
-              {profile.headline}
-            </p>
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-muted">{profile.bio}</p>
+          <Reveal index={1}>
+            <p className="mt-4 max-w-2xl text-base leading-[22px] text-muted">{profile.bio}</p>
+
+            <div className="mt-6 flex flex-wrap gap-2">
+              <ContactButton className="btn btn-primary">
+                <Mail />
+                Get in touch
+              </ContactButton>
+              <Link href={profile.resumeUrl || "/resume"} className="btn btn-secondary">
+                <Document />
+                View résumé
+              </Link>
+            </div>
+
+            {tags.length > 0 ? (
+              <ul className="mt-6 flex flex-wrap gap-2" aria-label="What I do">
+                {tags.map((tag) => (
+                  <li key={tag} className="tag">
+                    {tag}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </Reveal>
+        </div>
+
+        {/* ---------- Profile card ---------- */}
+        {portrait ? (
+          <Reveal index={2} className="hidden lg:block">
+            <div className="card overflow-hidden">
+              <div className="relative aspect-[4/5] bg-background">
+                <Image
+                  src={portrait}
+                  alt={profile.name}
+                  fill
+                  sizes="240px"
+                  priority
+                  className="object-cover object-top"
+                />
+              </div>
+              <div className="border-t border-line p-3">
+                <p className="text-sm font-semibold">{profile.name}</p>
+                {profile.role ? <p className="text-xs text-faint">{profile.role}</p> : null}
+                {profile.availability ? (
+                  <p className="mt-2 flex items-center gap-1.5 text-xs text-muted">
+                    {/* Fluent's "available" presence badge. */}
+                    <span className="size-2.5 rounded-full bg-[#13a10e] ring-2 ring-white" aria-hidden />
+                    {profile.availability}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </Reveal>
+        ) : null}
+      </section>
+
+      {/* ---------- Work ---------- */}
+      {projects.length > 0 ? (
+        <section id="work" className="scroll-mt-24 pt-14">
+          <Reveal>
+            <div className="mb-5 flex items-center gap-2.5">
+              {/* Fluent's Title 3: 24/32 semibold. */}
+              <h2 className="text-2xl font-semibold leading-8">Selected work</h2>
+              <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent-hover">
+                {projects.length}
+              </span>
+            </div>
           </Reveal>
 
-          {profile.resumeUrl ? (
-            <Reveal index={3}>
-              <div className="mt-8">
-                <a
-                  href={profile.resumeUrl}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="link-underline text-sm text-muted transition-colors hover:text-foreground"
-                >
-                  Résumé
-                </a>
-              </div>
-            </Reveal>
-          ) : null}
-
-          {profileRow?.ticker ? (
-            <Reveal index={4}>
-              <div className="mt-16">
-                <Ticker text={profileRow.ticker} />
-              </div>
-            </Reveal>
-          ) : null}
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {projects.map((project, index) => (
+              <Reveal key={project.id} index={index}>
+                <li className="h-full">
+                  <WorkCard project={project} />
+                </li>
+              </Reveal>
+            ))}
+          </ul>
         </section>
-
-        {/* ---------- Work ---------- */}
-        {projects.length > 0 ? (
-          <Section id="work" title="Selected work">
-            <ul className="-mx-3">
-              {projects.map((project, index) => (
-                <Reveal
-                  key={project.id}
-                  index={index}
-                  className="border-b border-line last:border-0"
-                >
-                  <li>
-                    <ProjectRow project={project} />
-                  </li>
-                </Reveal>
-              ))}
-            </ul>
-          </Section>
-        ) : null}
-
-        {/* ---------- Experience ---------- */}
+      ) : null}
     </main>
   );
 }
 
-/** Layout only — the surface below owns the padding and the hover. */
-const ROW_CLASS = "flex min-w-0 flex-1 items-start justify-between gap-6";
+/** Where a card opens: the case study, else the live site, else nowhere. */
+function destination(project: Project): { href: string; external: boolean } | null {
+  if (project.description) return { href: `/projects/${project.slug}`, external: false };
+  if (project.url) return { href: project.url, external: true };
+  return null;
+}
 
 /**
- * The row is one surface. The padding, rounding and hover background sit on
- * this wrapper rather than on the link, so they take in the video thumbnail
- * too — with them on the link, the thumbnail sat outside the highlight and
- * the two read as separate panels side by side.
+ * A project, as a Fluent card: the preview across the top, then the mark,
+ * title and summary. The whole card is the link, by stretching the title's
+ * link over it; the video preview sits above that so it still plays.
  */
-function ProjectRow({ project }: { project: Project }) {
-  return (
-    <div className="group flex items-center gap-4 rounded-lg px-3 py-5 transition-colors hover:bg-surface">
-      <ProjectLink project={project} />
-      {project.videoUrl ? <VideoThumb url={project.videoUrl} title={project.title} /> : null}
-    </div>
-  );
-}
+function WorkCard({ project }: { project: Project }) {
+  const target = destination(project);
+  const hasVideo = Boolean(project.videoUrl && youTubeId(project.videoUrl));
 
-function ProjectLink({ project }: { project: Project }) {
-  const body = (
-    <>
-      <div className="flex min-w-0 items-start gap-3.5">
-        <Mark src={project.logoUrl} label={project.title} className="mt-0.5" />
-
-        <div className="min-w-0">
-          <h3 className="flex items-center gap-1.5 text-base font-medium">
-            {project.title}
-            <ArrowUpRight className="size-3.5 shrink-0 text-faint transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent" />
-          </h3>
-          <p className="mt-1 text-[0.9375rem] leading-relaxed text-muted">{project.summary}</p>
-          {project.tags.length > 0 ? (
-            <p className="mt-2 text-sm text-faint">{project.tags.join(" · ")}</p>
-          ) : null}
-        </div>
-      </div>
-      {project.year ? (
-        <span className="tnum mt-1 shrink-0 text-sm text-faint">{project.year}</span>
-      ) : null}
-    </>
-  );
-
-  if (project.description) {
-    return (
-      <Link href={`/projects/${project.slug}`} className={ROW_CLASS}>
-        {body}
-      </Link>
-    );
-  }
-
-  if (project.url) {
-    return (
-      <a href={project.url} target="_blank" rel="noreferrer noopener" className={ROW_CLASS}>
-        {body}
+  const stretch = "after:absolute after:inset-0 after:rounded-[8px] after:content-['']";
+  const title = target ? (
+    target.external ? (
+      <a href={target.href} target="_blank" rel="noreferrer noopener" className={stretch}>
+        {project.title}
       </a>
-    );
-  }
+    ) : (
+      <Link href={target.href} className={stretch}>
+        {project.title}
+      </Link>
+    )
+  ) : (
+    project.title
+  );
 
-  return <div className={ROW_CLASS}>{body}</div>;
-}
-
-function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section id={id} className="scroll-mt-24 border-t border-line py-16 sm:py-20">
-      <Reveal>
-        <h2 className="mb-8 text-xl font-medium tracking-display">{title}</h2>
-      </Reveal>
-      {children}
-    </section>
+    <article className={`card relative flex h-full flex-col overflow-hidden ${target ? "card-interactive" : ""}`}>
+      {hasVideo ? (
+        <VideoCardPreview url={project.videoUrl!} title={project.title} posterUrl={project.imageUrl} />
+      ) : project.imageUrl ? (
+        <div className="relative aspect-video bg-surface">
+          <Image src={project.imageUrl} alt="" fill sizes="(max-width: 640px) 100vw, 480px" className="object-cover" />
+        </div>
+      ) : null}
+
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex items-start gap-3">
+          <Mark src={project.logoUrl} label={project.title} />
+          <div className="min-w-0 flex-1">
+            {/* Fluent's Subtitle 2: 16/22 semibold. */}
+            <h3 className="text-base font-semibold leading-[22px]">{title}</h3>
+            {project.year ? <p className="tnum text-xs text-faint">{project.year}</p> : null}
+          </div>
+        </div>
+
+        <p className="mt-3 text-sm text-muted">{project.summary}</p>
+
+        {project.tags.length > 0 ? (
+          <ul className="mt-auto flex flex-wrap gap-1.5 pt-4">
+            {project.tags.map((tag) => (
+              <li key={tag} className="tag min-h-6 px-1.5 py-0.5 text-xs">
+                {tag}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+    </article>
   );
 }

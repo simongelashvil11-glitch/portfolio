@@ -1,13 +1,13 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 
-import { MacWindow } from "@/components/mac-window";
+import { Dialog } from "@/components/dialog";
+import { ChevronLeft, ChevronRight } from "@/components/fluent-icons";
 
 /**
- * Case-study images: a grid of stills that open full size in the same window
+ * Case-study images: a grid of stills that open full size in the same dialog
  * the video player uses.
  *
  * Photographs arrive at every shape, so thumbnails crop to a common ratio to
@@ -27,7 +27,7 @@ export function Gallery({ images, title }: { images: string[]; title: string }) 
     [images.length],
   );
 
-  // Arrow keys page through once something is open. Escape is the window's job.
+  // Arrow keys page through once something is open. Escape is the dialog's job.
   useEffect(() => {
     if (!isOpen) return;
 
@@ -44,35 +44,35 @@ export function Gallery({ images, title }: { images: string[]; title: string }) 
 
   return (
     <>
-      <ul className="mt-12 grid gap-3 sm:grid-cols-2">
+      <ul className="grid gap-3 sm:grid-cols-2">
         {images.map((src, index) => (
           <li key={src}>
             <button
               type="button"
               onClick={() => setOpenIndex(index)}
               aria-label={`Open image ${index + 1} of ${images.length}`}
-              className="group/shot relative block aspect-[4/3] w-full overflow-hidden rounded-xl border border-line bg-surface transition-colors hover:border-white/20"
+              className="card card-interactive relative block aspect-[4/3] w-full overflow-hidden"
             >
               <Image
                 src={src}
                 alt=""
                 fill
-                sizes="(max-width: 640px) 100vw, 384px"
+                sizes="(max-width: 640px) 100vw, 480px"
                 unoptimized
-                className="object-cover transition-transform duration-500 ease-out group-hover/shot:scale-[1.03]"
+                className="object-cover"
               />
             </button>
           </li>
         ))}
       </ul>
 
-      <MacWindow
+      <Dialog
         open={isOpen}
         title={images.length > 1 ? `${title} — ${(openIndex ?? 0) + 1} of ${images.length}` : title}
         onClose={() => setOpenIndex(null)}
         widthClassName="max-w-5xl"
       >
-        <div className="relative grid max-h-[75vh] place-items-center bg-black">
+        <div className="relative grid max-h-[72vh] place-items-center overflow-hidden rounded-[4px] bg-surface">
           {openIndex !== null ? (
             <Image
               key={images[openIndex]}
@@ -81,7 +81,7 @@ export function Gallery({ images, title }: { images: string[]; title: string }) 
               width={1600}
               height={1200}
               unoptimized
-              className="max-h-[75vh] w-auto object-contain"
+              className="max-h-[72vh] w-auto object-contain"
             />
           ) : null}
 
@@ -91,22 +91,22 @@ export function Gallery({ images, title }: { images: string[]; title: string }) 
                 type="button"
                 onClick={() => step(-1)}
                 aria-label="Previous image"
-                className="absolute left-3 grid size-10 place-items-center rounded-full border border-white/15 bg-black/55 text-white/80 backdrop-blur-sm transition-colors hover:bg-black/75 hover:text-white"
+                className="btn btn-secondary btn-icon absolute left-3 rounded-full shadow-fluent-8"
               >
-                <ChevronLeft className="size-5" />
+                <ChevronLeft />
               </button>
               <button
                 type="button"
                 onClick={() => step(1)}
                 aria-label="Next image"
-                className="absolute right-3 grid size-10 place-items-center rounded-full border border-white/15 bg-black/55 text-white/80 backdrop-blur-sm transition-colors hover:bg-black/75 hover:text-white"
+                className="btn btn-secondary btn-icon absolute right-3 rounded-full shadow-fluent-8"
               >
-                <ChevronRight className="size-5" />
+                <ChevronRight />
               </button>
             </>
           ) : null}
         </div>
-      </MacWindow>
+      </Dialog>
     </>
   );
 }

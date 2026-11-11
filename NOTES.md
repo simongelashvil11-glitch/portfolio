@@ -17,34 +17,33 @@ document title share one query per request rather than three.
 
 The one deliberate exception is the LinkedIn banner's eyebrow line, in
 `src/components/linkedin-cover.tsx`. It used to read `profile.ticker` and share
-that line with the homepage marquee; they now say different things, so the
+that line with the homepage topic tags; they now say different things, so the
 banner carries its own.
 
 ---
 
-## Two appearances
+## Fluent 2, light
 
-The sidebar has a light and a dark palette. Both live as CSS variables in
-`globals.css`, named by the job each value does (`--rail-ink`, `--rail-line`,
-`--rail-active`) rather than by colour, so the markup knows no colours at all.
-Dark is the default and lives in `:root`; light is the override under
-`[data-rail="light"]`.
+The site follows Microsoft's Fluent 2 web kit in its light theme. Every colour,
+corner, shadow and type size in `globals.css` is a Fluent token, copied from
+`@fluentui/tokens` with the token name beside it — not eyeballed — so check
+there before nudging a value. The existing names (`text-muted`, `border-line`)
+were kept and now point at Fluent's greys, so pages did not need rewriting to
+change palette.
 
-**The default belongs in `:root`, not in the script.** `:root` is what renders
-before any script runs and what the server sends. Put the default only in the
-script and every visitor without a stored choice gets one appearance painted and
-corrected to the other.
-
-**The appearance script is a plain `<script>`, not `next/script`.** This matters
-and is easy to get wrong: `next/script` with `strategy="beforeInteractive"` never
-puts an *inline* script into the server HTML. Next injects it from the client
-runtime, so it runs *after the page has painted* — which is the flash it exists
-to prevent. Rendered as a plain element in the root layout it sits first inside
-`<body>` and runs while the rest is still parsing. `<html>` carries
-`suppressHydrationWarning` because that script writes to it before React sees it.
+- **No Fluent runtime.** `@fluentui/react-components` is not installed. Buttons,
+  fields, cards and tags are small CSS classes (`.btn`, `.field`, `.card`,
+  `.tag`) in `globals.css`, and the icons in `components/fluent-icons.tsx` are
+  generated from `@fluentui/svg-icons` (MIT) — only the ones in use, as plain SVG.
+- **Selected nav items** use the filled icon, a semibold label and the brand
+  indicator bar, as Fluent's NavItem does.
+- **One appearance.** There is no light/dark switch and nothing runs before
+  paint.
+- **Segoe UI** is Fluent's face and is used from the visitor's system; it is not
+  served, since its licence does not allow that. Other platforms fall back to
+  their own UI face.
 
 ---
-
 ## Navigation and scrolling
 
 Three things interact here, and all three are needed.
@@ -158,12 +157,25 @@ own backdrop disappears into the card. A photograph on a contrasting background
 needs no matte, and a cutout is the wrong tool on a dark page anyway, where a
 black shirt vanishes.
 
-`public/portrait.png` is the cutout, still used by `/about` and the dark visual
-résumé, which is the one job it is right for: a figure with no background.
+**The current portrait follows that lesson.** It was shot on white
+(`tools/portrait-source-white.png`, the original as delivered) and is used
+everywhere as a photograph, not a cutout: `public/portrait-2026-11.png` (what
+the profile's portrait field points at — the site's cards and avatar) and
+`public/portrait-2026-11.jpg` (both visual résumés) are the same crop of it,
+centred on the subject at full height, with no other edits. The site's photo
+cards are white so the photo's own ground disappears into them. The names are
+dated on purpose; see "Replacing an image under the same name" below.
+
+Do not run the matte tool on the white original. Its enclosed-hole fill keeps
+the white seen between the arm and the body, and the edges leave a pale rim on
+dark grounds — nothing about it was built for a light backdrop, and nothing on
+the site needs a cutout any more.
 
 The dark-backdrop original is kept beside the tool as
-`tools/portrait-source-dark.png`, because a tool whose only input has been thrown
-away is a tool nobody can run. It reproduces the committed cutout exactly:
+`tools/portrait-source-dark.png`, because a tool whose only input has been
+thrown away is a tool nobody can run. It still reproduces the old cutout,
+`public/portrait.png`, exactly. That file and `public/portrait-source.jpg` are
+the previous pictures, kept but no longer shown.
 
 ```
 python tools/portrait-matte.py tools/portrait-source-dark.png public/portrait.png
@@ -173,6 +185,12 @@ python tools/portrait-matte.py tools/portrait-source-dark.png public/portrait.pn
 
 ## Small things that will bite
 
+- **Replacing an image under the same name serves the old one.** The image
+  optimizer caches each resized copy per format, in `.next/dev/cache/images` in
+  development — and browsers ask for WebP/AVIF, so a quick PNG check looks fine
+  while visitors still get the old picture. Locally, delete that folder.
+  In production Vercel caches the same way, so ship a changed image under a
+  new file name and point the profile at it.
 - **Chrome will not open a window narrower than about 500px.** Screenshots taken
   below that are a 500px layout cropped narrow, which looks exactly like a
   horizontal-overflow bug and is not one. Phone widths cannot be reproduced this
