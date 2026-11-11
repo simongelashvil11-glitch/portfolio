@@ -1,3 +1,4 @@
+import { Link } from "@/components/fluent-icons";
 import { getProfile, getSkills } from "@/lib/queries";
 import { siteUrl } from "@/lib/site-url";
 
@@ -189,6 +190,73 @@ html, body { margin: 0; padding: 0; background: #08090b; }
 .lc-lights { display: flex; gap: 7px; }
 .lc-lights span { width: 11px; height: 11px; border-radius: 50%; display: block; }
 .lc-url { font-size: 22px; font-weight: 500; letter-spacing: -0.01em; }
+.lc-link { display: none; }
+
+/* ---------- the light banner, in the site's Fluent 2 style ---------- */
+
+/*
+ * The light banner wears the website's look: the Fluent 2 Web UI Kit cover's
+ * pale blue base with its sky-blue, lavender and pink glows, Segoe UI and
+ * Fluent's greys, white cards with Fluent's 8px corners and shadows instead
+ * of glass and window chrome, and the nav's periwinkle indicator bar.
+ * The left stays the softest part of the gradient, behind the profile photo.
+ */
+.lc.is-light {
+  --ink: #242424;
+  --eyebrow: #616161;
+  --lavender: #7f85f5;
+  --brand: #115ea3;
+
+  background:
+    radial-gradient(42% 95% at 4% 40%, rgba(219, 233, 254, 0.95), transparent 70%),
+    radial-gradient(36% 90% at 30% 105%, rgba(243, 208, 247, 0.75), transparent 72%),
+    radial-gradient(40% 110% at 97% 0%, rgba(243, 208, 247, 0.85), transparent 70%),
+    radial-gradient(34% 90% at 72% 100%, rgba(225, 225, 255, 0.9), transparent 72%),
+    linear-gradient(90deg, #ecf0ff 0%, #f4f6ff 45%, #f7f1fd 100%);
+  font-family: "Segoe UI Variable Display", "Segoe UI", -apple-system, system-ui, sans-serif;
+}
+
+.lc.is-light .lc-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.lc.is-light .lc-eyebrow::before {
+  content: "";
+  width: 4px;
+  height: 22px;
+  border-radius: 4px;
+  background: var(--lavender);
+}
+
+.lc.is-light .lc-headline { letter-spacing: -0.01em; }
+
+.lc.is-light .lc-window {
+  gap: 10px;
+  padding: 0 22px 0 16px;
+  border: none;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.14);
+}
+.lc.is-light .lc-lights { display: none; }
+.lc.is-light .lc-link { display: block; width: 24px; height: 24px; color: var(--lavender); }
+.lc.is-light .lc-url { color: var(--brand); font-weight: 600; letter-spacing: 0; }
+
+.lc.is-light .lc-marks {
+  border: none;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.14);
+}
+.lc.is-light .lc-mark {
+  border: none;
+  border-radius: 4px;
+  background: #f5f5f5;
+  box-shadow: none;
+}
 `;
 
 export async function LinkedInCover({ tone }: { tone: Tone }) {
@@ -212,6 +280,7 @@ export async function LinkedInCover({ tone }: { tone: Tone }) {
                 <span style={{ background: "#febc2e" }} />
                 <span style={{ background: "#28c840" }} />
               </div>
+              <Link className="lc-link" aria-hidden />
               <span className="lc-url">{prettyUrl(siteUrl)}</span>
             </div>
 
