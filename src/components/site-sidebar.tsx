@@ -228,7 +228,14 @@ function useActiveSection(pathname: string) {
 export function SiteSidebar(props: SidebarProps) {
   const [open, setOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
-  const pathname = usePathname();
+  /*
+   * When Vercel regenerates the home page in the background, the render sees
+   * its path as "/index" rather than "/", so the server marked Home inactive
+   * while the browser marked it active — a hydration mismatch on every visit
+   * after the first regeneration. Both names mean the home page.
+   */
+  const rawPathname = usePathname();
+  const pathname = rawPathname === "/index" ? "/" : rawPathname;
   const reduced = useReducedMotion();
   const { active: activeSection, select } = useActiveSection(pathname);
 
