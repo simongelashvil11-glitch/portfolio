@@ -382,9 +382,96 @@ const STYLES = `
   color: var(--faint);
 }
 
+/* ---------- the white sheet, in the site's Fluent 2 style ---------- */
+
+/*
+ * The white sheet wears the website's look: Fluent's neutral greys and Segoe
+ * UI, the Web UI Kit cover's blue-to-pink wash across the head of the page,
+ * 4px tags, an 8px card with Fluent's shadow4 and no window chrome, and the
+ * cover's periwinkle as the accent the nav uses for "you are here".
+ * The black sheet is retired and keeps its own look above.
+ */
+.vr.is-light {
+  --bg: #ffffff;
+  --surface: #f5f5f5;
+  --raised: #ebebeb;
+  --line: #e0e0e0;
+  --ink: #242424;
+  --muted: #424242;
+  --faint: #616161;
+  --bullet: #7f85f5;
+  --brand: #115ea3;
+  --lavender: #7f85f5;
+
+  font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, system-ui, sans-serif;
+  letter-spacing: 0;
+  background:
+    radial-gradient(60% 34% at 0% 0%, rgb(219 233 254 / 0.95), transparent 70%),
+    radial-gradient(55% 32% at 100% 0%, rgb(243 208 247 / 0.8), transparent 72%),
+    linear-gradient(180deg, #eef2ff 0mm, #ffffff 72mm);
+}
+
+.vr.is-light .vr-chrome { display: none; }
+.vr.is-light .vr-card {
+  border-radius: 2.1mm;
+  border-color: var(--line);
+  background: #ffffff;
+  box-shadow: 0 0 2px rgb(0 0 0 / 0.12), 0 2px 4px rgb(0 0 0 / 0.14);
+}
+.vr.is-light .vr-cardname {
+  border-top-color: var(--line);
+  background: #ffffff;
+  text-align: left;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.vr.is-light .vr-name { letter-spacing: 0; }
+.vr.is-light .vr-role { letter-spacing: 0; }
+.vr.is-light .vr-tagline { letter-spacing: 0; font-weight: 600; }
+
+/* Contacts as Fluent tags, their text in the brand's link colour. */
+.vr.is-light .vr-chip {
+  border: none;
+  border-radius: 1.1mm;
+  background: rgb(255 255 255 / 0.85);
+  box-shadow: 0 0 2px rgb(0 0 0 / 0.12), 0 1px 2px rgb(0 0 0 / 0.14);
+  color: var(--brand);
+}
+
+/* Section titles as Fluent subtitles, marked with the nav's indicator bar. */
+.vr.is-light .vr-h2 {
+  display: flex;
+  align-items: center;
+  gap: 1.6mm;
+  font-size: 9pt;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+.vr.is-light .vr-h2::before {
+  content: "";
+  width: 0.8mm;
+  height: 3.4mm;
+  border-radius: 1mm;
+  background: var(--lavender);
+}
+
+.vr.is-light .vr-job-title { letter-spacing: 0; }
+.vr.is-light .vr-job-org { color: var(--brand); }
+.vr.is-light .vr-point-label { font-weight: 600; }
+
+.vr.is-light .vr-group-name { letter-spacing: 0; text-transform: none; font-size: 7pt; }
+.vr.is-light .vr-tag {
+  border: none;
+  border-radius: 1.1mm;
+  background: var(--surface);
+}
+.vr.is-light .vr-mark { border-radius: 0.8mm; background: #ffffff; }
+
 @media screen {
   .vr { margin: 8mm auto; box-shadow: 0 3mm 18mm rgb(0 0 0 / 0.7); }
-  .vr.is-light { box-shadow: 0 3mm 18mm rgb(0 0 0 / 0.35); }
+  .vr.is-light { box-shadow: 0 0 8px rgb(0 0 0 / 0.12), 0 32px 64px rgb(0 0 0 / 0.14); }
 }
 @media print {
   .vr { margin: 0; box-shadow: none; }
@@ -425,7 +512,7 @@ export async function VisualResume({ tone }: { tone: Tone }) {
         dangerouslySetInnerHTML={{
           __html:
             tone === "light"
-              ? "@media screen { body { background: #e6e1d6; } }"
+              ? "@media screen { body { background: linear-gradient(180deg, #ecf0ff, #f7effc) fixed; } }"
               : "@media screen { body { background: #08090b; } }",
         }}
       />
