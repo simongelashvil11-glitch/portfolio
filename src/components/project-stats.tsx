@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ChevronRight } from "@/components/fluent-icons";
+import { ChartMark, Window } from "@/components/window";
 import type { ProjectCampaign, ProjectStat } from "@/db/schema";
 
 /**
@@ -46,45 +47,32 @@ export function ProjectStats({
     </Link>
   ) : null;
 
-  return (
-    <section
-      aria-labelledby="project-stats-title"
-      className="overflow-hidden rounded-[8px] border border-line bg-background shadow-fluent-4"
-    >
-      {/* ---------- Title bar and headline, on the sidebar's colours ---------- */}
-      <div className="shell-bg relative border-b border-line">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 sm:px-6">
-          <span className="flex min-w-0 items-center gap-2">
-            <ChartMark className="size-5 shrink-0 text-lavender" />
-            <h2 id="project-stats-title" className="truncate text-sm font-semibold">
-              {heading}
-            </h2>
-          </span>
-          {note ? <p className="text-xs text-faint sm:ml-auto">{note}</p> : null}
-        </div>
-
-        {headline.length > 0 || readMore ? (
-          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4 px-4 pb-6 pt-3 sm:px-6">
-          <dl className="flex flex-wrap gap-x-12 gap-y-5">
-            {headline.map((stat, i) => (
-              <div key={i} className="relative pl-3.5">
-                {/* The nav's selected-item bar, so the headline reads as the one chosen. */}
-                <span className="absolute inset-y-1 left-0 w-[3px] rounded-full bg-lavender" aria-hidden />
-                <dt className="text-sm text-muted">{stat.label}</dt>
-                <dd className="tnum mt-0.5 text-[40px] font-semibold leading-[48px] sm:text-[48px] sm:leading-[56px]">
-                  {stat.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
-          {readMore}
-          </div>
-        ) : null}
+  const band =
+    headline.length > 0 || readMore ? (
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4 px-4 pb-6 pt-3 sm:px-6">
+        <dl className="flex flex-wrap gap-x-12 gap-y-5">
+          {headline.map((stat, i) => (
+            <div key={i} className="relative pl-3.5">
+              {/* The nav's selected-item bar, so the headline reads as the one chosen. */}
+              <span className="absolute inset-y-1 left-0 w-[3px] rounded-full bg-lavender" aria-hidden />
+              <dt className="text-sm text-muted">{stat.label}</dt>
+              <dd className="tnum mt-0.5 text-[40px] font-semibold leading-[48px] sm:text-[48px] sm:leading-[56px]">
+                {stat.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        {readMore}
       </div>
+    ) : null;
 
+  const hasBody = groups.length > 0 || shownCampaigns.length > 0;
+
+  return (
+    <Window id="project-stats-title" title={heading} icon={<ChartMark />} aside={note} band={band}>
       {/* ---------- The rest, grouped, then the campaigns ---------- */}
-      {groups.length > 0 || shownCampaigns.length > 0 ? (
-        <div className="grid gap-6 px-4 py-5 sm:px-6 sm:py-6">
+      {hasBody ? (
+        <div className="grid gap-6">
           {groups.map((group, index) => (
             <div key={group.name || `ungrouped-${index}`}>
               {group.name ? <h3 className="pb-2 text-xs font-semibold text-faint">{group.name}</h3> : null}
@@ -125,7 +113,7 @@ export function ProjectStats({
           ) : null}
         </div>
       ) : null}
-    </section>
+    </Window>
   );
 }
 
@@ -200,18 +188,4 @@ function columns(count: number) {
     default:
       return "grid-cols-2 sm:grid-cols-3 xl:grid-cols-4";
   }
-}
-
-/**
- * A bar-chart mark drawn to sit with the Fluent set (20px grid, 1px stroke,
- * rounded ends). The generated set in fluent-icons.tsx has no chart icon.
- */
-function ChartMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" width="1em" height="1em" fill="none" stroke="currentColor" aria-hidden className={className}>
-      <rect x="3.5" y="10.5" width="3" height="6" rx="1" />
-      <rect x="8.5" y="6.5" width="3" height="10" rx="1" />
-      <rect x="13.5" y="3.5" width="3" height="13" rx="1" />
-    </svg>
-  );
 }

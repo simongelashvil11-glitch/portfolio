@@ -9,6 +9,7 @@ import { ProjectStats } from "@/components/project-stats";
 import { Prose } from "@/components/prose";
 import { Reveal } from "@/components/reveal";
 import { VideoPoster } from "@/components/video";
+import { ImageMark, TextMark, Window } from "@/components/window";
 import { getProjectBySlug, getProjects } from "@/lib/queries";
 
 export const revalidate = 60;
@@ -146,19 +147,33 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
         </Reveal>
       ) : null}
 
+      {/*
+        The text and the gallery are windows like the statistics, so the
+        page reads as one set of panels rather than panels and loose parts.
+      */}
       {project.description ? (
         <Reveal index={2}>
-          <div className="mt-10 max-w-2xl text-base leading-[22px]">
-            <Prose content={project.description} />
+          <div className="mt-6">
+            <Window id="case-study-title" title="Case study" icon={<TextMark />} bodyClassName="sm:py-7">
+              <div className="max-w-[68ch] text-base leading-6">
+                <Prose content={project.description} />
+              </div>
+            </Window>
           </div>
         </Reveal>
       ) : null}
 
       {project.gallery.length > 0 ? (
         <Reveal index={3}>
-          <div className="mt-10">
-            <h2 className="mb-4 text-xl font-semibold leading-7">Gallery</h2>
-            <Gallery images={project.gallery} title={project.title} />
+          <div className="mt-6">
+            <Window
+              id="gallery-title"
+              title="Gallery"
+              icon={<ImageMark />}
+              aside={`${project.gallery.length} ${project.gallery.length === 1 ? "image" : "images"} · select one to enlarge`}
+            >
+              <Gallery images={project.gallery} title={project.title} />
+            </Window>
           </div>
         </Reveal>
       ) : null}

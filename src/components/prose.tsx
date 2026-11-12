@@ -78,11 +78,11 @@ export function Prose({ content }: { content: string }) {
       {blocks.map((block, index) => (
         <Fragment key={index}>
           {block.kind === "heading" && block.level === 2 ? (
-            <h2 className="mt-4 text-xl font-semibold leading-7">{block.text}</h2>
+            <h2 className="mt-4 text-xl font-semibold leading-7 text-balance first:mt-0">{block.text}</h2>
           ) : null}
 
           {block.kind === "heading" && block.level === 3 ? (
-            <h3 className="mt-2 text-base font-semibold leading-[22px]">{block.text}</h3>
+            <h3 className="mt-2 text-base font-semibold leading-[22px] first:mt-0">{block.text}</h3>
           ) : null}
 
           {block.kind === "divider" ? (

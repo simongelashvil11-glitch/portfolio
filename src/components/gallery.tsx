@@ -10,9 +10,11 @@ import { ChevronLeft, ChevronRight } from "@/components/fluent-icons";
  * Case-study images: a grid of stills that open full size in the same dialog
  * the video player uses.
  *
- * Photographs arrive at every shape, so thumbnails crop to a common ratio to
- * keep the grid tidy while the opened image is contained, never cropped —
- * what you click is a tidy tile, what you get is the whole frame.
+ * Thumbnails are shown whole, at their own shape. They used to be cropped
+ * to 4:3, which cut the edges off ad creatives — prices, logos and lettering
+ * live at the edges — so the preview showed a different picture from the
+ * one that opened. Tiles align to the top, so a set of same-shaped images
+ * (the usual case) lines up exactly and a mixed set stays tidy.
  */
 export function Gallery({ images, title }: { images: string[]; title: string }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -44,22 +46,27 @@ export function Gallery({ images, title }: { images: string[]; title: string }) 
 
   return (
     <>
-      <ul className="grid gap-3 sm:grid-cols-2">
+      <ul className={`grid items-start gap-3 ${columns(images.length)}`}>
         {images.map((src, index) => (
           <li key={src}>
             <button
               type="button"
               onClick={() => setOpenIndex(index)}
               aria-label={`Open image ${index + 1} of ${images.length}`}
-              className="card card-interactive relative block aspect-[4/3] w-full overflow-hidden"
+              className="group card card-interactive relative block w-full overflow-hidden bg-surface"
             >
-              <Image
+              {/*
+                A plain img rather than next/image: its size is not known
+                ahead of time, and next/image needs either that or a fixed
+                frame — which is the crop this replaced.
+              */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={src}
                 alt=""
-                fill
-                sizes="(max-width: 640px) 100vw, 480px"
-                unoptimized
-                className="object-cover"
+                loading="lazy"
+                decoding="async"
+                className="block h-auto w-full transition-transform duration-300 ease-(--ease-fluent) group-hover:scale-[1.02]"
               />
             </button>
           </li>
@@ -109,4 +116,11 @@ export function Gallery({ images, title }: { images: string[]; title: string }) 
       </Dialog>
     </>
   );
+}
+
+/** Two across for small sets, three once there are enough to fill rows. */
+function columns(count: number) {
+  if (count === 1) return "grid-cols-1 max-w-md";
+  if (count === 2 || count === 4) return "grid-cols-2";
+  return "grid-cols-2 lg:grid-cols-3";
 }
