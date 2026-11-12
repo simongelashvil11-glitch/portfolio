@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import { ChevronRight, Code, Open } from "@/components/fluent-icons";
 import { Gallery } from "@/components/gallery";
+import { ProjectPress } from "@/components/project-press";
 import { ProjectStats } from "@/components/project-stats";
 import { Prose } from "@/components/prose";
 import { Reveal } from "@/components/reveal";
@@ -133,9 +134,18 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
         </Reveal>
       ) : null}
 
-      {project.stats.length > 0 || project.campaigns.length > 0 ? (
+      {/* Coverage first: the independent word on the work, before the detail. */}
+      {project.press.length > 0 ? (
         <Reveal index={2}>
           <div className="mt-8">
+            <ProjectPress press={project.press} />
+          </div>
+        </Reveal>
+      ) : null}
+
+      {project.stats.length > 0 || project.campaigns.length > 0 ? (
+        <Reveal index={2}>
+          <div className="mt-6">
             <ProjectStats
               title={project.statsTitle}
               note={project.statsNote}

@@ -8,6 +8,7 @@ import { Checkbox, Field, Input, Textarea } from "@/components/admin/ui";
 import type { Project } from "@/db/schema";
 
 import { CampaignsEditor } from "./campaigns-editor";
+import { PressEditor } from "./press-editor";
 import { StatsEditor } from "./stats-editor";
 import { SubmitButton } from "./submit-button";
 
@@ -139,6 +140,14 @@ export function ProjectForm({ project }: { project?: Project }) {
           </Field>
           <CampaignsEditor campaigns={project?.campaigns ?? []} error={state.fieldErrors?.campaigns} />
         </div>
+      </fieldset>
+
+      <fieldset className="grid gap-4 rounded-xl border border-line p-4">
+        <legend className="px-1.5 font-mono text-xs uppercase tracking-widest text-muted">In the press</legend>
+        <p className="-mt-1 text-xs text-faint">
+          Articles about this project, shown as a press window under the cover. Remove every article to hide it.
+        </p>
+        <PressEditor press={project?.press ?? []} error={state.fieldErrors?.press} />
       </fieldset>
 
       <div className="grid gap-5 sm:grid-cols-2">

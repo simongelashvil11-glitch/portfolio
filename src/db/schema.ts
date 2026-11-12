@@ -94,6 +94,22 @@ export type ProjectCampaign = {
   figures: { label: string; value: string }[];
 };
 
+/**
+ * An article about the project, shown as a press card on the case study.
+ * `title` is the headline as it should read here (translated if need be);
+ * `originalTitle` is the headline as published, shown beneath it when the
+ * two differ. `image` is a URL or a path in /public.
+ */
+export type ProjectPress = {
+  outlet: string;
+  date: string;
+  title: string;
+  originalTitle: string;
+  summary: string;
+  url: string;
+  image: string;
+};
+
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 200 }).notNull(),
@@ -121,6 +137,8 @@ export const projects = pgTable("projects", {
   /** Heading over the campaign cards; defaults to "Best campaigns". */
   campaignsTitle: varchar("campaigns_title", { length: 120 }),
   campaigns: jsonb("campaigns").$type<ProjectCampaign[]>().default([]).notNull(),
+  /** Articles about the project. An empty list hides the press window. */
+  press: jsonb("press").$type<ProjectPress[]>().default([]).notNull(),
   year: varchar("year", { length: 12 }),
   featured: boolean("featured").default(false).notNull(),
   sortOrder: integer("sort_order").default(0).notNull(),

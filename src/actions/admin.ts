@@ -284,6 +284,41 @@ function campaignRows(value: FormDataEntryValue | null): unknown[] {
   }
 }
 
+/** A full URL, or a path to a file in /public ("/press/photo.jpg"). */
+const imageRef = z
+  .string()
+  .trim()
+  .max(500)
+  .refine((value) => value === "" || value.startsWith("/") || /^https?:\/\//.test(value), {
+    message: "Use a full https:// URL or a /path in the site.",
+  });
+
+const PressSchema = z.object({
+  outlet: z.string().trim().min(1, "Every article needs the publication's name.").max(80),
+  date: z.string().trim().max(40),
+  title: z.string().trim().min(1, "Every article needs a headline.").max(240),
+  originalTitle: z.string().trim().max(240),
+  summary: z.string().trim().max(600),
+  url: z.url("Every article needs a valid link."),
+  image: imageRef,
+});
+
+/** Articles left completely blank are dropped. */
+function pressRows(value: FormDataEntryValue | null): unknown[] {
+  try {
+    const rows = JSON.parse(text(value) || "[]");
+    if (!Array.isArray(rows)) return [];
+    return rows.filter(
+      (row) =>
+        row &&
+        typeof row === "object" &&
+        Object.values(row).some((field) => typeof field === "string" && field.trim() !== ""),
+    );
+  } catch {
+    return [];
+  }
+}
+
 const ProjectSchema = z.object({
   title: z.string().min(1, "Title is required.").max(200),
   slug: z.string().min(1, "Slug is required.").max(200),
@@ -301,6 +336,7 @@ const ProjectSchema = z.object({
   stats: z.array(StatSchema),
   campaignsTitle: z.string().max(120, "Keep it under 120 characters.").nullable(),
   campaigns: z.array(CampaignSchema),
+  press: z.array(PressSchema),
   year: z.string().max(12).nullable(),
   featured: z.boolean(),
   sortOrder: z.number().int(),
@@ -330,6 +366,7 @@ export async function saveProject(_previous: FormState, formData: FormData): Pro
     stats: statRows(formData.get("stats")),
     campaignsTitle: nullable(formData.get("campaignsTitle")),
     campaigns: campaignRows(formData.get("campaigns")),
+    press: pressRows(formData.get("press")),
     year: nullable(formData.get("year")),
     featured: checked(formData.get("featured")),
     sortOrder: Number(text(formData.get("sortOrder")) || 0),
