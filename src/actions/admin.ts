@@ -77,6 +77,11 @@ const ProfileSchema = z.object({
   location: z.string().max(120).nullable(),
   email: z.email("Enter a valid email address.").max(255).nullable(),
   availability: z.string().max(120).nullable(),
+  whatsapp: z
+    .string()
+    .max(32)
+    .regex(/^\+?[\d\s()-]{7,}$/, "Enter a phone number with its country code, like +995 551 669 696.")
+    .nullable(),
   ticker: z.string().max(200).nullable(),
   resumeUrl: z.url("Enter a valid URL.").nullable(),
   socials: z.array(z.object({ label: z.string().min(1), url: z.url() })),
@@ -93,6 +98,7 @@ export async function saveProfile(_previous: FormState, formData: FormData): Pro
     location: nullable(formData.get("location")),
     email: nullable(formData.get("email")),
     availability: nullable(formData.get("availability")),
+    whatsapp: nullable(formData.get("whatsapp")),
     ticker: nullable(formData.get("ticker")),
     resumeUrl: nullable(formData.get("resumeUrl")),
     socials: socialLines(formData.get("socials")),

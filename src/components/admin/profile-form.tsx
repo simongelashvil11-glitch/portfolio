@@ -75,6 +75,19 @@ export function ProfileForm({ profile }: { profile: Profile | null }) {
       </div>
 
       <Field
+        label="WhatsApp"
+        hint="Your number with its country code. Shown as a WhatsApp button under Availability. Leave blank to hide."
+        error={state.fieldErrors?.whatsapp}
+      >
+        <Input
+          name="whatsapp"
+          type="tel"
+          defaultValue={profile?.whatsapp ?? ""}
+          placeholder="+995 551 669 696"
+        />
+      </Field>
+
+      <Field
         label="Sidebar ticker"
         hint="Scrolling strip on the home page, between the greeting and Selected work. Leave blank to hide it."
         error={state.fieldErrors?.ticker}

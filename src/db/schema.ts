@@ -28,6 +28,8 @@ export const profile = pgTable("profile", {
   location: varchar("location", { length: 120 }),
   email: varchar("email", { length: 255 }),
   availability: varchar("availability", { length: 120 }),
+  /** Phone number for WhatsApp, as written ("+995 551 …"). Blank hides the button. */
+  whatsapp: varchar("whatsapp", { length: 32 }),
   /** Scrolling strip above the email in the sidebar. Blank hides the strip. */
   ticker: varchar("ticker", { length: 200 }),
   /*

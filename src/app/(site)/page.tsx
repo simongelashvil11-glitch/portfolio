@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { WhatsAppIcon, whatsAppHref } from "@/components/brand-icons";
 import { ContactButton } from "@/components/contact-window";
 import { Document, Mail } from "@/components/fluent-icons";
 import { Greeting } from "@/components/greeting";
@@ -20,6 +21,7 @@ const FALLBACK = {
   bio: "Add your profile in the admin dashboard to replace this placeholder text.",
   ticker: null as string | null,
   availability: null as string | null,
+  whatsapp: null as string | null,
   portraitUrl: null as string | null,
   resumeUrl: null as string | null,
 };
@@ -37,6 +39,7 @@ export default async function HomePage() {
   const profile = profileRow ?? FALLBACK;
   const tags = topics(profile.ticker);
   const portrait = profile.portraitUrl?.trim();
+  const whatsapp = profile.whatsapp?.trim();
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10 lg:px-10 lg:py-12">
@@ -65,6 +68,22 @@ export default async function HomePage() {
                 <Document />
                 View résumé
               </Link>
+              {/*
+                The profile card, which carries the WhatsApp button, is hidden
+                below `lg` — and phones are where WhatsApp is. So it is here too,
+                for them only.
+              */}
+              {whatsapp ? (
+                <a
+                  href={whatsAppHref(whatsapp)}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="btn btn-secondary lg:hidden"
+                >
+                  <WhatsAppIcon className="text-[#25d366]" />
+                  WhatsApp
+                </a>
+              ) : null}
             </div>
 
             {tags.length > 0 ? (
@@ -102,6 +121,17 @@ export default async function HomePage() {
                     <span className="size-2.5 rounded-full bg-[#13a10e] ring-2 ring-white" aria-hidden />
                     {profile.availability}
                   </p>
+                ) : null}
+                {whatsapp ? (
+                  <a
+                    href={whatsAppHref(whatsapp)}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="btn btn-secondary mt-3 w-full"
+                  >
+                    <WhatsAppIcon className="text-[#25d366]" />
+                    WhatsApp
+                  </a>
                 ) : null}
               </div>
             </div>
