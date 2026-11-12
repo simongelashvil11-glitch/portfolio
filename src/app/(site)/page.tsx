@@ -118,19 +118,27 @@ export default async function HomePage() {
                 {profile.availability ? (
                   <p className="mt-2 flex items-center gap-1.5 text-xs text-muted">
                     {/* Fluent's "available" presence badge. */}
-                    <span className="size-2.5 rounded-full bg-[#13a10e] ring-2 ring-white" aria-hidden />
+                    {/* As wide as the WhatsApp mark below, so both labels start together. */}
+                    <span className="flex w-3.5 shrink-0" aria-hidden>
+                      <span className="size-2.5 rounded-full bg-[#13a10e] ring-2 ring-white" />
+                    </span>
                     {profile.availability}
                   </p>
                 ) : null}
                 {whatsapp ? (
+                  /*
+                    One more line of the card rather than a button in it: left
+                    aligned with the lines above, the logo where the status
+                    dot sits, the label in Fluent's link colour.
+                  */
                   <a
                     href={whatsAppHref(whatsapp)}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="btn btn-secondary mt-3 w-full"
+                    className="mt-1.5 flex w-fit items-center gap-1.5 text-xs font-semibold text-accent-hover hover:underline"
                   >
-                    <WhatsAppIcon className="text-[#25d366]" />
-                    WhatsApp
+                    <WhatsAppIcon className="size-3.5 shrink-0 text-[#25d366]" />
+                    Chat on WhatsApp
                   </a>
                 ) : null}
               </div>
