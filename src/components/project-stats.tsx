@@ -1,3 +1,6 @@
+import Link from "next/link";
+
+import { ChevronRight } from "@/components/fluent-icons";
 import type { ProjectCampaign, ProjectStat } from "@/db/schema";
 
 /**
@@ -8,6 +11,10 @@ import type { ProjectCampaign, ProjectStat } from "@/db/schema";
  *
  * Nothing is formatted here. Each value is printed as written in the admin,
  * so "$88,265" and "72.99M" read exactly the way the source reported them.
+ *
+ * With `peek`, it is the homepage's preview of the same window: the project's
+ * name in the title bar, the headline and the first group only, and a Read
+ * more link through to the case study for the rest.
  */
 export function ProjectStats({
   title,
@@ -15,18 +22,29 @@ export function ProjectStats({
   stats,
   campaignsTitle,
   campaigns,
+  peek,
 }: {
   title: string | null;
   note: string | null;
   stats: ProjectStat[];
   campaignsTitle: string | null;
   campaigns: ProjectCampaign[];
+  peek?: { project: string; href: string };
 }) {
   if (stats.length === 0 && campaigns.length === 0) return null;
 
   const headline = stats.filter((stat) => stat.featured);
-  const groups = groupInOrder(stats.filter((stat) => !stat.featured));
-  const heading = title?.trim() || "Results";
+  const allGroups = groupInOrder(stats.filter((stat) => !stat.featured));
+  const groups = peek ? allGroups.slice(0, 1) : allGroups;
+  const shownCampaigns = peek ? [] : campaigns;
+  const heading = peek ? `${peek.project} · ${title?.trim() || "Results"}` : title?.trim() || "Results";
+
+  const readMore = peek ? (
+    <Link href={peek.href} className="btn btn-secondary shrink-0">
+      Read more
+      <ChevronRight />
+    </Link>
+  ) : null;
 
   return (
     <section
@@ -45,8 +63,9 @@ export function ProjectStats({
           {note ? <p className="text-xs text-faint sm:ml-auto">{note}</p> : null}
         </div>
 
-        {headline.length > 0 ? (
-          <dl className="flex flex-wrap gap-x-12 gap-y-5 px-4 pb-6 pt-3 sm:px-6">
+        {headline.length > 0 || readMore ? (
+          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4 px-4 pb-6 pt-3 sm:px-6">
+          <dl className="flex flex-wrap gap-x-12 gap-y-5">
             {headline.map((stat, i) => (
               <div key={i} className="relative pl-3.5">
                 {/* The nav's selected-item bar, so the headline reads as the one chosen. */}
@@ -58,11 +77,13 @@ export function ProjectStats({
               </div>
             ))}
           </dl>
+          {readMore}
+          </div>
         ) : null}
       </div>
 
       {/* ---------- The rest, grouped, then the campaigns ---------- */}
-      {groups.length > 0 || campaigns.length > 0 ? (
+      {groups.length > 0 || shownCampaigns.length > 0 ? (
         <div className="grid gap-6 px-4 py-5 sm:px-6 sm:py-6">
           {groups.map((group, index) => (
             <div key={group.name || `ungrouped-${index}`}>
@@ -87,7 +108,7 @@ export function ProjectStats({
             </div>
           ))}
 
-          {campaigns.length > 0 ? (
+          {shownCampaigns.length > 0 ? (
             <div>
               <h3 className="pb-2 text-xs font-semibold text-faint">{campaignsTitle?.trim() || "Best campaigns"}</h3>
               {/*
@@ -95,8 +116,8 @@ export function ProjectStats({
                 big figures and the detail rows line up across the cards
                 even when one campaign name wraps further than the others.
               */}
-              <ul className={`grid gap-x-3 gap-y-3 ${campaigns.length >= 3 ? "md:grid-cols-3" : "sm:grid-cols-2"}`}>
-                {campaigns.map((campaign, i) => (
+              <ul className={`grid gap-x-3 gap-y-3 ${shownCampaigns.length >= 3 ? "md:grid-cols-3" : "sm:grid-cols-2"}`}>
+                {shownCampaigns.map((campaign, i) => (
                   <CampaignCard key={i} campaign={campaign} />
                 ))}
               </ul>

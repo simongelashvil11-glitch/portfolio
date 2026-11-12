@@ -6,6 +6,7 @@ import { ContactButton } from "@/components/contact-window";
 import { Document, Mail } from "@/components/fluent-icons";
 import { Greeting } from "@/components/greeting";
 import { Mark } from "@/components/mark";
+import { ProjectStats } from "@/components/project-stats";
 import { Reveal } from "@/components/reveal";
 import { VideoCardPreview } from "@/components/video";
 import type { Project } from "@/db/schema";
@@ -40,6 +41,11 @@ export default async function HomePage() {
   const tags = topics(profile.ticker);
   const portrait = profile.portraitUrl?.trim();
   const whatsapp = profile.whatsapp?.trim();
+  /*
+   * The results preview shows the first project in Work order that has
+   * figures. Reordering the work list in the admin changes which one.
+   */
+  const showcase = projects.find((project) => project.stats.length > 0);
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10 lg:px-10 lg:py-12">
@@ -146,6 +152,22 @@ export default async function HomePage() {
           </Reveal>
         ) : null}
       </section>
+
+      {/* ---------- Results preview ---------- */}
+      {showcase ? (
+        <section className="pt-14">
+          <Reveal>
+            <ProjectStats
+              title={showcase.statsTitle}
+              note={showcase.statsNote}
+              stats={showcase.stats}
+              campaignsTitle={null}
+              campaigns={[]}
+              peek={{ project: showcase.title, href: `/projects/${showcase.slug}` }}
+            />
+          </Reveal>
+        </section>
+      ) : null}
 
       {/* ---------- Work ---------- */}
       {projects.length > 0 ? (
