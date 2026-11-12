@@ -92,6 +92,20 @@
       "when": 1794484253980,
       "tag": "0012_secret_zombie",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794507473837,
+      "tag": "0013_noisy_payback",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794508031744,
+      "tag": "0014_low_the_initiative",
+      "breakpoints": true
     }
   ]
 }

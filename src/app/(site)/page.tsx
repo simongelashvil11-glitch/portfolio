@@ -175,9 +175,9 @@ export default async function HomePage() {
   );
 }
 
-/** Where a card opens: the case study, else the live site, else nowhere. */
+/** Where a card opens: the case study (text or figures), else the live site, else nowhere. */
 function destination(project: Project): { href: string; external: boolean } | null {
-  if (project.description) return { href: `/projects/${project.slug}`, external: false };
+  if (project.description || project.stats.length > 0 || project.campaigns.length > 0) return { href: `/projects/${project.slug}`, external: false };
   if (project.url) return { href: project.url, external: true };
   return null;
 }

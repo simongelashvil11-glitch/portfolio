@@ -7,6 +7,8 @@ import { saveProject, type FormState } from "@/actions/admin";
 import { Checkbox, Field, Input, Textarea } from "@/components/admin/ui";
 import type { Project } from "@/db/schema";
 
+import { CampaignsEditor } from "./campaigns-editor";
+import { StatsEditor } from "./stats-editor";
 import { SubmitButton } from "./submit-button";
 
 const initialState: FormState = {};
@@ -101,6 +103,43 @@ export function ProjectForm({ project }: { project?: Project }) {
           placeholder="https://www.youtube.com/watch?v=..."
         />
       </Field>
+
+      {/* Not a Field: that is a <label>, and a label around a list of inputs
+          sends every click inside it to the first one. */}
+      <fieldset className="grid gap-4 rounded-xl border border-line p-4">
+        <legend className="px-1.5 font-mono text-xs uppercase tracking-widest text-muted">Statistics</legend>
+        <p className="-mt-1 text-xs text-faint">
+          Shown as a results window on the case study. Write each value exactly as it should read
+          ($88,265, 72.99M, 0.68%). Figures sharing a group sit together; tick Headline to set one large
+          across the top. Remove every figure and campaign to hide the window.
+        </p>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Window title" hint="Defaults to “Results”." error={state.fieldErrors?.statsTitle}>
+            <Input name="statsTitle" defaultValue={project?.statsTitle ?? ""} placeholder="Campaign results" />
+          </Field>
+          <Field label="Source line" hint="Where the figures come from." error={state.fieldErrors?.statsNote}>
+            <Input
+              name="statsNote"
+              defaultValue={project?.statsNote ?? ""}
+              placeholder="Meta Ads Manager · lifetime"
+            />
+          </Field>
+        </div>
+
+        <StatsEditor stats={project?.stats ?? []} error={state.fieldErrors?.stats} />
+
+        <div className="mt-2 grid gap-3 border-t border-line pt-4">
+          <Field
+            label="Campaigns heading"
+            hint="Cards under the figures, one per standout campaign. The first figure in each is set large. Defaults to “Best campaigns”."
+            error={state.fieldErrors?.campaignsTitle}
+          >
+            <Input name="campaignsTitle" defaultValue={project?.campaignsTitle ?? ""} placeholder="Best campaigns" />
+          </Field>
+          <CampaignsEditor campaigns={project?.campaigns ?? []} error={state.fieldErrors?.campaigns} />
+        </div>
+      </fieldset>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Tags" hint="Comma separated." error={state.fieldErrors?.tags}>

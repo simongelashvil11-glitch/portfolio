@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import { ChevronRight, Code, Open } from "@/components/fluent-icons";
 import { Gallery } from "@/components/gallery";
+import { ProjectStats } from "@/components/project-stats";
 import { Prose } from "@/components/prose";
 import { Reveal } from "@/components/reveal";
 import { VideoPoster } from "@/components/video";
@@ -126,6 +127,20 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
               sizes="(max-width: 1024px) 100vw, 960px"
               className="object-cover"
               priority
+            />
+          </div>
+        </Reveal>
+      ) : null}
+
+      {project.stats.length > 0 || project.campaigns.length > 0 ? (
+        <Reveal index={2}>
+          <div className="mt-8">
+            <ProjectStats
+              title={project.statsTitle}
+              note={project.statsNote}
+              stats={project.stats}
+              campaignsTitle={project.campaignsTitle}
+              campaigns={project.campaigns}
             />
           </div>
         </Reveal>

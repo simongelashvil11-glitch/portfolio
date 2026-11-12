@@ -229,6 +229,61 @@ export async function deleteExperience(formData: FormData) {
 /* projects                                                            */
 /* ------------------------------------------------------------------ */
 
+const StatSchema = z.object({
+  label: z.string().trim().min(1, "Every figure needs a label.").max(80),
+  value: z.string().trim().min(1, "Every figure needs a value.").max(40),
+  group: z.string().trim().max(60),
+  featured: z.boolean(),
+});
+
+/**
+ * The stats editor posts its rows as one JSON field. Rows left completely
+ * blank are dropped rather than rejected, so an "Add figure" pressed by
+ * mistake does not block the save.
+ */
+function statRows(value: FormDataEntryValue | null): unknown[] {
+  try {
+    const rows = JSON.parse(text(value) || "[]");
+    if (!Array.isArray(rows)) return [];
+    return rows.filter(
+      (row) => row && typeof row === "object" && (String(row.label ?? "").trim() || String(row.value ?? "").trim()),
+    );
+  } catch {
+    return [];
+  }
+}
+
+const CampaignSchema = z.object({
+  tag: z.string().trim().max(80),
+  name: z.string().trim().min(1, "Every campaign needs a name.").max(160),
+  figures: z.array(
+    z.object({
+      label: z.string().trim().min(1, "Every campaign figure needs a label.").max(80),
+      value: z.string().trim().min(1, "Every campaign figure needs a value.").max(40),
+    }),
+  ),
+});
+
+/** Same as `statRows`, one level deeper: blank figures and blank campaigns are dropped. */
+function campaignRows(value: FormDataEntryValue | null): unknown[] {
+  const filled = (v: unknown) => String(v ?? "").trim() !== "";
+  try {
+    const rows = JSON.parse(text(value) || "[]");
+    if (!Array.isArray(rows)) return [];
+    return rows
+      .filter((row) => row && typeof row === "object")
+      .map((row) => ({
+        ...row,
+        figures: Array.isArray(row.figures)
+          ? row.figures.filter((f: { label?: unknown; value?: unknown }) => f && (filled(f.label) || filled(f.value)))
+          : [],
+      }))
+      .filter((row) => filled(row.name) || filled(row.tag) || row.figures.length > 0);
+  } catch {
+    return [];
+  }
+}
+
 const ProjectSchema = z.object({
   title: z.string().min(1, "Title is required.").max(200),
   slug: z.string().min(1, "Slug is required.").max(200),
@@ -241,6 +296,11 @@ const ProjectSchema = z.object({
   videoUrl: z.url("Enter a valid URL.").nullable(),
   gallery: z.array(z.url("Enter one valid image URL per line.")),
   tags: z.array(z.string()),
+  statsTitle: z.string().max(120, "Keep it under 120 characters.").nullable(),
+  statsNote: z.string().max(200, "Keep it under 200 characters.").nullable(),
+  stats: z.array(StatSchema),
+  campaignsTitle: z.string().max(120, "Keep it under 120 characters.").nullable(),
+  campaigns: z.array(CampaignSchema),
   year: z.string().max(12).nullable(),
   featured: z.boolean(),
   sortOrder: z.number().int(),
@@ -265,6 +325,11 @@ export async function saveProject(_previous: FormState, formData: FormData): Pro
     videoUrl: nullable(formData.get("videoUrl")),
     gallery: lines(formData.get("gallery")),
     tags: csv(formData.get("tags")),
+    statsTitle: nullable(formData.get("statsTitle")),
+    statsNote: nullable(formData.get("statsNote")),
+    stats: statRows(formData.get("stats")),
+    campaignsTitle: nullable(formData.get("campaignsTitle")),
+    campaigns: campaignRows(formData.get("campaigns")),
     year: nullable(formData.get("year")),
     featured: checked(formData.get("featured")),
     sortOrder: Number(text(formData.get("sortOrder")) || 0),

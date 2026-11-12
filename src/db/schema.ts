@@ -68,6 +68,32 @@ export const experiences = pgTable("experiences", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+/**
+ * One figure in a project's statistics window. The value is text, written
+ * exactly as it should read ("$88,265", "72.99M", "0.68%"), so no formatting
+ * rule has to guess at currencies or units. Figures with the same `group`
+ * are shown together under that heading, in list order; a `featured` figure
+ * is set large across the top instead.
+ */
+export type ProjectStat = {
+  label: string;
+  value: string;
+  group: string;
+  featured: boolean;
+};
+
+/**
+ * A standout campaign, shown as a card in the statistics window. `tag` is
+ * the small line above the name ("Messaging · highest volume"). The first
+ * figure is the result and is set large; the rest are label/value rows.
+ * Values are text for the same reason as `ProjectStat`.
+ */
+export type ProjectCampaign = {
+  tag: string;
+  name: string;
+  figures: { label: string; value: string }[];
+};
+
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 200 }).notNull(),
@@ -84,6 +110,17 @@ export const projects = pgTable("projects", {
   /** Extra images for the case study, shown as a grid that opens a lightbox. */
   gallery: jsonb("gallery").$type<string[]>().default([]).notNull(),
   tags: jsonb("tags").$type<string[]>().default([]).notNull(),
+  /*
+   * The statistics window on the case study. Its heading and a source line
+   * ("Meta Ads Manager · lifetime") sit in the title bar; the figures are an
+   * ordered list. An empty list hides the window.
+   */
+  statsTitle: varchar("stats_title", { length: 120 }),
+  statsNote: varchar("stats_note", { length: 200 }),
+  stats: jsonb("stats").$type<ProjectStat[]>().default([]).notNull(),
+  /** Heading over the campaign cards; defaults to "Best campaigns". */
+  campaignsTitle: varchar("campaigns_title", { length: 120 }),
+  campaigns: jsonb("campaigns").$type<ProjectCampaign[]>().default([]).notNull(),
   year: varchar("year", { length: 12 }),
   featured: boolean("featured").default(false).notNull(),
   sortOrder: integer("sort_order").default(0).notNull(),

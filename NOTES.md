@@ -183,6 +183,28 @@ python tools/portrait-matte.py tools/portrait-source-dark.png public/portrait.pn
 
 ---
 
+## The statistics window
+
+Each project can carry a list of figures (`projects.stats`, with a title and a
+source line beside it), edited as rows in the project form and shown on the
+case study as a window: the shell's gradient across the top with the headline
+figure, the rest as tiles on white. An empty list hides it.
+
+- **Values are text, not numbers.** "$88,265", "72.99M" and "0.68%" are printed
+  exactly as typed. Formatting from numbers would have to guess currency
+  symbols, compact units and decimal places, and would get one of them wrong.
+- **Groups come from the rows.** Figures sharing a group name sit together
+  under it, in the order entered; there is no separate groups table to keep in
+  step. A "Headline" figure leaves its group and is set large in the header.
+- **Best campaigns** (`projects.campaigns`) are cards under the figures: a
+  label line, the campaign name, then figures, the first set large. The cards
+  share a subgrid, so the big numbers line up across a row however far each
+  campaign name wraps.
+- A project with figures or campaigns but no case-study text still gets its own
+  page, so the homepage card links there rather than out.
+
+---
+
 ## Small things that will bite
 
 - **Replacing an image under the same name serves the old one.** The image
