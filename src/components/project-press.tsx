@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 import { Open } from "@/components/fluent-icons";
-import { Window } from "@/components/window";
+import { NewsMark, Window } from "@/components/window";
 import type { ProjectPress as Article } from "@/db/schema";
 
 /**
@@ -67,17 +67,5 @@ export function ProjectPress({ press }: { press: Article[] }) {
         ))}
       </ul>
     </Window>
-  );
-}
-
-/** A newspaper, drawn to sit with the other title-bar marks. */
-function NewsMark() {
-  return (
-    <svg viewBox="0 0 20 20" width="1em" height="1em" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M4.5 3.5h9a1 1 0 0 1 1 1v10.5a1.5 1.5 0 0 0 1.5 1.5H5a2 2 0 0 1-2-2V5a1.5 1.5 0 0 1 1.5-1.5" />
-      <path d="M14.5 7.5h2a1 1 0 0 1 1 1V15a1.5 1.5 0 0 1-3 0" />
-      <rect x="6" y="6.5" width="5.5" height="3.5" rx=".5" />
-      <path d="M6 12.5h5.5M6 14.5h3.5" />
-    </svg>
   );
 }

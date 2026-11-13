@@ -3,12 +3,13 @@ import Link from "next/link";
 
 import { WhatsAppIcon, whatsAppHref } from "@/components/brand-icons";
 import { ContactButton } from "@/components/contact-window";
-import { Document, Mail } from "@/components/fluent-icons";
+import { Document, Mail, Open } from "@/components/fluent-icons";
 import { Greeting } from "@/components/greeting";
 import { Mark } from "@/components/mark";
 import { ProjectStats } from "@/components/project-stats";
 import { Reveal } from "@/components/reveal";
 import { VideoCardPreview } from "@/components/video";
+import { NewsMark } from "@/components/window";
 import type { Project } from "@/db/schema";
 import { getProfile, getProjects } from "@/lib/queries";
 import { youTubeId } from "@/lib/youtube";
@@ -46,6 +47,8 @@ export default async function HomePage() {
    * figures. Reordering the work list in the admin changes which one.
    */
   const showcase = projects.find((project) => project.stats.length > 0);
+  /** The first article in any project's press list, in Work order. */
+  const mention = projects.flatMap((project) => project.press)[0];
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10 lg:px-10 lg:py-12">
@@ -100,6 +103,34 @@ export default async function HomePage() {
                   </li>
                 ))}
               </ul>
+            ) : null}
+
+            {/*
+              Press, as one slim line on the shell's gradient: the same
+              title-bar treatment as the windows below, so it reads as part
+              of the set rather than a badge stuck on.
+            */}
+            {mention ? (
+              <a
+                href={mention.url}
+                target="_blank"
+                rel="noreferrer noopener"
+                title={mention.title}
+                className="shell-bg group relative mt-6 flex w-fit max-w-full items-center gap-2.5 rounded-[8px] border border-line py-2 pl-3 pr-3.5 text-sm shadow-fluent-2 transition-shadow duration-150 hover:shadow-fluent-8"
+              >
+                <span className="flex shrink-0 text-xl text-lavender">
+                  <NewsMark />
+                </span>
+                <span className="min-w-0 truncate">
+                  <span className="text-muted">Featured in </span>
+                  <span className="font-semibold">{mention.outlet}</span>
+                  {mention.date ? <span className="text-faint"> · {mention.date}</span> : null}
+                </span>
+                <span className="ml-1 flex shrink-0 items-center gap-1 text-xs font-semibold text-accent-hover group-hover:underline">
+                  Read
+                  <Open className="size-3.5" />
+                </span>
+              </a>
             ) : null}
           </Reveal>
         </div>
