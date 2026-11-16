@@ -205,6 +205,25 @@ figure, the rest as tiles on white. An empty list hides it.
 
 ---
 
+## Visitor tracking
+
+`/admin/visitors` reads the `visits` table, one row per public page view.
+`components/visit-beacon.tsx` (mounted in the root layout) posts the path and
+referrer to `/api/visit`; the route adds country, region, city and IP from the
+headers Vercel puts on every request, so there is no third-party service.
+
+Not recorded: anything outside production (local dev shares the live database,
+so it would log the owner's own testing), a request with a valid admin session,
+bots and headless browsers, and `/admin` or `/api` paths. To test the route
+locally, run `next build && next start` and post to it with fake
+`x-vercel-ip-*` headers — then delete the rows, since they land in the live
+table.
+
+IP addresses are personal data under GDPR and Georgia's data-protection law.
+The page has buttons to delete visits older than 90 days, or all of them.
+
+---
+
 ## Small things that will bite
 
 - **Replacing an image under the same name serves the old one.** The image

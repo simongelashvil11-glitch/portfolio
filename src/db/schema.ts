@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   jsonb,
   pgTable,
@@ -207,6 +208,35 @@ export const tools = pgTable("tools", {
   sortOrder: integer("sort_order").default(0).notNull(),
 });
 
+/*
+ * One row per page view on the public site, for the Visitors page in the
+ * admin. Location comes from the headers Vercel adds to every request, so
+ * nothing is looked up from a third party. The owner's own visits (a valid
+ * admin session), bots and local development are never recorded.
+ *
+ * The IP is personal data in most jurisdictions; it is kept because the
+ * owner asked for it, and the admin page can clear old rows.
+ */
+export const visits = pgTable(
+  "visits",
+  {
+    id: serial("id").primaryKey(),
+    path: varchar("path", { length: 300 }).notNull(),
+    /** ISO 3166-1 alpha-2, e.g. "GE". Null when the host did not say. */
+    country: varchar("country", { length: 2 }),
+    region: varchar("region", { length: 80 }),
+    city: varchar("city", { length: 120 }),
+    ip: varchar("ip", { length: 64 }),
+    /** Where the visitor came from: the referring host, or null if direct. */
+    referrer: varchar("referrer", { length: 300 }),
+    device: varchar("device", { length: 16 }),
+    browser: varchar("browser", { length: 40 }),
+    os: varchar("os", { length: 40 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [index("visits_created_at_idx").on(table.createdAt)],
+);
+
 export type Profile = typeof profile.$inferSelect;
 export type Experience = typeof experiences.$inferSelect;
 export type Project = typeof projects.$inferSelect;
@@ -215,3 +245,4 @@ export type Tool = typeof tools.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type Update = typeof updates.$inferSelect;
 export type Message = typeof messages.$inferSelect;
+export type Visit = typeof visits.$inferSelect;

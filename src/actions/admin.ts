@@ -1,12 +1,12 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { eq, lt } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { experiences, messages, posts, profile, projects, skills, tools, updates } from "@/db/schema";
+import { experiences, messages, posts, profile, projects, skills, tools, updates, visits } from "@/db/schema";
 import { requireSession } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
 
@@ -618,4 +618,23 @@ export async function deleteMessage(formData: FormData) {
   await db.delete(messages).where(eq(messages.id, Number(text(formData.get("id")))));
   revalidatePath("/admin/messages");
   revalidatePath("/admin");
+}
+
+/* ------------------------------------------------------------------ */
+/* visitors                                                            */
+/* ------------------------------------------------------------------ */
+
+/** Deletes recorded visits: all of them at 0 days, otherwise those older than that. */
+export async function clearVisits(formData: FormData) {
+  await requireSession();
+  const days = Number(text(formData.get("olderThanDays")));
+  if (!Number.isFinite(days) || days < 0) return;
+
+  if (days === 0) {
+    await db.delete(visits);
+  } else {
+    await db.delete(visits).where(lt(visits.createdAt, new Date(Date.now() - days * 24 * 60 * 60 * 1000)));
+  }
+
+  revalidatePath("/admin/visitors");
 }

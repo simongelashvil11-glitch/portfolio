@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BarChart3,
   Briefcase,
   FileText,
   FolderKanban,
@@ -47,7 +48,10 @@ const GROUPS: { heading: string | null; items: NavItem[] }[] = [
   },
   {
     heading: null,
-    items: [{ href: "/admin/messages", label: "Messages", icon: Inbox }],
+    items: [
+      { href: "/admin/messages", label: "Messages", icon: Inbox },
+      { href: "/admin/visitors", label: "Visitors", icon: BarChart3 },
+    ],
   },
 ];
 
