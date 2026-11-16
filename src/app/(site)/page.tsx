@@ -54,7 +54,13 @@ export default async function HomePage() {
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10 lg:px-10 lg:py-12">
       {/* ---------- Page header ---------- */}
       <section className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_15rem]">
-        <div>
+        {/*
+          min-w-0: a grid item will not shrink below its content by default,
+          and the one-line press strip below is as wide as its full text. On
+          a phone that widened this whole column past the screen and pushed
+          the heading, the text and the buttons off the right edge.
+        */}
+        <div className="min-w-0">
           <Reveal>
             <p className="text-sm text-faint">
               <Greeting />
@@ -124,10 +130,12 @@ export default async function HomePage() {
                 <span className="min-w-0 truncate">
                   <span className="text-muted">Featured in </span>
                   <span className="font-semibold">{mention.outlet}</span>
-                  {mention.date ? <span className="text-faint"> · {mention.date}</span> : null}
+                  {/* The date waits for room; on a phone the line stays short. */}
+                  {mention.date ? <span className="hidden text-faint sm:inline"> · {mention.date}</span> : null}
                 </span>
-                <span className="ml-1 flex shrink-0 items-center gap-1 text-xs font-semibold text-accent-hover group-hover:underline">
-                  Read
+                <span className="ml-auto flex shrink-0 items-center gap-1 text-xs font-semibold text-accent-hover group-hover:underline sm:ml-1">
+                  {/* On a phone the arrow alone says "opens elsewhere"; the word waits for room. */}
+                  <span className="hidden sm:inline">Read</span>
                   <Open className="size-3.5" />
                 </span>
               </a>
