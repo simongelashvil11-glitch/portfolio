@@ -1,11 +1,12 @@
-import { and, count, countDistinct, desc, gte, isNotNull, sql, type SQL } from "drizzle-orm";
+import { and, count, countDistinct, desc, gte, inArray, isNotNull, max, sql, type SQL } from "drizzle-orm";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 import { clearVisits } from "@/actions/admin";
 import { ConfirmForm } from "@/components/admin/confirm-form";
 import { Card, EmptyState, PageHeading } from "@/components/admin/ui";
 import { db } from "@/db";
-import { visits } from "@/db/schema";
+import { visits, type Visit } from "@/db/schema";
 import { requireSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +46,49 @@ function when(date: Date): string {
   }).format(date);
 }
 
+function clock(date: Date): string {
+  return new Intl.DateTimeFormat("en-GB", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit" }).format(date);
+}
+
+function place(row: Pick<Visit, "city" | "country">): string {
+  return [row.city, countryName(row.country)].filter(Boolean).join(", ");
+}
+
+/** How many addresses the per-visitor panel lists, most recently seen first. */
+const VISITOR_LIMIT = 50;
+
+/** A gap longer than this between two views from one address starts a new visit. */
+const VISIT_GAP_MS = 30 * 60 * 1000;
+
+type Trail = {
+  ip: string;
+  /** Page views split into visits, each in the order they happened. */
+  sessions: Visit[][];
+  views: number;
+  pages: string[];
+  latest: Visit;
+  first: Visit;
+};
+
+/** Groups one address's views (oldest first) into visits separated by a long pause. */
+function trail(ip: string, rows: Visit[]): Trail {
+  const sessions: Visit[][] = [];
+  for (const row of rows) {
+    const current = sessions[sessions.length - 1];
+    const previous = current?.[current.length - 1];
+    if (previous && row.createdAt.getTime() - previous.createdAt.getTime() <= VISIT_GAP_MS) current.push(row);
+    else sessions.push([row]);
+  }
+  return {
+    ip,
+    sessions,
+    views: rows.length,
+    pages: [...new Set(rows.map((row) => row.path))],
+    latest: rows[rows.length - 1],
+    first: rows[0],
+  };
+}
+
 /**
  * A calendar day in Tbilisi, as "YYYY-MM-DD", for grouping views by day.
  * The zone is written into the SQL rather than bound: as a parameter it
@@ -73,7 +117,7 @@ export default async function VisitorsPage({
 
   const inRange: SQL | undefined = since ? gte(visits.createdAt, since) : undefined;
 
-  const [[totals], countries, pages, sources, devices, cities, daily, recent] = await Promise.all([
+  const [[totals], countries, pages, sources, devices, cities, daily, recent, people] = await Promise.all([
     db
       .select({
         views: count(),
@@ -119,7 +163,34 @@ export default async function VisitorsPage({
       ? db.select({ day: DAY, views: count() }).from(visits).where(inRange).groupBy(DAY).orderBy(DAY)
       : Promise.resolve([] as { day: string; views: number }[]),
     db.select().from(visits).where(inRange).orderBy(desc(visits.createdAt)).limit(100),
+    db
+      .select({ ip: visits.ip })
+      .from(visits)
+      .where(and(inRange, isNotNull(visits.ip)))
+      .groupBy(visits.ip)
+      .orderBy(desc(max(visits.createdAt)))
+      .limit(VISITOR_LIMIT),
   ]);
+
+  // Every view in range from the listed addresses; newest first so the cap
+  // drops old history rather than recent activity, then turned back around.
+  const ips = people.map((row) => row.ip).filter((ip): ip is string => ip !== null);
+  const trailRows = ips.length
+    ? (
+        await db
+          .select()
+          .from(visits)
+          .where(and(inRange, inArray(visits.ip, ips)))
+          .orderBy(desc(visits.createdAt))
+          .limit(5000)
+      ).reverse()
+    : [];
+  const byIp = new Map<string, Visit[]>();
+  for (const row of trailRows) {
+    if (!row.ip) continue;
+    byIp.set(row.ip, [...(byIp.get(row.ip) ?? []), row]);
+  }
+  const trails = ips.filter((ip) => byIp.has(ip)).map((ip) => trail(ip, byIp.get(ip)!));
 
   const topPage = pages[0]?.path ?? "—";
 
@@ -240,6 +311,22 @@ export default async function VisitorsPage({
               ) : null}
             </Panel>
           </div>
+
+          {/* ---------- One row per address ---------- */}
+          {trails.length > 0 ? (
+            <Panel
+              title={`Visitors by IP${trails.length === VISITOR_LIMIT ? ` (latest ${VISITOR_LIMIT})` : ""}`}
+            >
+              <p className="-mt-2 mb-3 text-xs text-faint">
+                Select an address to see each visit in order. Views more than 30 minutes apart count as separate visits.
+              </p>
+              <div className="-mx-5 border-t border-line">
+                {trails.map((item) => (
+                  <VisitorRow key={item.ip} item={item} />
+                ))}
+              </div>
+            </Panel>
+          ) : null}
 
           {/* ---------- The log ---------- */}
           <Panel title={`Recent visits${recent.length === 100 ? " (latest 100)" : ""}`}>
@@ -371,6 +458,70 @@ function DailyBars({ days }: { days: { day: string; views: number }[] }) {
         <span>{label(days[days.length - 1].day)}</span>
       </div>
     </Panel>
+  );
+}
+
+/**
+ * One address: a summary line (where, how often, what they looked at) that
+ * opens into every view, grouped into visits. Plain <details>, so it needs no
+ * client script.
+ */
+function VisitorRow({ item }: { item: Trail }) {
+  const visitsCount = item.sessions.length;
+  const device = [item.latest.device, item.latest.browser, item.latest.os].filter(Boolean).join(" · ");
+
+  return (
+    <details className="group border-b border-line last:border-0">
+      <summary className="flex cursor-pointer list-none items-start gap-2 px-5 py-3 transition-colors hover:bg-accent-soft/40 [&::-webkit-details-marker]:hidden">
+        <ChevronRight
+          aria-hidden
+          className="mt-0.5 size-4 shrink-0 text-faint transition-transform group-open:rotate-90"
+        />
+        <span className="grid min-w-0 flex-1 gap-0.5">
+          <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+            <span className="font-mono text-xs">{item.ip}</span>
+            <span className="text-sm">{place(item.latest) || "Unknown location"}</span>
+            <span className="text-xs text-muted">
+              {visitsCount} {visitsCount === 1 ? "visit" : "visits"} · {item.views}{" "}
+              {item.views === 1 ? "page view" : "page views"}
+            </span>
+            <span className="tnum text-xs text-faint sm:ml-auto">last {when(item.latest.createdAt)}</span>
+          </span>
+          <span className="truncate text-xs text-faint">
+            Viewed <span className="font-mono">{item.pages.join("  ·  ")}</span>
+          </span>
+        </span>
+      </summary>
+
+      <div className="grid gap-4 bg-accent-soft/20 px-5 pb-4 pl-11 pt-1">
+        <p className="text-xs text-muted">
+          First seen {when(item.first.createdAt)}
+          {device ? ` · ${device}` : ""}
+        </p>
+        <ol className="grid gap-3">
+          {item.sessions.map((session, index) => (
+            <li key={session[0].id}>
+              <p className="text-xs font-medium">
+                Visit {index + 1}
+                <span className="font-normal text-faint">
+                  {" "}
+                  · {when(session[0].createdAt)} · {place(session[0]) || "unknown location"} ·{" "}
+                  {session[0].referrer ? `from ${session[0].referrer}` : "came directly"}
+                </span>
+              </p>
+              <ul className="mt-1 grid gap-0.5 border-l border-line pl-3">
+                {session.map((view) => (
+                  <li key={view.id} className="flex min-w-0 gap-3 text-sm">
+                    <span className="tnum shrink-0 text-xs leading-5 text-faint">{clock(view.createdAt)}</span>
+                    <span className="truncate font-mono text-xs leading-5">{view.path}</span>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </details>
   );
 }
 
