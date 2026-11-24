@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { clearVisits } from "@/actions/admin";
 import { ConfirmForm } from "@/components/admin/confirm-form";
+import { CloudTag, countryName } from "@/components/admin/network";
 import { Card, EmptyState, PageHeading } from "@/components/admin/ui";
 import { db } from "@/db";
 import { visits, type Visit } from "@/db/schema";
@@ -17,17 +18,6 @@ export const metadata = { title: "Visitors" };
 
 /** Times are shown in Tbilisi, where the site's owner reads them. */
 const TIME_ZONE = "Asia/Tbilisi";
-
-const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
-
-function countryName(code: string | null): string {
-  if (!code) return "Unknown";
-  try {
-    return regionNames.of(code) ?? code;
-  } catch {
-    return code;
-  }
-}
 
 function when(date: Date): string {
   return new Intl.DateTimeFormat("en-GB", {
@@ -612,18 +602,6 @@ function VisitorRow({ item }: { item: Trail }) {
         </ol>
       </div>
     </details>
-  );
-}
-
-/** Marks a hosting or cloud network: a server, VPN or relay rather than a person's own line. */
-function CloudTag() {
-  return (
-    <span
-      title="Hosting, cloud or platform network: usually a server, link preview, VPN or privacy relay rather than someone's own connection"
-      className="shrink-0 rounded-full border border-line px-1.5 text-[10px] uppercase leading-4 tracking-wide text-faint"
-    >
-      server / VPN
-    </span>
   );
 }
 

@@ -258,7 +258,17 @@ export const signals = pgTable("signals", {
   signalKey: text("signal_key"),
   signalValue: text("signal_value"),
   path: text("path"),
-   ip: varchar("ip", { length: 64 }),
+  ip: varchar("ip", { length: 64 }),
+  /** Same identity fields as visits, recorded the same way (lib/request-identity, lib/network). */
+  country: varchar("country", { length: 2 }),
+  region: varchar("region", { length: 80 }),
+  city: varchar("city", { length: 120 }),
+  network: varchar("network", { length: 120 }),
+  asn: integer("asn"),
+  cloud: boolean("cloud"),
+  device: varchar("device", { length: 16 }),
+  browser: varchar("browser", { length: 40 }),
+  os: varchar("os", { length: 40 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

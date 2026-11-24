@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { visits } from "@/db/schema";
 import { lookupNetwork } from "@/lib/network";
 import { rateLimit, requestIp } from "@/lib/rate-limit";
+import { requestIdentity } from "@/lib/request-identity";
 import { SESSION_COOKIE, verifySession } from "@/lib/session";
 
 /*
@@ -22,25 +23,6 @@ import { SESSION_COOKIE, verifySession } from "@/lib/session";
  * - known bots, by user agent;
  * - anything that does not look like one of the site's own paths.
  */
-
-/** The value of a Vercel header, URL-decoded (cities arrive encoded), or null. */
-function header(request: NextRequest, name: string, max: number): string | null {
-  const raw = request.headers.get(name);
-  if (!raw) return null;
-  try {
-    return decodeURIComponent(raw).slice(0, max) || null;
-  } catch {
-    return raw.slice(0, max) || null;
-  }
-}
-
-/** The visitor's address: Vercel's own header first, then the proxy chain's first hop. */
-function clientIp(request: NextRequest): string | null {
-  const direct = request.headers.get("x-real-ip");
-  if (direct) return direct.slice(0, 64);
-  const chain = request.headers.get("x-forwarded-for");
-  return chain ? chain.split(",")[0].trim().slice(0, 64) || null : null;
-}
 
 /** A trimmed, length-capped string from the body, or null. */
 function text(value: unknown, max: number): string | null {
@@ -96,24 +78,18 @@ export async function POST(request: NextRequest) {
   if (!/^\/(?!\/)[^\s<>"'`\\]{0,299}$/.test(path)) return refused;
   if (path.startsWith("/admin") || path.startsWith("/api")) return nothing;
 
-  const ip = clientIp(request);
+  const identity = requestIdentity(request);
+  const { ip } = identity;
 
   const row = {
     path,
-    country: header(request, "x-vercel-ip-country", 2)?.toUpperCase() ?? null,
-    region: header(request, "x-vercel-ip-country-region", 80),
-    city: header(request, "x-vercel-ip-city", 120),
-    ip,
+    ...identity,
     utmSource: text(body.utmSource, 100),
     utmMedium: text(body.utmMedium, 100),
     utmCampaign: text(body.utmCampaign, 100),
     screen: /^\d{2,5}x\d{2,5}$/.test(String(body.screen)) ? String(body.screen) : null,
     lang: typeof body.lang === "string" && /^[A-Za-z0-9-]{2,35}$/.test(body.lang) ? body.lang : null,
     referrer: referrerHost(body.referrer, request.nextUrl.hostname),
-    // The parser reports no type for desktop browsers.
-    device: (ua.device.type ?? "desktop").slice(0, 16),
-    browser: ua.browser.name?.slice(0, 40) ?? null,
-    os: ua.os.name?.slice(0, 40) ?? null,
   };
 
   after(async () => {

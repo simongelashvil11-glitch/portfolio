@@ -2,7 +2,9 @@ import { after, type NextRequest } from "next/server";
 
 import { db } from "@/db";
 import { signals } from "@/db/schema";
+import { lookupNetwork } from "@/lib/network";
 import { rateLimit, requestIp } from "@/lib/rate-limit";
+import { requestIdentity } from "@/lib/request-identity";
 import { SESSION_COOKIE, verifySession } from "@/lib/session";
 
 /*
@@ -12,6 +14,10 @@ import { SESSION_COOKIE, verifySession } from "@/lib/session";
  * Content of copied text or unsent form fields is never captured —
  * counts and classifications only. The response goes out first, the row
  * is written afterwards, so a slow database never delays the visitor.
+ *
+ * Each signal also carries the same identity a page view does — address,
+ * location, device and the network behind the address — recorded the same
+ * way as the visit route (lib/request-identity, lib/network).
  */
 
 /** A trimmed, length-capped string from the body, or null. */
@@ -33,10 +39,8 @@ export async function POST(request: NextRequest) {
   const nothing = new Response(null, { status: 204 });
   const refused = new Response(null, { status: 400 });
 
-  const ip = requestIp(request.headers);
-
   // Quiet per-address flood guard, same shape as the visit route.
-  if (!rateLimit(`signal:${ip}`, 60, 60_000)) return nothing;
+  if (!rateLimit(`signal:${requestIp(request.headers)}`, 60, 60_000)) return nothing;
 
   let body: Record<string, unknown>;
   try {
@@ -66,12 +70,16 @@ export async function POST(request: NextRequest) {
     signalValue: text(body.value, 300),
     sessionId: text(body.sid, 64),
     path,
-    ip: ip === "unknown" ? null : ip,
+    ...requestIdentity(request),
   };
 
   after(async () => {
     try {
-      await db.insert(signals).values(row);
+      // Looked up from the database file on this server; the IP goes nowhere else.
+      const network = await lookupNetwork(row.ip);
+      await db
+        .insert(signals)
+        .values({ ...row, network: network?.name ?? null, asn: network?.asn ?? null, cloud: network?.cloud ?? null });
     } catch (error) {
       console.error("signal not recorded", error);
     }

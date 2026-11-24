@@ -47,6 +47,7 @@ const nextConfig: NextConfig = {
   // file tracer cannot see, so it is named here for the routes that use it.
   outputFileTracingIncludes: {
     "/api/visit": ["./data/dbip-asn-lite.mmdb"],
+    "/api/signal": ["./data/dbip-asn-lite.mmdb"],
   },
   images: {
     // Cover images are pasted in as URLs from the admin dashboard, so the
