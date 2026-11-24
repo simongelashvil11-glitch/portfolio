@@ -29,8 +29,8 @@ export function SiteFooter({ name, socials }: { name: string; socials: Social[] 
         plainly is the honest minimum. Kept to one quiet line.
       */}
       <p className="mx-auto w-full max-w-5xl px-6 pb-5 text-[11px] leading-4 text-faint lg:px-10">
-        This site records visits — the page, approximate location and IP address — to see where readers come from.
-        Nothing is shared or sold.
+        This site records visits — the page, approximate location, IP address and its network, and basic browser
+        details — to see where readers come from. No cookies or fingerprinting; nothing is shared or sold.
       </p>
     </footer>
   );

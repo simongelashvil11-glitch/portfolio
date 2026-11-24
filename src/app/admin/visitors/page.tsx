@@ -1,5 +1,5 @@
-import { and, count, countDistinct, desc, gte, inArray, isNotNull, max, sql, type SQL } from "drizzle-orm";
-import { ChevronRight } from "lucide-react";
+import { and, count, countDistinct, desc, inArray, isNotNull, max, sql, type SQL } from "drizzle-orm";
+import { ChevronRight, Download } from "lucide-react";
 import Link from "next/link";
 
 import { clearVisits } from "@/actions/admin";
@@ -9,18 +9,11 @@ import { db } from "@/db";
 import { visits, type Visit } from "@/db/schema";
 import { requireSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { pickRange, RANGES, rangeCutoff, inRange as rangeWhere } from "@/lib/visit-ranges";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Visitors" };
-
-const RANGES = [
-  { key: "24h", label: "24 hours", days: 1 },
-  { key: "7d", label: "7 days", days: 7 },
-  { key: "30d", label: "30 days", days: 30 },
-  { key: "90d", label: "90 days", days: 90 },
-  { key: "all", label: "All time", days: null },
-] as const;
 
 /** Times are shown in Tbilisi, where the site's owner reads them. */
 const TIME_ZONE = "Asia/Tbilisi";
@@ -104,20 +97,12 @@ export default async function VisitorsPage({
 }) {
   await requireSession();
 
-  const requested = (await searchParams).range;
-  const range = RANGES.find((item) => item.key === requested) ?? RANGES[2];
-  /*
-   * The cutoff is worked out by the database, so the page never reads the
-   * clock while rendering. The column holds UTC without a zone, so "now" is
-   * taken in UTC to compare like with like.
-   */
-  const since = range.days
-    ? sql`(now() at time zone 'UTC') - make_interval(days => ${range.days})`
-    : null;
+  const range = pickRange((await searchParams).range);
+  const since = rangeCutoff(range);
+  const inRange: SQL | undefined = rangeWhere(range);
 
-  const inRange: SQL | undefined = since ? gte(visits.createdAt, since) : undefined;
-
-  const [[totals], countries, pages, sources, devices, cities, daily, recent, people] = await Promise.all([
+  const [[totals], countries, pages, sources, devices, cities, daily, recent, people, networks, campaigns] =
+    await Promise.all([
     db
       .select({
         views: count(),
@@ -170,6 +155,26 @@ export default async function VisitorsPage({
       .groupBy(visits.ip)
       .orderBy(desc(max(visits.createdAt)))
       .limit(VISITOR_LIMIT),
+    db
+      .select({ network: visits.network, cloud: visits.cloud, views: count(), visitors: countDistinct(visits.ip) })
+      .from(visits)
+      .where(and(inRange, isNotNull(visits.network)))
+      .groupBy(visits.network, visits.cloud)
+      .orderBy(desc(countDistinct(visits.ip)), desc(count()))
+      .limit(10),
+    db
+      .select({
+        source: visits.utmSource,
+        medium: visits.utmMedium,
+        campaign: visits.utmCampaign,
+        views: count(),
+        visitors: countDistinct(visits.ip),
+      })
+      .from(visits)
+      .where(and(inRange, isNotNull(visits.utmSource)))
+      .groupBy(visits.utmSource, visits.utmMedium, visits.utmCampaign)
+      .orderBy(desc(count()))
+      .limit(10),
   ]);
 
   // Every view in range from the listed addresses; newest first so the cap
@@ -218,6 +223,16 @@ export default async function VisitorsPage({
             {item.label}
           </Link>
         ))}
+        {totals.views > 0 ? (
+          <a
+            href={`/admin/visitors/export?range=${range.key}`}
+            download
+            className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm text-muted transition-colors hover:border-accent hover:text-foreground"
+          >
+            <Download aria-hidden className="size-3.5" />
+            Export CSV
+          </a>
+        ) : null}
       </nav>
 
       {totals.views === 0 ? (
@@ -310,6 +325,59 @@ export default async function VisitorsPage({
                 </p>
               ) : null}
             </Panel>
+
+            <Panel title="Networks">
+              {networks.length === 0 ? (
+                <p className="text-sm text-faint">No network data yet. It is recorded for visits from now on.</p>
+              ) : (
+                <MeterList
+                  rows={networks.map((row) => ({
+                    key: `${row.network}-${row.cloud}`,
+                    label: (
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="truncate">{row.network}</span>
+                        {row.cloud ? <CloudTag /> : null}
+                      </span>
+                    ),
+                    value: row.visitors,
+                    note: `${row.views} ${row.views === 1 ? "view" : "views"}`,
+                  }))}
+                />
+              )}
+              <p className="mt-4 border-t border-line pt-3 text-xs text-faint">
+                Counted in visitors: the carrier, ISP, company or cloud host that owns each address. Data:{" "}
+                <a href="https://db-ip.com" className="underline hover:text-foreground">
+                  IP to ASN Lite by DB-IP
+                </a>
+                , CC BY 4.0.
+              </p>
+            </Panel>
+
+            <Panel title="Campaigns">
+              {campaigns.length === 0 ? (
+                <p className="text-sm text-muted">
+                  No tagged links yet. Add tags to a link you share to see it here, for example:
+                  <code className="mt-2 block break-all rounded bg-accent-soft/60 px-2 py-1 font-mono text-xs">
+                    simongelashvili.com/?utm_source=linkedin&amp;utm_campaign=job-post
+                  </code>
+                </p>
+              ) : (
+                <MeterList
+                  rows={campaigns.map((row) => ({
+                    key: `${row.source}-${row.medium}-${row.campaign}`,
+                    label: (
+                      <span className="truncate">
+                        {row.source}
+                        {row.medium ? <span className="text-faint"> / {row.medium}</span> : null}
+                        {row.campaign ? <span className="text-faint"> · {row.campaign}</span> : null}
+                      </span>
+                    ),
+                    value: row.views,
+                    note: `${row.visitors} ${row.visitors === 1 ? "visitor" : "visitors"}`,
+                  }))}
+                />
+              )}
+            </Panel>
           </div>
 
           {/* ---------- One row per address ---------- */}
@@ -331,12 +399,13 @@ export default async function VisitorsPage({
           {/* ---------- The log ---------- */}
           <Panel title={`Recent visits${recent.length === 100 ? " (latest 100)" : ""}`}>
             <div className="-mx-5 overflow-x-auto">
-              <table className="w-full min-w-[46rem] text-left text-sm">
+              <table className="w-full min-w-[56rem] text-left text-sm">
                 <thead className="text-xs text-faint">
                   <tr className="border-b border-line">
                     <th className="px-5 py-2 font-medium">When</th>
                     <th className="px-2 py-2 font-medium">Where</th>
                     <th className="px-2 py-2 font-medium">IP</th>
+                    <th className="px-2 py-2 font-medium">Network</th>
                     <th className="px-2 py-2 font-medium">Page</th>
                     <th className="px-2 py-2 font-medium">Device</th>
                     <th className="px-5 py-2 font-medium">From</th>
@@ -350,6 +419,9 @@ export default async function VisitorsPage({
                         {[row.city, countryName(row.country)].filter(Boolean).join(", ")}
                       </td>
                       <td className="whitespace-nowrap px-2 py-2 font-mono text-xs text-muted">{row.ip ?? "—"}</td>
+                      <td className="max-w-[11rem] truncate px-2 py-2 text-muted" title={row.network ?? undefined}>
+                        {row.network ?? "—"}
+                      </td>
                       <td className="max-w-[14rem] truncate px-2 py-2 font-mono text-xs">{row.path}</td>
                       <td className="whitespace-nowrap px-2 py-2 text-muted">
                         {[row.device, row.browser, row.os].filter(Boolean).join(" · ")}
@@ -481,6 +553,12 @@ function VisitorRow({ item }: { item: Trail }) {
           <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
             <span className="font-mono text-xs">{item.ip}</span>
             <span className="text-sm">{place(item.latest) || "Unknown location"}</span>
+            {item.latest.network ? (
+              <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted">
+                {item.latest.network}
+                {item.latest.cloud ? <CloudTag /> : null}
+              </span>
+            ) : null}
             <span className="text-xs text-muted">
               {visitsCount} {visitsCount === 1 ? "visit" : "visits"} · {item.views}{" "}
               {item.views === 1 ? "page view" : "page views"}
@@ -495,8 +573,15 @@ function VisitorRow({ item }: { item: Trail }) {
 
       <div className="grid gap-4 bg-accent-soft/20 px-5 pb-4 pl-11 pt-1">
         <p className="text-xs text-muted">
-          First seen {when(item.first.createdAt)}
-          {device ? ` · ${device}` : ""}
+          {[
+            `First seen ${when(item.first.createdAt)}`,
+            device,
+            item.latest.screen ? `window ${item.latest.screen}` : null,
+            item.latest.lang ? `language ${item.latest.lang}` : null,
+            item.latest.asn ? `AS${item.latest.asn}` : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
         </p>
         <ol className="grid gap-3">
           {item.sessions.map((session, index) => (
@@ -507,6 +592,11 @@ function VisitorRow({ item }: { item: Trail }) {
                   {" "}
                   · {when(session[0].createdAt)} · {place(session[0]) || "unknown location"} ·{" "}
                   {session[0].referrer ? `from ${session[0].referrer}` : "came directly"}
+                  {session[0].utmSource
+                    ? ` · link tagged ${[session[0].utmSource, session[0].utmMedium, session[0].utmCampaign]
+                        .filter(Boolean)
+                        .join(" / ")}`
+                    : ""}
                 </span>
               </p>
               <ul className="mt-1 grid gap-0.5 border-l border-line pl-3">
@@ -522,6 +612,18 @@ function VisitorRow({ item }: { item: Trail }) {
         </ol>
       </div>
     </details>
+  );
+}
+
+/** Marks a hosting or cloud network: a server, VPN or relay rather than a person's own line. */
+function CloudTag() {
+  return (
+    <span
+      title="Hosting, cloud or platform network: usually a server, link preview, VPN or privacy relay rather than someone's own connection"
+      className="shrink-0 rounded-full border border-line px-1.5 text-[10px] uppercase leading-4 tracking-wide text-faint"
+    >
+      server / VPN
+    </span>
   );
 }
 

@@ -24,7 +24,17 @@ export function VisitBeacon() {
     const referrer = first.current ? document.referrer : "";
     first.current = false;
 
-    const body = JSON.stringify({ path: pathname, referrer });
+    // Campaign tags, when a shared link carried them (?utm_source=linkedin…).
+    const params = new URLSearchParams(window.location.search);
+    const body = JSON.stringify({
+      path: pathname,
+      referrer,
+      utmSource: params.get("utm_source"),
+      utmMedium: params.get("utm_medium"),
+      utmCampaign: params.get("utm_campaign"),
+      screen: `${window.innerWidth}x${window.innerHeight}`,
+      lang: navigator.language,
+    });
 
     try {
       if (navigator.sendBeacon?.("/api/visit", new Blob([body], { type: "text/plain" }))) return;

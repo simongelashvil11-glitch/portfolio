@@ -2,13 +2,15 @@ import { after, type NextRequest, userAgent } from "next/server";
 
 import { db } from "@/db";
 import { visits } from "@/db/schema";
+import { lookupNetwork } from "@/lib/network";
 import { SESSION_COOKIE, verifySession } from "@/lib/session";
 
 /*
  * Records one page view, sent by the visit beacon on every public page.
  *
- * Location and IP come from the headers Vercel puts on each request, so no
- * third-party lookup is involved. The response is sent first and the row is
+ * Location and IP come from the headers Vercel puts on each request, and the
+ * network (carrier, ISP, company or cloud host) from a database file kept with
+ * the site, so no third-party lookup is involved. The response is sent first and the row is
  * written afterwards (`after`), so a slow database never delays anything the
  * visitor sees.
  *
@@ -39,6 +41,11 @@ function clientIp(request: NextRequest): string | null {
   return chain ? chain.split(",")[0].trim().slice(0, 64) || null : null;
 }
 
+/** A trimmed, length-capped string from the body, or null. */
+function text(value: unknown, max: number): string | null {
+  return typeof value === "string" ? value.trim().slice(0, max) || null : null;
+}
+
 /** Only the host of an outside referrer is kept; the site's own pages and blanks count as direct. */
 function referrerHost(value: unknown, ownHost: string | null): string | null {
   if (typeof value !== "string" || !value) return null;
@@ -63,7 +70,7 @@ export async function POST(request: NextRequest) {
 
   if (await verifySession(request.cookies.get(SESSION_COOKIE)?.value)) return nothing;
 
-  let body: { path?: unknown; referrer?: unknown };
+  let body: Record<string, unknown>;
   try {
     body = JSON.parse(await request.text());
   } catch {
@@ -75,12 +82,19 @@ export async function POST(request: NextRequest) {
     return nothing;
   }
 
+  const ip = clientIp(request);
+
   const row = {
     path,
     country: header(request, "x-vercel-ip-country", 2)?.toUpperCase() ?? null,
     region: header(request, "x-vercel-ip-country-region", 80),
     city: header(request, "x-vercel-ip-city", 120),
-    ip: clientIp(request),
+    ip,
+    utmSource: text(body.utmSource, 100),
+    utmMedium: text(body.utmMedium, 100),
+    utmCampaign: text(body.utmCampaign, 100),
+    screen: /^\d{2,5}x\d{2,5}$/.test(String(body.screen)) ? String(body.screen) : null,
+    lang: typeof body.lang === "string" && /^[A-Za-z0-9-]{2,35}$/.test(body.lang) ? body.lang : null,
     referrer: referrerHost(body.referrer, request.nextUrl.hostname),
     // The parser reports no type for desktop browsers.
     device: (ua.device.type ?? "desktop").slice(0, 16),
@@ -90,7 +104,11 @@ export async function POST(request: NextRequest) {
 
   after(async () => {
     try {
-      await db.insert(visits).values(row);
+      // Looked up from the database file on this server; the IP goes nowhere else.
+      const network = await lookupNetwork(ip);
+      await db
+        .insert(visits)
+        .values({ ...row, network: network?.name ?? null, asn: network?.asn ?? null, cloud: network?.cloud ?? null });
     } catch (error) {
       // A lost page view is not worth an error page; note it and move on.
       console.error("visit not recorded", error);

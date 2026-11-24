@@ -219,6 +219,22 @@ locally, run `next build && next start` and post to it with fake
 `x-vercel-ip-*` headers — then delete the rows, since they land in the live
 table.
 
+The beacon also sends UTM tags from the URL, the window size and the browser
+language. The route adds the **network** (carrier, ISP, company or cloud host,
+plus its AS number) from `data/dbip-asn-lite.mmdb` — DB-IP's free "IP to ASN
+Lite", CC BY 4.0, read by `lib/network.ts`. It is a file on the server, so IPs
+are never sent anywhere. `cloud` marks hosting providers (AWS, Google Cloud,
+Cloudflare WARP, VPN hosts…): those visits are servers or relays, not someone's
+own line. To refresh the data, download the month's `dbip-asn-lite-YYYY-MM.mmdb.gz`
+from db-ip.com, unzip it over the file and deploy. `next.config.ts` lists the
+file in `outputFileTracingIncludes`, or Vercel would leave it out.
+
+`/admin/visitors/export?range=…` downloads the range as CSV.
+
+Deliberately not done, so the footer notice stays true and no consent banner is
+needed: cookies or local IDs for visitors, browser fingerprinting, and sending
+IPs to lookup services such as ip-api.com.
+
 IP addresses are personal data under GDPR and Georgia's data-protection law.
 The page has buttons to delete visits older than 90 days, or all of them.
 

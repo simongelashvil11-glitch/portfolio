@@ -232,6 +232,19 @@ export const visits = pgTable(
     device: varchar("device", { length: 16 }),
     browser: varchar("browser", { length: 40 }),
     os: varchar("os", { length: 40 }),
+    /** Who owns the address: carrier, ISP, company or cloud host (see lib/network). */
+    network: varchar("network", { length: 120 }),
+    asn: integer("asn"),
+    /** The network is a hosting or cloud provider: a server, VPN or relay, not a home or office line. */
+    cloud: boolean("cloud"),
+    /** Campaign tags from the landing URL (?utm_source=…), when a link carried them. */
+    utmSource: varchar("utm_source", { length: 100 }),
+    utmMedium: varchar("utm_medium", { length: 100 }),
+    utmCampaign: varchar("utm_campaign", { length: 100 }),
+    /** Browser window size, e.g. "1440x900". */
+    screen: varchar("screen", { length: 16 }),
+    /** The browser's preferred language, e.g. "ka-GE". */
+    lang: varchar("lang", { length: 35 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [index("visits_created_at_idx").on(table.createdAt)],
