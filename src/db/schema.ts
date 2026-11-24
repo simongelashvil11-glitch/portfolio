@@ -1,4 +1,5 @@
 import {
+  bigint,
   boolean,
   index,
   integer,
@@ -250,8 +251,10 @@ export const visits = pgTable(
   (table) => [index("visits_created_at_idx").on(table.createdAt)],
 );
 
+// Created by hand before it was in this file; the column types below match
+// that table, so db:push leaves them alone.
 export const signals = pgTable("signals", {
-  id: serial("id").primaryKey(),
+  id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
   visitorHash: text("visitor_hash"),
   sessionId: text("session_id"),
   signalType: text("signal_type").notNull(),
@@ -269,7 +272,7 @@ export const signals = pgTable("signals", {
   device: varchar("device", { length: 16 }),
   browser: varchar("browser", { length: 40 }),
   os: varchar("os", { length: 40 }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type Profile = typeof profile.$inferSelect;
