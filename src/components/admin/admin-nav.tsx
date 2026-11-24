@@ -10,6 +10,7 @@ import {
   Newspaper,
   User,
   Wrench,
+  Activity,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -37,10 +38,10 @@ const GROUPS: { heading: string | null; items: NavItem[] }[] = [
       { href: "/admin/projects", label: "Selected work", icon: FolderKanban },
     ],
   },
-  
+
    {
   heading: "Insights",
-  items: [{ href: "/admin/signals", label: "Signals" }],
+  items: [{ href: "/admin/signals", label: "Signals", icon: Activity }],
    },
 
   {
