@@ -136,12 +136,15 @@ export default async function SignalsPage() {
                     const badge = TYPE_BADGES[e.type];
                     return (
                       <li key={i} className="flex flex-wrap items-center gap-2 text-sm">
+
                         <span className="w-16 shrink-0 font-mono text-xs text-faint">
-                          {new Date(e.at).toLocaleTimeString("en-GB", {
-                            hour: "2-digit",
-                            minute: "2-digit",
+                        {new Date(e.at).toLocaleTimeString("en-GB", {
+                        timeZone: "Asia/Tbilisi",
+                         hour: "2-digit",
+                          minute: "2-digit",
                           })}
                         </span>
+                        
                         {badge ? (
                           <span
                             className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest ${badge.cls}`}
