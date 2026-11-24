@@ -37,7 +37,11 @@ const GROUPS: { heading: string | null; items: NavItem[] }[] = [
       { href: "/admin/projects", label: "Selected work", icon: FolderKanban },
     ],
   },
-   { label: "Signals", href: "/admin/signals" },
+  
+   {
+  heading: "Insights",
+  items: [{ href: "/admin/signals", label: "Signals" }],
+   },
 
   {
     heading: "About page",
