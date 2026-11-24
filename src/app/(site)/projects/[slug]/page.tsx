@@ -33,7 +33,8 @@ export async function generateMetadata({
     openGraph: {
       title: project.title,
       description: project.summary,
-      images: project.imageUrl ? [project.imageUrl] : undefined,
+      // Setting openGraph here replaces the site's card, so fall back to it explicitly.
+      images: [project.imageUrl || "/opengraph-image"],
     },
   };
 }

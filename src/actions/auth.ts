@@ -1,9 +1,15 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { login, logout } from "@/lib/auth";
+import { rateLimit, requestIp } from "@/lib/rate-limit";
+
+/** Sign-in attempts allowed per address in LOGIN_WINDOW_MS, right or wrong. */
+const LOGIN_ATTEMPTS = 10;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
 const LoginSchema = z.object({
   email: z.email("Enter a valid email address."),
@@ -25,6 +31,12 @@ export async function loginAction(
 
   if (!parsed.success) {
     return { error: "Enter your email address and password." };
+  }
+
+  // Counted before the password is checked, so guessing is slowed whether
+  // or not the guesses are right.
+  if (!rateLimit(`login:${requestIp(await headers())}`, LOGIN_ATTEMPTS, LOGIN_WINDOW_MS)) {
+    return { error: "Too many attempts. Wait 15 minutes and try again." };
   }
 
   const ok = await login(parsed.data.email, parsed.data.password);

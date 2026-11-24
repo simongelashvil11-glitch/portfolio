@@ -30,6 +30,8 @@ export async function generateMetadata({
       title: post.title,
       description: post.excerpt ?? undefined,
       publishedTime: post.publishedAt?.toISOString(),
+      // Setting openGraph here replaces the site's card, so name it explicitly.
+      images: ["/opengraph-image"],
     },
   };
 }

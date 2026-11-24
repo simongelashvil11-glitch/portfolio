@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 type Social = { label: string; url: string };
 
 export function SiteFooter({ name, socials }: { name: string; socials: Social[] }) {
@@ -17,11 +15,6 @@ export function SiteFooter({ name, socials }: { name: string; socials: Social[] 
               </a>
             </li>
           ))}
-          <li>
-            <Link href="/admin" className="text-xs text-faint hover:text-foreground hover:underline">
-              Admin
-            </Link>
-          </li>
         </ul>
       </div>
       {/*

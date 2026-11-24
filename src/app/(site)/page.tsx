@@ -12,9 +12,40 @@ import { VideoCardPreview } from "@/components/video";
 import { NewsMark } from "@/components/window";
 import type { Project } from "@/db/schema";
 import { getProfile, getProjects } from "@/lib/queries";
+import { siteUrl } from "@/lib/site-url";
 import { youTubeId } from "@/lib/youtube";
 
 export const revalidate = 60;
+
+// The homepage is the one address for the site's root; other pages keep their own.
+export const metadata = { alternates: { canonical: "/" } };
+
+/** What search engines are told the person works on (schema.org `knowsAbout`). */
+const KNOWS_ABOUT = ["Digital Marketing", "Meta Ads", "Video Production", "E-commerce"];
+
+/**
+ * schema.org Person data for search engines, built from the profile row.
+ * `<` is escaped so text from the admin can never close the script tag.
+ */
+function personJsonLd(profile: NonNullable<Awaited<ReturnType<typeof getProfile>>>): string {
+  const absolute = (url: string | null | undefined) =>
+    url ? (url.startsWith("/") ? `${siteUrl}${url}` : url) : undefined;
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: profile.name,
+    jobTitle: profile.role?.trim() || "Digital Marketer",
+    description: profile.headline,
+    url: siteUrl,
+    image: absolute(profile.portraitUrl?.trim()),
+    ...(profile.location?.trim()
+      ? { address: { "@type": "PostalAddress", addressLocality: profile.location.trim() } }
+      : {}),
+    sameAs: profile.socials.map((social) => social.url).filter((url) => /^https?:\/\//.test(url)),
+    knowsAbout: KNOWS_ABOUT,
+  };
+  return JSON.stringify(data).replace(/</g, "\\u003c");
+}
 
 const FALLBACK = {
   name: "Your Name",
@@ -52,6 +83,9 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10 lg:px-10 lg:py-12">
+      {profileRow ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: personJsonLd(profileRow) }} />
+      ) : null}
       {/* ---------- Page header ---------- */}
       <section className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_15rem]">
         {/*

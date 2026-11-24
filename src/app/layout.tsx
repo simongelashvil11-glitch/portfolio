@@ -29,6 +29,9 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { default: name, template: `%s — ${name}` },
     description: profile?.headline?.trim() || "Selected work and experience.",
     openGraph: { type: "website", url: siteUrl, siteName: name },
+    // The image itself comes from app/opengraph-image.tsx; this asks X and
+    // others to show it large rather than as a thumbnail.
+    twitter: { card: "summary_large_image" },
     robots: { index: true, follow: true },
   };
 }

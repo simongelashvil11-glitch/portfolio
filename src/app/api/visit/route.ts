@@ -3,6 +3,7 @@ import { after, type NextRequest, userAgent } from "next/server";
 import { db } from "@/db";
 import { visits } from "@/db/schema";
 import { lookupNetwork } from "@/lib/network";
+import { rateLimit, requestIp } from "@/lib/rate-limit";
 import { SESSION_COOKIE, verifySession } from "@/lib/session";
 
 /*
@@ -58,10 +59,18 @@ function referrerHost(value: unknown, ownHost: string | null): string | null {
   }
 }
 
+/** A real beacon is a few hundred bytes; anything far bigger is not one. */
+const MAX_BODY = 2048;
+
 export async function POST(request: NextRequest) {
   const nothing = new Response(null, { status: 204 });
+  const refused = new Response(null, { status: 400 });
 
   if (process.env.NODE_ENV !== "production") return nothing;
+
+  // A flood from one address is dropped quietly: the answer looks the same,
+  // so it gives nothing away about the limit.
+  if (!rateLimit(`visit:${requestIp(request.headers)}`, 60, 60_000)) return nothing;
 
   const ua = userAgent(request);
   // Headless browsers are scrapers, previews and screenshot tools, not people,
@@ -72,15 +81,20 @@ export async function POST(request: NextRequest) {
 
   let body: Record<string, unknown>;
   try {
-    body = JSON.parse(await request.text());
+    const raw = await request.text();
+    if (raw.length > MAX_BODY) return refused;
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return refused;
+    body = parsed as Record<string, unknown>;
   } catch {
-    return nothing;
+    return refused;
   }
 
+  // A site path: starts with one slash, no spaces, quotes, angle brackets or
+  // control characters — nothing a real page address contains.
   const path = typeof body.path === "string" ? body.path : "";
-  if (!path.startsWith("/") || path.startsWith("/admin") || path.startsWith("/api") || path.length > 300) {
-    return nothing;
-  }
+  if (!/^\/(?!\/)[^\s<>"'`\\]{0,299}$/.test(path)) return refused;
+  if (path.startsWith("/admin") || path.startsWith("/api")) return nothing;
 
   const ip = clientIp(request);
 
