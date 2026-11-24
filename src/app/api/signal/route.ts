@@ -33,8 +33,10 @@ export async function POST(request: NextRequest) {
   const nothing = new Response(null, { status: 204 });
   const refused = new Response(null, { status: 400 });
 
+  const ip = requestIp(request.headers);
+
   // Quiet per-address flood guard, same shape as the visit route.
-  if (!rateLimit(`signal:${requestIp(request.headers)}`, 60, 60_000)) return nothing;
+  if (!rateLimit(`signal:${ip}`, 60, 60_000)) return nothing;
 
   let body: Record<string, unknown>;
   try {
@@ -64,6 +66,7 @@ export async function POST(request: NextRequest) {
     signalValue: text(body.value, 300),
     sessionId: text(body.sid, 64),
     path,
+    ip: ip === "unknown" ? null : ip,
   };
 
   after(async () => {
