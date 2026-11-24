@@ -116,7 +116,33 @@ export default async function SignalsPage() {
   await requireSession();
 
   // Latest 300 signals, grouped by IP address, then into stories per session.
-  const rows = await db.select().from(signals).orderBy(desc(signals.createdAt)).limit(300);
+  const rows: Signal[] = await db
+    .select()
+    .from(signals)
+    .orderBy(desc(signals.createdAt))
+    .limit(300)
+    .catch(async () => {
+      // The identity columns are not in the database yet: read the original ones.
+      const base = await db
+        .select({
+          id: signals.id,
+          visitorHash: signals.visitorHash,
+          sessionId: signals.sessionId,
+          signalType: signals.signalType,
+          signalKey: signals.signalKey,
+          signalValue: signals.signalValue,
+          path: signals.path,
+          ip: signals.ip,
+          createdAt: signals.createdAt,
+        })
+        .from(signals)
+        .orderBy(desc(signals.createdAt))
+        .limit(300);
+      return base.map((r) => ({
+        ...r, country: null, region: null, city: null, network: null, asn: null, cloud: null,
+        device: null, browser: null, os: null,
+      }));
+    });
 
   const ips = [...new Set(rows.map((r) => r.ip).filter(Boolean))] as string[];
   const ipVisits = ips.length

@@ -81,7 +81,13 @@ export async function POST(request: NextRequest) {
         .insert(signals)
         .values({ ...row, network: network?.name ?? null, asn: network?.asn ?? null, cloud: network?.cloud ?? null });
     } catch (error) {
-      console.error("signal not recorded", error);
+      // Until the identity columns are in the database, keep the signal and its IP.
+      try {
+        const { signalType, signalKey, signalValue, sessionId, path, ip } = row;
+        await db.insert(signals).values({ signalType, signalKey, signalValue, sessionId, path, ip });
+      } catch {
+        console.error("signal not recorded", error);
+      }
     }
   });
 
