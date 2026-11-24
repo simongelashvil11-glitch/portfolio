@@ -258,6 +258,7 @@ export const signals = pgTable("signals", {
   signalKey: text("signal_key"),
   signalValue: text("signal_value"),
   path: text("path"),
+   ip: varchar("ip", { length: 64 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
