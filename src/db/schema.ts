@@ -250,6 +250,17 @@ export const visits = pgTable(
   (table) => [index("visits_created_at_idx").on(table.createdAt)],
 );
 
+export const signals = pgTable("signals", {
+  id: serial("id").primaryKey(),
+  visitorHash: text("visitor_hash"),
+  sessionId: text("session_id"),
+  signalType: text("signal_type").notNull(),
+  signalKey: text("signal_key"),
+  signalValue: text("signal_value"),
+  path: text("path"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export type Profile = typeof profile.$inferSelect;
 export type Experience = typeof experiences.$inferSelect;
 export type Project = typeof projects.$inferSelect;
@@ -259,3 +270,4 @@ export type Post = typeof posts.$inferSelect;
 export type Update = typeof updates.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type Visit = typeof visits.$inferSelect;
+export type Signal = typeof signals.$inferSelect;

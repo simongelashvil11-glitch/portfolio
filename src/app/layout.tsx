@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { VisitBeacon } from "@/components/visit-beacon";
+import EngagementSignals from "@/components/EngagementSignals";
 import { getProfile } from "@/lib/queries";
 import { siteUrl } from "@/lib/site-url";
 
 import "./globals.css";
+
+
 
 /*
  * The site is set in Fluent's own face, Segoe UI, through `--font-fluent`.
@@ -43,6 +46,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         {/* Page views for the admin's Visitors page; admin paths are dropped server-side. */}
         <VisitBeacon />
+        {/* Engagement signals: scroll/time, copy & print counters, exit-intent email card. */}
+        <EngagementSignals />
       </body>
     </html>
   );
