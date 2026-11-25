@@ -1,3 +1,4 @@
+import { CursorLight } from "@/components/cursor-light";
 import { PageTransition } from "@/components/page-transition";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteSidebar } from "@/components/site-sidebar";
@@ -30,6 +31,7 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
 
       <div className="flex flex-1 flex-col bg-background lg:my-2 lg:mr-2 lg:rounded-[8px] lg:shadow-fluent-4">
         <PageTransition>{children}</PageTransition>
+        <CursorLight />
         <SiteFooter name={name} socials={profile?.socials ?? []} />
       </div>
     </div>

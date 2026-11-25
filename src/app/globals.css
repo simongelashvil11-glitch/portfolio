@@ -257,6 +257,53 @@
     box-shadow: var(--shadow-8);
   }
 
+  /*
+   * Reveal highlight (components/cursor-light.tsx), after Fluent's: a ring
+   * of light along the edge where the pointer is near — on neighbouring
+   * cards too — and a faint glow inside the card under the pointer. The
+   * ring sits just inside the border, because the cards clip their content
+   * (overflow: hidden) at the padding edge.
+   */
+  .card-interactive {
+    position: relative;
+  }
+  .card-interactive::before,
+  .card-interactive::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 250ms var(--ease-fluent);
+  }
+  .card-interactive::before {
+    z-index: 1;
+    background: radial-gradient(320px circle at var(--mx, -999px) var(--my, -999px), rgb(15 108 189 / 0.07), transparent 65%);
+  }
+  .card-interactive::after {
+    /* Above a work card's video button (z-10), which would hide the ring along the picture. */
+    z-index: 20;
+    padding: 1.5px;
+    background: radial-gradient(
+      220px circle at var(--mx, -999px) var(--my, -999px),
+      rgb(15 108 189 / 0.8),
+      rgb(127 133 245 / 0.35) 45%,
+      transparent 72%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+  }
+  .card-interactive[data-lit]::after,
+  .card-interactive[data-lit]:hover::before {
+    opacity: 1;
+  }
+
   /* Tag, after Fluent's: neutral fill, 4px corners. */
   .tag {
     display: inline-flex;
