@@ -9,7 +9,7 @@ import { inRange, pickRange } from "@/lib/visit-ranges";
 
 /*
  * Every recorded visit in the chosen range as a CSV file, newest first, for
- * opening in Excel or Google Sheets. Admin only: the middleware guards
+ * opening in Excel or Google Sheets. Admin only: the proxy (src/proxy.ts) guards
  * /admin/*, and the session is checked again here because this returns data
  * rather than a page.
  */

@@ -371,15 +371,26 @@
   }
 }
 
+/*
+ * Scroll reveals (components/reveal.tsx). Visible unless the script has
+ * marked a block "pending" — which it only does to blocks below the window —
+ * so the page as served is always complete.
+ */
+[data-reveal] {
+  transition:
+    opacity 350ms var(--ease-fluent) var(--reveal-delay, 0ms),
+    translate 350ms var(--ease-fluent) var(--reveal-delay, 0ms);
+}
+[data-reveal="pending"] {
+  opacity: 0;
+  translate: 0 8px;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  /*
-   * Scroll reveals start hidden via an inline style so the server and client
-   * markup match. `!important` beats that inline style, so anyone who prefers
-   * reduced motion simply gets the content, already in place.
-   */
+  /* Anyone who prefers reduced motion simply gets the content, already in place. */
   [data-reveal] {
     opacity: 1 !important;
-    transform: none !important;
+    translate: none !important;
   }
 
   *,

@@ -15,6 +15,7 @@ import {
   getUpdates,
   groupSkills,
 } from "@/lib/queries";
+import { excerpt } from "@/lib/seo";
 import { formatPeriod } from "@/lib/utils";
 
 export const revalidate = 60;
@@ -22,9 +23,11 @@ export const revalidate = 60;
 export async function generateMetadata(): Promise<Metadata> {
   const profile = await getProfile();
 
+  // Its own description, from the about text, rather than the homepage's headline again.
   return {
     title: "About",
-    description: profile?.headline ?? "About me.",
+    description: excerpt(profile?.about) ?? profile?.headline ?? "About me.",
+    alternates: { canonical: "/about" },
   };
 }
 
@@ -100,7 +103,7 @@ export default async function AboutPage() {
 
               return (
                 <li key={item.id} className="flex items-start gap-4 p-4 sm:p-5">
-                  <Mark src={item.logoUrl} label={item.company} className="mt-0.5" />
+                  <Mark src={item.logoUrl} label={item.company} fallback="work" className="mt-0.5" />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline justify-between gap-x-4">

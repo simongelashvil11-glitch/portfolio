@@ -31,8 +31,8 @@ export function PageTransition({ children }: { children: ReactNode }) {
  * A project's picture, named so it morphs between the card on the homepage
  * and the top of the project's page. Only on the way in (the card's link
  * carries the "to-project" type); going back is a plain crossfade, because
- * the homepage cards fade in as they scroll into view and would land on an
- * invisible card.
+ * homepage cards below the window wait hidden to fade in as they scroll
+ * into view, and a morph back would land on a hidden card.
  */
 export function ProjectPicture({ slug, children }: { slug: string; children: ReactNode }) {
   return (

@@ -26,10 +26,13 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 export async function generateMetadata(): Promise<Metadata> {
   const profile = await getProfile();
   const name = profile?.name?.trim() || "Simon Gelashvili";
+  // "Simon Gelashvili — Digital Marketer, Tbilisi": the words people search for.
+  // Role and location come from the profile, so either can be changed in admin.
+  const role = [profile?.role?.trim(), profile?.location?.trim()].filter(Boolean).join(", ");
 
   return {
     metadataBase: new URL(siteUrl),
-    title: { default: name, template: `%s — ${name}` },
+    title: { default: role ? `${name} — ${role}` : name, template: `%s — ${name}` },
     description: profile?.headline?.trim() || "Selected work and experience.",
     openGraph: { type: "website", url: siteUrl, siteName: name },
     // The image itself comes from app/opengraph-image.tsx; this asks X and

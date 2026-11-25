@@ -12,7 +12,9 @@ import { Prose } from "@/components/prose";
 import { Reveal } from "@/components/reveal";
 import { VideoPoster } from "@/components/video";
 import { ImageMark, TextMark, Window } from "@/components/window";
-import { getProjectBySlug, getProjects } from "@/lib/queries";
+import { ProjectEnding } from "@/components/project-ending";
+import { getProfile, getProjectBySlug, getProjects } from "@/lib/queries";
+import { projectJsonLd } from "@/lib/seo";
 
 export const revalidate = 60;
 
@@ -28,23 +30,32 @@ export async function generateMetadata({
   const project = await getProjectBySlug(slug);
   if (!project) return { title: "Not found" };
 
+  // The share picture is this folder's opengraph-image.tsx: the project's own card.
   return {
     title: project.title,
     description: project.summary,
+    alternates: { canonical: `/projects/${project.slug}` },
     openGraph: {
+      type: "article",
       title: project.title,
       description: project.summary,
-      // Setting openGraph here replaces the site's card, so fall back to it explicitly.
-      images: [project.imageUrl || "/opengraph-image"],
+      url: `/projects/${project.slug}`,
     },
   };
 }
 
 export default async function ProjectPage({ params }: PageProps<"/projects/[slug]">) {
   const { slug } = await params;
-  const project = await getProjectBySlug(slug);
+  const [project, projects, profile] = await Promise.all([getProjectBySlug(slug), getProjects(), getProfile()]);
 
   if (!project) notFound();
+
+  // The next case study in the homepage's order, wrapping round; only ones with a page of their own.
+  const withPages = projects.filter(
+    (item) => item.description || item.stats.length > 0 || item.campaigns.length > 0,
+  );
+  const at = withPages.findIndex((item) => item.id === project.id);
+  const next = withPages.length > 1 ? withPages[(at + 1) % withPages.length] : null;
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-8 lg:px-10 lg:py-10">
@@ -117,8 +128,8 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
       */}
       {/*
         Not in a Reveal: the picture is the other end of the homepage card's
-        morph (components/page-transition), and a Reveal starts it invisible,
-        so the morph would land and the picture blink out and back.
+        morph (components/page-transition), and a Reveal can hold it hidden
+        while it waits to scroll in, so the morph would land on nothing.
       */}
       {project.videoUrl ? (
         <div className="mt-8">
@@ -196,6 +207,10 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
           </div>
         </Reveal>
       ) : null}
+
+      <ProjectEnding next={next} availability={profile?.availability?.trim() || null} whatsapp={profile?.whatsapp?.trim() || null} />
+
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: projectJsonLd(project, profile) }} />
     </main>
   );
 }

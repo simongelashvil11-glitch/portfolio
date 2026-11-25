@@ -6,7 +6,7 @@ A portfolio site with a database-backed admin dashboard, built to deploy on Verc
 - **Tailwind CSS v4**, monochrome dark palette with an animated gradient sidebar
 - **Neon Postgres** via **Drizzle ORM**
 - Cookie session auth for a single admin account
-- **Motion** for scroll reveals and the mobile nav drawer
+- **Motion** for the mobile nav drawer and dialogs; scroll reveals and page transitions are CSS
 
 ## Routes
 
@@ -15,7 +15,7 @@ A portfolio site with a database-backed admin dashboard, built to deploy on Verc
 | `/`                | Time-of-day greeting, selected work, contact                     |
 | `/about`           | About copy, personal updates, tech stack, career                 |
 | `/projects/[slug]` | Case study (only for projects with body text), with video player |
-| `/writing`         | Post index — built and reachable, but not linked in the nav       |
+| `/writing`         | Post index — not linked in the nav; a 404 until a post is published |
 | `/writing/[slug]`  | Post                                                             |
 | `/admin`           | Dashboard, grouped by the page each section feeds                |
 

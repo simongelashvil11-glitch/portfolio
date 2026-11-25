@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { Reveal } from "@/components/reveal";
 import { getPosts } from "@/lib/queries";
@@ -14,6 +15,10 @@ export const metadata: Metadata = {
 
 export default async function WritingPage() {
   const posts = await getPosts();
+
+  // Hidden until there is something to read: an empty "Writing" page looks
+  // abandoned. It appears by itself with the first published post.
+  if (posts.length === 0) notFound();
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16 lg:px-12">

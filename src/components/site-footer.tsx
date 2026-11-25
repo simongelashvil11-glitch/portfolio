@@ -18,12 +18,14 @@ export function SiteFooter({ name, socials }: { name: string; socials: Social[] 
         </ul>
       </div>
       {/*
-        The visit log keeps IP addresses, which are personal data; saying so
-        plainly is the honest minimum. Kept to one quiet line.
+        The visit and signal logs keep IP addresses, which are personal data;
+        saying so plainly is the honest minimum. Kept to one quiet line, and
+        kept in step with what /api/visit and /api/signal actually record.
       */}
       <p className="mx-auto w-full max-w-5xl px-6 pb-5 text-[11px] leading-4 text-faint lg:px-10">
-        This site records visits — the page, approximate location, IP address and its network, and basic browser
-        details — to see where readers come from. No cookies or fingerprinting; nothing is shared or sold.
+        This site records visits and how pages are used — the page, approximate location, IP address and its network,
+        basic browser details, reading time, links followed, and any email you choose to leave — to see where readers
+        come from and what they find useful. No cookies or fingerprinting; nothing is shared or sold.
       </p>
     </footer>
   );

@@ -322,7 +322,7 @@ function WorkCard({ project }: { project: Project }) {
 
       <div className="flex flex-1 flex-col p-4">
         <div className="flex items-start gap-3">
-          <Mark src={project.logoUrl} label={project.title} />
+          <Mark src={project.logoUrl} label={project.title} fallback="work" />
           <div className="min-w-0 flex-1">
             {/* Fluent's Subtitle 2: 16/22 semibold. */}
             <h3 className="text-base font-semibold leading-[22px]">{title}</h3>

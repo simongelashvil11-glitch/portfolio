@@ -11,7 +11,7 @@ import { inRange, pickRange } from "@/lib/visit-ranges";
 /*
  * Every engagement signal in the chosen range as a CSV file, newest first,
  * each with a plain-words description beside its raw fields. Admin only: the
- * middleware guards /admin/*, and the session is checked again here because
+ * proxy (src/proxy.ts) guards /admin/*, and the session is checked again here because
  * this returns data rather than a page.
  */
 

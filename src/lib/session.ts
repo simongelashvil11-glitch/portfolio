@@ -19,7 +19,7 @@ export async function signSession(payload: SessionPayload) {
     .sign(secret());
 }
 
-/** Edge-safe: used by middleware as well as server components. */
+/** Edge-safe: used by the proxy as well as server components. */
 export async function verifySession(token: string | undefined): Promise<SessionPayload | null> {
   if (!token) return null;
   try {

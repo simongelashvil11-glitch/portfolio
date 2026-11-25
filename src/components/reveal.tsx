@@ -1,7 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, type CSSProperties, type ReactNode } from "react";
 
 type RevealProps = {
   children: ReactNode;
@@ -13,26 +12,43 @@ type RevealProps = {
 /**
  * Fades and lifts content the first time it scrolls into view.
  *
- * The hidden starting state has to render identically on the server and the
- * client, so reduced motion is handled in CSS (see `[data-reveal]` in
- * globals.css) rather than by branching here — branching leaves a hydration
- * mismatch that React cannot patch, stranding the content at opacity 0.
+ * Visible by default: the server's HTML shows everything, so link previews,
+ * crawlers, printing, readers and a phone still loading its scripts never
+ * see an empty page. Once the page is running, only blocks that are still
+ * below the window are hidden (before the next paint, so nothing seen
+ * flickers) and fade in when they arrive. What is already on screen stays
+ * put. The motion itself is CSS (`[data-reveal]` in globals.css), which also
+ * switches it off for visitors who ask for reduced motion.
  */
 export function Reveal({ children, index = 0, className }: RevealProps) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element || typeof IntersectionObserver === "undefined") return;
+    if (element.getBoundingClientRect().top < window.innerHeight) return; // already in view: leave it be
+
+    element.dataset.reveal = "pending";
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        element.dataset.reveal = "shown";
+        observer.disconnect();
+      },
+      { rootMargin: "0px 0px -80px 0px" },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <motion.div
-      data-reveal
+    <div
+      ref={ref}
+      data-reveal=""
       className={className}
-      initial={{ opacity: 0, y: 8 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{
-        duration: 0.35,
-        delay: Math.min(index, 6) * 0.06,
-        ease: [0, 0, 0, 1],
-      }}
+      style={{ "--reveal-delay": `${Math.min(index, 6) * 60}ms` } as CSSProperties}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }

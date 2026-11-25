@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { Briefcase } from "@/components/fluent-icons";
 import { cn } from "@/lib/utils";
 
 /**
@@ -17,11 +18,18 @@ export function Mark({
   label,
   size = "md",
   className,
+  fallback = "letter",
 }: {
   src?: string | null;
   label: string;
   size?: "sm" | "md";
   className?: string;
+  /**
+   * What stands in without a logo. "work" draws a briefcase: for companies
+   * and projects, a lone letter ("P" for "Project-based") reads as a logo
+   * that failed to load rather than a deliberate placeholder.
+   */
+  fallback?: "letter" | "work";
 }) {
   const small = size === "sm";
   const shell = cn(
@@ -35,7 +43,11 @@ export function Mark({
         className={cn(shell, small ? "text-xs" : "text-sm", "font-medium text-faint", className)}
         aria-hidden
       >
-        {label.trim().charAt(0).toUpperCase()}
+        {fallback === "work" ? (
+          <Briefcase className={small ? "text-sm" : "text-base"} />
+        ) : (
+          label.trim().charAt(0).toUpperCase()
+        )}
       </span>
     );
   }

@@ -67,15 +67,24 @@ Three things interact here, and all three are needed.
    catching up. Released on `scrollend`, with a timer behind it — `scrollend` is
    not in every browser, and a jump with nowhere left to travel never fires one.
 
+**Scroll reveals are visible by default.** `components/reveal.tsx` renders
+content plainly; once the page runs, it hides only blocks still below the
+window (before the next paint) and fades them in on arrival. The served HTML
+is therefore complete — link previews, crawlers, printing and a phone still
+loading its scripts see every block. It used to start every block at
+`opacity: 0` and depend on the script to show it, which left whole pages
+blank to anything that did not run it or never scrolled.
+
 **Page transitions** use the browser's View Transitions API through React's
 `<ViewTransition>` (`components/page-transition.tsx`, motion in `globals.css`).
 The site layout wraps each page in a boundary keyed by the path, so pages
 crossfade; `default="none"` keeps other updates (the contact form, a video
 opening) from animating the page. A project's picture morphs from its card
 into the top of its page, only on the way in (the card link's
-`transitionTypes`): the homepage cards sit in scroll `Reveal`s, which start
-invisible, so a morph back would land on a hidden card. For the same reason
-the project page's picture is not in a `Reveal`. Browser back/forward and the
+`transitionTypes`): homepage cards below the window wait hidden in their
+scroll `Reveal`s, so a morph back would land on a hidden card. For the same
+reason the project page's picture is not in a `Reveal`. The "Next project"
+link at the end of a case study morphs the same way. Browser back/forward and the
 in-page jumps above start no transition, and scroll lands exactly where it did
 before. The morph only pairs when the project page is prefetched, so test it
 on a production build (`next build && next start`), not the dev server.
