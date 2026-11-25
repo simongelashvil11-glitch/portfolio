@@ -1,0 +1,14 @@
+/*
+ * The results funnel (project-funnel.tsx): one brand gradient for every
+ * bar — a single series — growing out from the centre, one after another,
+ * when its Reveal scrolls in. Reduced motion is covered by the global rule
+ * that cuts every transition short.
+ */
+.funnel-bar {
+  background: linear-gradient(90deg, var(--accent), var(--lavender));
+  transition: scale 700ms var(--ease-fluent) calc(var(--i, 0) * 90ms + 120ms);
+}
+
+[data-reveal="pending"] .funnel-bar {
+  scale: 0 1;
+}

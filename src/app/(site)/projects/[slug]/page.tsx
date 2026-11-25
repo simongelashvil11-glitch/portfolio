@@ -13,6 +13,7 @@ import { Reveal } from "@/components/reveal";
 import { VideoPoster } from "@/components/video";
 import { ImageMark, TextMark, Window } from "@/components/window";
 import { ProjectEnding } from "@/components/project-ending";
+import { funnelSteps, ProjectFunnel } from "@/components/project-funnel";
 import { getProfile, getProjectBySlug, getProjects } from "@/lib/queries";
 import { projectJsonLd } from "@/lib/seo";
 
@@ -175,6 +176,13 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
             />
           </div>
         </Reveal>
+      ) : null}
+
+      {/* The same results as a funnel, when there are enough plain counts to draw one. */}
+      {funnelSteps(project.stats) ? (
+        <div className="mt-6">
+          <ProjectFunnel stats={project.stats} note={project.statsNote} />
+        </div>
       ) : null}
 
       {/*
