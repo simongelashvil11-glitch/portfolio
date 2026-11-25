@@ -105,6 +105,14 @@ export function ProjectForm({ project }: { project?: Project }) {
         />
       </Field>
 
+      <Field
+        label="Hover preview clip"
+        hint="Optional. A 3–4 second silent MP4 or WebM on this site, e.g. /previews/isroa.mp4, played while the work card is hovered. Without one, a video project's card cycles through its YouTube stills."
+        error={state.fieldErrors?.previewUrl}
+      >
+        <Input name="previewUrl" defaultValue={project?.previewUrl ?? ""} placeholder="/previews/my-project.mp4" />
+      </Field>
+
       {/* Not a Field: that is a <label>, and a label around a list of inputs
           sends every click inside it to the first one. */}
       <fieldset className="grid gap-4 rounded-xl border border-line p-4">

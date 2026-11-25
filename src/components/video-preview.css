@@ -1,0 +1,18 @@
+/*
+ * Work card hover previews (video.tsx): the clip or stills fade over the
+ * poster, and each still pushes in slowly while it shows.
+ */
+.preview-layer {
+  pointer-events: none;
+  transition: opacity 450ms var(--ease-fluent);
+}
+
+.preview-still {
+  transition:
+    opacity 450ms var(--ease-fluent),
+    scale 2600ms linear;
+}
+
+.preview-still.opacity-100 {
+  scale: 1.07;
+}

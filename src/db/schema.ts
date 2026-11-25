@@ -125,6 +125,12 @@ export const projects = pgTable("projects", {
   logoUrl: text("logo_url"),
   /** YouTube link. Renders a thumbnail on the row that opens an inline player. */
   videoUrl: text("video_url"),
+  /**
+   * A short silent clip (a site path such as /previews/isroa.mp4) played on
+   * the work card while it is hovered. Without one, a video project's card
+   * cycles through its YouTube stills instead. Added by hand, like signals.
+   */
+  previewUrl: varchar("preview_url", { length: 300 }),
   /** Extra images for the case study, shown as a grid that opens a lightbox. */
   gallery: jsonb("gallery").$type<string[]>().default([]).notNull(),
   tags: jsonb("tags").$type<string[]>().default([]).notNull(),

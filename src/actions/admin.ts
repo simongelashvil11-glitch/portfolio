@@ -319,6 +319,14 @@ function pressRows(value: FormDataEntryValue | null): unknown[] {
   }
 }
 
+/**
+ * A video file served by this site. The Content Security Policy only lets
+ * <video> play from the site itself (media-src 'self'), so a clip hosted
+ * elsewhere would silently never play.
+ */
+const SITE_CLIP = /^\/(?!\/)[\w\-./]+\.(mp4|webm)$/i;
+const SITE_CLIP_MESSAGE = "Use a path to an MP4 or WebM on this site, like /previews/isroa.mp4.";
+
 const ProjectSchema = z.object({
   title: z.string().min(1, "Title is required.").max(200),
   slug: z.string().min(1, "Slug is required.").max(200),
@@ -329,6 +337,7 @@ const ProjectSchema = z.object({
   imageUrl: z.url("Enter a valid URL.").nullable(),
   logoUrl: z.url("Enter a valid URL.").nullable(),
   videoUrl: z.url("Enter a valid URL.").nullable(),
+  previewUrl: z.string().regex(SITE_CLIP, SITE_CLIP_MESSAGE).nullable(),
   gallery: z.array(z.url("Enter one valid image URL per line.")),
   tags: z.array(z.string()),
   statsTitle: z.string().max(120, "Keep it under 120 characters.").nullable(),
@@ -359,6 +368,7 @@ export async function saveProject(_previous: FormState, formData: FormData): Pro
     imageUrl: nullable(formData.get("imageUrl")),
     logoUrl: nullable(formData.get("logoUrl")),
     videoUrl: nullable(formData.get("videoUrl")),
+    previewUrl: nullable(formData.get("previewUrl")),
     gallery: lines(formData.get("gallery")),
     tags: csv(formData.get("tags")),
     statsTitle: nullable(formData.get("statsTitle")),

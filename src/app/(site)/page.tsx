@@ -309,7 +309,12 @@ function WorkCard({ project }: { project: Project }) {
         <ProjectPicture slug={project.slug}>
           {/* No positioning here: the player's dialog inside must not be trapped in a stacking context. */}
           <div>
-            <VideoCardPreview url={project.videoUrl!} title={project.title} posterUrl={project.imageUrl} />
+            <VideoCardPreview
+              url={project.videoUrl!}
+              title={project.title}
+              posterUrl={project.imageUrl}
+              previewUrl={project.previewUrl}
+            />
           </div>
         </ProjectPicture>
       ) : project.imageUrl ? (
