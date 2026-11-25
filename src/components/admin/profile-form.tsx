@@ -104,6 +104,18 @@ export function ProfileForm({ profile }: { profile: Profile | null }) {
       </Field>
 
       <Field
+        label="Showreel"
+        hint="Optional, shown under the homepage headline. Either a silent MP4 or WebM on this site (/showreel.mp4), which loops with a sound toggle, or a YouTube link, which opens in the player."
+        error={state.fieldErrors?.showreelUrl}
+      >
+        <Input
+          name="showreelUrl"
+          defaultValue={profile?.showreelUrl ?? ""}
+          placeholder="/showreel.mp4 or https://youtu.be/…"
+        />
+      </Field>
+
+      <Field
         label="Socials"
         hint="One per line, as: Label | https://url"
         error={state.fieldErrors?.socials}

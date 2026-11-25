@@ -49,6 +49,12 @@ export const profile = pgTable("profile", {
   careerHeading: varchar("career_heading", { length: 120 }),
   careerIntro: text("career_intro"),
   resumeUrl: text("resume_url"),
+  /**
+   * A showreel for the homepage, under the hero: a silent looping clip on
+   * the site (/showreel.mp4) or a YouTube link. Hidden while empty. Added to
+   * the database by hand, like signals.
+   */
+  showreelUrl: varchar("showreel_url", { length: 300 }),
   socials: jsonb("socials").$type<{ label: string; url: string }[]>().default([]).notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

@@ -84,6 +84,15 @@ const ProfileSchema = z.object({
     .nullable(),
   ticker: z.string().max(200).nullable(),
   resumeUrl: z.url("Enter a valid URL.").nullable(),
+  // A clip on this site (the CSP lets <video> play only from here) or a YouTube link.
+  showreelUrl: z
+    .string()
+    .max(300)
+    .regex(
+      /^(\/(?!\/)[\w\-./]+\.(mp4|webm)|https:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\/\S+)$/i,
+      "Use an MP4 or WebM on this site (/showreel.mp4) or a YouTube link.",
+    )
+    .nullable(),
   socials: z.array(z.object({ label: z.string().min(1), url: z.url() })),
 });
 
@@ -101,6 +110,7 @@ export async function saveProfile(_previous: FormState, formData: FormData): Pro
     whatsapp: nullable(formData.get("whatsapp")),
     ticker: nullable(formData.get("ticker")),
     resumeUrl: nullable(formData.get("resumeUrl")),
+    showreelUrl: nullable(formData.get("showreelUrl")),
     socials: socialLines(formData.get("socials")),
   });
 

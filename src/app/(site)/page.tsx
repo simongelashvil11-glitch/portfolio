@@ -9,6 +9,7 @@ import { Mark } from "@/components/mark";
 import { ProjectPicture } from "@/components/page-transition";
 import { ProjectStats } from "@/components/project-stats";
 import { Reveal } from "@/components/reveal";
+import { Showreel } from "@/components/showreel";
 import { VideoCardPreview } from "@/components/video";
 import { NewsMark } from "@/components/window";
 import type { Project } from "@/db/schema";
@@ -226,6 +227,13 @@ export default async function HomePage() {
           </Reveal>
         ) : null}
       </section>
+
+      {/* ---------- Showreel, once one is set in the profile ---------- */}
+      {profileRow?.showreelUrl ? (
+        <section className="pt-10" aria-label="Showreel">
+          <Showreel url={profileRow.showreelUrl} name={profile.name} />
+        </section>
+      ) : null}
 
       {/* ---------- Results preview ---------- */}
       {showcase ? (
