@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { experiences, messages, posts, profile, projects, skills, tools, updates, visits } from "@/db/schema";
+import { experiences, messages, posts, profile, projects, signals, skills, tools, updates, visits } from "@/db/schema";
 import { requireSession } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
 
@@ -637,4 +637,19 @@ export async function clearVisits(formData: FormData) {
   }
 
   revalidatePath("/admin/visitors");
+}
+
+/** Deletes engagement signals: everything, or only those older than a number of days. */
+export async function clearSignals(formData: FormData) {
+  await requireSession();
+  const days = Number(text(formData.get("olderThanDays")));
+  if (!Number.isFinite(days) || days < 0) return;
+
+  if (days === 0) {
+    await db.delete(signals);
+  } else {
+    await db.delete(signals).where(lt(signals.createdAt, new Date(Date.now() - days * 24 * 60 * 60 * 1000)));
+  }
+
+  revalidatePath("/admin/signals");
 }

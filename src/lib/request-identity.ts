@@ -2,6 +2,8 @@ import "server-only";
 
 import { type NextRequest, userAgent } from "next/server";
 
+import { SESSION_COOKIE, verifySession } from "@/lib/session";
+
 /*
  * Who sent a request, as far as the request itself says: the address and
  * location from the headers Vercel adds, and the device from the user agent.
@@ -26,6 +28,21 @@ export function clientIp(request: NextRequest): string | null {
   if (direct) return direct.slice(0, 64);
   const chain = request.headers.get("x-forwarded-for");
   return chain ? chain.split(",")[0].trim().slice(0, 64) || null : null;
+}
+
+/**
+ * True when a request should leave no trace in the visit or signal logs:
+ * - outside production. Local development shares the live database, so a
+ *   dev server would otherwise fill the logs with the owner's own testing;
+ * - known bots by user agent, and headless browsers (scrapers, link
+ *   previews, screenshot tools), which the bot check does not catch;
+ * - the owner: any request carrying a valid admin session.
+ */
+export async function isUntracked(request: NextRequest): Promise<boolean> {
+  if (process.env.NODE_ENV !== "production") return true;
+  const ua = userAgent(request);
+  if (ua.isBot || /headless/i.test(ua.browser.name ?? "") || /headless/i.test(ua.ua)) return true;
+  return (await verifySession(request.cookies.get(SESSION_COOKIE)?.value)) !== null;
 }
 
 /** Address, location and device of the request, ready to store. */

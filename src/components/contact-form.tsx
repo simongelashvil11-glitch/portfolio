@@ -1,9 +1,10 @@
 "use client";
 
-import { startTransition, useActionState, type FormEvent } from "react";
+import { startTransition, useActionState, useEffect, type FormEvent } from "react";
 
 import { sendMessage, type ContactState } from "@/actions/contact";
 import { Send } from "@/components/fluent-icons";
+import { sendSignal } from "@/lib/signal-client";
 
 const initialState: ContactState = { status: "idle" };
 
@@ -45,6 +46,12 @@ function Field({
 
 export function ContactForm() {
   const [state, formAction, pending] = useActionState(sendMessage, initialState);
+
+  // Lets the Signals page put the message on the sender's timeline. Only the
+  // fact that one was sent travels; the message itself is in the messages table.
+  useEffect(() => {
+    if (state.status === "success") sendSignal("message", "contact_form");
+  }, [state.status]);
 
   /*
    * Submitted by hand rather than through `<form action>`, which resets the

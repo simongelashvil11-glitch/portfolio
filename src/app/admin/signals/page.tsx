@@ -1,404 +1,610 @@
-import { desc, inArray } from "drizzle-orm";
-import { ChevronRight } from "lucide-react";
+import { and, desc, eq, isNull, sql, type SQL } from "drizzle-orm";
+import { ArrowLeft, Download, Search } from "lucide-react";
+import Link from "next/link";
 
-import { CloudTag, place } from "@/components/admin/network";
-import { Card, EmptyState, PageHeading } from "@/components/admin/ui";
+import { clearSignals } from "@/actions/admin";
+import { ConfirmForm } from "@/components/admin/confirm-form";
+import { CloudTag, countryName, place } from "@/components/admin/network";
+import { DailyBars, MeterList, Panel, Pill, RangeNav, Stat } from "@/components/admin/stats";
+import { EmptyState, PageHeading } from "@/components/admin/ui";
 import { db } from "@/db";
-import { signals, visits, type Signal, type Visit } from "@/db/schema";
+import { messages, signals, visits } from "@/db/schema";
+import {
+  buildPeople,
+  dailyPeople,
+  isLegacyRead,
+  pageStats,
+  tally,
+  topClicks,
+  totals,
+  type ActivityEvent,
+  type Person,
+} from "@/lib/activity";
+import { dayKey, dayKeysEnding, duration, plural, when } from "@/lib/admin-time";
 import { requireSession } from "@/lib/auth";
+import { inRange, pickRange } from "@/lib/visit-ranges";
+
+import { EventTag, PersonRow, personHref, whoLine } from "./parts";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Signals" };
 
-/** Times are shown in Tbilisi, where the site's owner reads them. */
-const TIME_ZONE = "Asia/Tbilisi";
+/** Rows read per table: far more than the site sees in a range, and a ceiling if that changes. */
+const ROW_LIMIT = 10_000;
+/** People listed at once, after filtering. */
+const PEOPLE_LIMIT = 100;
 
-function when(date: Date): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: TIME_ZONE,
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
-
-function clock(date: Date): string {
-  return new Intl.DateTimeFormat("en-GB", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit" }).format(date);
-}
-
-const TYPE_BADGES: Record<string, { label: string; cls: string }> = {
-  device_coarse: { label: "DEVICE", cls: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
-  engage: { label: "READ", cls: "bg-green-500/10 text-green-600 dark:text-green-400" },
-  copy_counter: { label: "COPIED", cls: "bg-orange-500/10 text-orange-600 dark:text-orange-400" },
-  print: { label: "PRINTED", cls: "bg-purple-500/10 text-purple-600 dark:text-purple-400" },
-  email_gate: { label: "EMAIL!", cls: "bg-red-500/10 text-red-600 dark:text-red-400" },
-};
-
-/** Human sentence for each signal, built from its key/value. */
-function describe(signalType: string, key: string | null, value: string | null): string {
-  switch (signalType) {
-    case "device_coarse":
-      return (value ?? "").replaceAll("|", " · ").replace(/(\w)=/g, (_m, g) => g + ": ");
-    case "engage": {
-      const [scroll, secs] = (value ?? "/").split("/");
-      const minutes = Math.floor(parseInt(secs ?? "0", 10) / 60);
-      const rest = parseInt(secs ?? "0", 10) % 60;
-      const dur = minutes > 0 ? `${minutes}m ${rest}s` : `${rest ?? 0}s`;
-      return `read ${dur}, scrolled to ${scroll} of the page`;
-    }
-    case "copy_counter":
-      return value === "phone-like"
-        ? "copied the phone number"
-        : value === "email-like"
-          ? "copied an email address"
-          : "copied some text";
-    case "print":
-      return "printed the page";
-    case "email_gate":
-      return `left email: ${value ?? "—"}`;
-    default:
-      return `${key ?? signalType}: ${value ?? ""}`;
-  }
-}
-
-/** Who an address belongs to: the same fields the visitors page shows. */
-type Identity = {
-  country: string | null;
-  city: string | null;
-  network: string | null;
-  asn: number | null;
-  cloud: boolean | null;
-  device: string | null;
-  browser: string | null;
-  os: string | null;
-  screen: string | null;
-  lang: string | null;
-};
-
-const IDENTITY_KEYS = [
-  "country", "city", "network", "asn", "cloud", "device", "browser", "os", "screen", "lang",
+const SHOWS = [
+  { key: "people", label: "People" },
+  { key: "interested", label: "Interested" },
+  { key: "all", label: "Everyone" },
 ] as const;
+type Show = (typeof SHOWS)[number]["key"];
 
-/**
- * Field by field, the first source that knows it wins. Sources come newest
- * first: the address's own signals, then its page views, which also carry
- * window size and language.
- */
-function mergeIdentity(sources: Partial<Record<keyof Identity, unknown>>[]): Identity {
-  const out = Object.fromEntries(IDENTITY_KEYS.map((key) => [key, null])) as Record<keyof Identity, unknown>;
-  for (const key of IDENTITY_KEYS) {
-    const hit = sources.find((source) => source[key] !== null && source[key] !== undefined);
-    if (hit) out[key] = hit[key];
-  }
-  return out as Identity;
+const SORTS = [
+  { key: "recent", label: "Latest first" },
+  { key: "interest", label: "Most interested first" },
+] as const;
+type Sort = (typeof SORTS)[number]["key"];
+
+function one(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
 }
 
-type Story = {
-  session: string;
-  ip: string | null;
-  /** Oldest first. */
-  events: { at: Date; type: string; text: string; path: string | null }[];
-};
+/** True when the search text appears anywhere a person can be recognised by. */
+function matches(person: Person, query: string): boolean {
+  const id = person.identity;
+  const haystack = [
+    person.ip,
+    id.city,
+    id.region,
+    id.country,
+    id.country ? countryName(id.country) : null,
+    id.network,
+    id.asn ? `AS${id.asn}` : null,
+    id.browser,
+    id.os,
+    id.platform,
+    ...person.emails,
+    ...person.names,
+    ...person.pages,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((word) => haystack.includes(word));
+}
 
-type Group = {
-  ip: string | null;
-  identity: Identity | null;
-  stories: Story[];
-  signals: number;
-  first: Date;
-  last: Date;
-  pages: string[];
-};
-
-export default async function SignalsPage() {
+export default async function SignalsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   await requireSession();
 
-  // Latest 300 signals, grouped by IP address, then into stories per session.
-  const rows: Signal[] = await db
-    .select()
-    .from(signals)
-    .orderBy(desc(signals.createdAt))
-    .limit(300)
-    .catch(async () => {
-      // The identity columns are not in the database yet: read the original ones.
-      const base = await db
-        .select({
-          id: signals.id,
-          visitorHash: signals.visitorHash,
-          sessionId: signals.sessionId,
-          signalType: signals.signalType,
-          signalKey: signals.signalKey,
-          signalValue: signals.signalValue,
-          path: signals.path,
-          ip: signals.ip,
-          createdAt: signals.createdAt,
-        })
-        .from(signals)
-        .orderBy(desc(signals.createdAt))
-        .limit(300);
-      return base.map((r) => ({
-        ...r, country: null, region: null, city: null, network: null, asn: null, cloud: null,
-        device: null, browser: null, os: null,
-      }));
-    });
+  const params = await searchParams;
+  const range = pickRange(one(params.range));
+  const show: Show = SHOWS.find((item) => item.key === one(params.show))?.key ?? "people";
+  const sort: Sort = SORTS.find((item) => item.key === one(params.sort))?.key ?? "recent";
+  const query = (one(params.q) ?? "").trim().slice(0, 100);
+  const focus = one(params.ip)?.slice(0, 64) || null;
 
-  const ips = [...new Set(rows.map((r) => r.ip).filter(Boolean))] as string[];
-  const ipVisits = ips.length
-    ? await db
-        .select()
-        .from(visits)
-        .where(inArray(visits.ip, ips))
-        .orderBy(desc(visits.createdAt))
-        .limit(2000)
-    : [];
-
-  // Older signals were stored without an IP: borrow one from the page view
-  // closest in time, the way this page used to guess.
-  const needsGuess = rows.some((r) => !r.ip);
-  const recentVisits = needsGuess
-    ? await db.select().from(visits).orderBy(desc(visits.createdAt)).limit(500)
-    : [];
-
-  const sessionRows = new Map<string, Signal[]>();
-  for (const row of rows) {
-    const sid = row.sessionId ?? `anon-${row.id}`;
-    sessionRows.set(sid, [...(sessionRows.get(sid) ?? []), row]);
+  // One visitor: only their rows. "none" is the bucket of signals saved before addresses were.
+  const visitWhere: (SQL | undefined)[] = [inRange(range)];
+  const signalWhere: (SQL | undefined)[] = [inRange(range, signals.createdAt, { zoned: true })];
+  if (focus) {
+    visitWhere.push(focus === "none" ? isNull(visits.ip) : eq(visits.ip, focus));
+    signalWhere.push(focus === "none" ? isNull(signals.ip) : eq(signals.ip, focus));
   }
 
-  const stories: Story[] = [...sessionRows].map(([sid, list]) => {
-    const oldest = [...list].reverse();
-    let ip = oldest.find((r) => r.ip)?.ip ?? null;
-    if (!ip) {
-      const start = oldest[0].createdAt.getTime();
-      ip =
-        recentVisits.find((v) => v.ip && Math.abs(v.createdAt.getTime() - start) < 10 * 60 * 1000)?.ip ?? null;
+  const [visitRows, signalRows, messageRows, clockRows] = await Promise.all([
+    db
+      .select()
+      .from(visits)
+      .where(and(...visitWhere))
+      .orderBy(desc(visits.createdAt))
+      .limit(ROW_LIMIT),
+    db
+      .select()
+      .from(signals)
+      .where(and(...signalWhere))
+      .orderBy(desc(signals.createdAt))
+      .limit(ROW_LIMIT),
+    db.select().from(messages).where(inRange(range, messages.createdAt)).orderBy(desc(messages.createdAt)),
+    // Today, by the database's clock, so nothing reads the time while rendering.
+    db.execute<{ now: string }>(sql`select (extract(epoch from now()) * 1000)::bigint::text as now`),
+  ]);
+
+  const everyone = buildPeople({ visits: visitRows, signals: signalRows, messages: messageRows });
+  // A person: an address that does not look automated. The no-address bucket
+  // (signals from before IPs were recorded) is many people at once, so it
+  // only appears under Everyone.
+  const isPerson = (person: Person) => person.ip !== null && !person.automated;
+  const isInterested = (person: Person) =>
+    isPerson(person) && (person.tier !== "browsing" || person.important.length > 0);
+  const filters: Record<Show, (person: Person) => boolean> = {
+    people: isPerson,
+    interested: isInterested,
+    all: () => true,
+  };
+  const counts: Record<Show, number> = {
+    people: everyone.filter(isPerson).length,
+    interested: everyone.filter(isInterested).length,
+    all: everyone.length,
+  };
+  const audience = everyone.filter(filters[show]);
+  const hiddenAutomated = everyone.filter((person) => person.automated).length;
+  const hiddenUnaddressed = everyone.some((person) => person.ip === null);
+  const found = (focus ? everyone : audience)
+    .filter((person) => !focus || person.key === focus)
+    .filter((person) => !query || matches(person, query));
+  const listed = (sort === "interest" ? [...found].sort((a, b) => b.score - a.score || b.last.getTime() - a.last.getTime()) : found).slice(
+    0,
+    PEOPLE_LIMIT,
+  );
+
+  const legacyReads = signalRows.filter(isLegacyRead).length;
+  const summary = totals(audience);
+  const pages = pageStats(audience);
+  const clicks = topClicks(audience);
+  const important = audience
+    .flatMap((person) => person.important.map((event) => ({ event, person })))
+    .sort((a, b) => b.event.at.getTime() - a.event.at.getTime());
+  const recent = audience
+    .flatMap((person) => person.sessions.flatMap((session) => session.events.map((event) => ({ event, person }))))
+    .sort((a, b) => b.event.at.getTime() - a.event.at.getTime())
+    .slice(0, 60);
+
+  const today = dayKey(new Date(Number(clockRows.rows[0]?.now ?? 0)));
+  const daily = range.days && range.days > 1 ? dailyPeople(audience, dayKeysEnding(today, range.days)) : [];
+
+  const platforms = tally(audience, (person) => person.identity.platform ?? person.identity.os);
+  const browsers = tally(audience, (person) => person.identity.browser);
+  const screens = tally(audience, (person) => person.identity.screenClass);
+  const zones = tally(audience, (person) => person.identity.timeZone);
+  const networks = tally(audience, (person) => person.identity.network);
+  const cloudNetworks = new Set(audience.filter((p) => p.identity.cloud).map((p) => p.identity.network));
+
+  const link = (changes: Record<string, string | null>) => {
+    const next = new URLSearchParams();
+    const merged: Record<string, string | null> = { range: range.key, show, sort, q: query || null, ...changes };
+    for (const [key, value] of Object.entries(merged)) {
+      if (value && !(key === "show" && value === "people") && !(key === "sort" && value === "recent")) next.set(key, value);
     }
-    return {
-      session: sid,
-      ip,
-      events: oldest.map((r) => ({
-        at: r.createdAt,
-        type: r.signalType,
-        text: describe(r.signalType, r.signalKey, r.signalValue),
-        path: r.path,
-      })),
-    };
-  });
+    const text = next.toString();
+    return `/admin/signals${text ? `?${text}` : ""}`;
+  };
 
-  // Guessed addresses need their page views too, for the identity.
-  const guessedIps = [...new Set(stories.map((s) => s.ip).filter((ip): ip is string => !!ip && !ips.includes(ip)))];
-  const guessedVisits = guessedIps.length
-    ? await db.select().from(visits).where(inArray(visits.ip, guessedIps)).orderBy(desc(visits.createdAt)).limit(1000)
-    : [];
-
-  const visitsByIp = new Map<string, Visit[]>();
-  for (const v of [...ipVisits, ...guessedVisits]) {
-    if (v.ip) visitsByIp.set(v.ip, [...(visitsByIp.get(v.ip) ?? []), v]);
-  }
-  const signalsByIp = new Map<string, Signal[]>();
-  for (const r of rows) {
-    if (r.ip) signalsByIp.set(r.ip, [...(signalsByIp.get(r.ip) ?? []), r]);
-  }
-
-  const groupMap = new Map<string, Group>();
-  for (const story of stories) {
-    const key = story.ip ?? "";
-    let group = groupMap.get(key);
-    if (!group) {
-      group = {
-        ip: story.ip,
-        identity: story.ip
-          ? mergeIdentity([...(signalsByIp.get(story.ip) ?? []), ...(visitsByIp.get(story.ip) ?? [])])
-          : null,
-        stories: [],
-        signals: 0,
-        first: story.events[0].at,
-        last: story.events[story.events.length - 1].at,
-        pages: [],
-      };
-      groupMap.set(key, group);
-    }
-    group.stories.push(story);
-    group.signals += story.events.length;
-    if (story.events[0].at < group.first) group.first = story.events[0].at;
-    const end = story.events[story.events.length - 1].at;
-    if (end > group.last) group.last = end;
-    for (const e of story.events) if (e.path && !group.pages.includes(e.path)) group.pages.push(e.path);
-  }
-
-  const ended = (story: Story) => story.events[story.events.length - 1].at.getTime();
-  const groups = [...groupMap.values()]
-    .map((g) => ({ ...g, stories: g.stories.sort((a, b) => ended(b) - ended(a)) }))
-    // Newest activity first; signals with no address at all go last.
-    .sort((a, b) => (!a.ip !== !b.ip ? (a.ip ? -1 : 1) : b.last.getTime() - a.last.getTime()));
-
-  // Which networks the signalling visitors came from, counted in addresses.
-  const networkCounts = new Map<string, { network: string; cloud: boolean; ips: number; signals: number }>();
-  for (const g of groups) {
-    if (!g.ip || !g.identity?.network) continue;
-    const key = `${g.identity.network}-${g.identity.cloud}`;
-    const entry = networkCounts.get(key) ?? { network: g.identity.network, cloud: !!g.identity.cloud, ips: 0, signals: 0 };
-    entry.ips += 1;
-    entry.signals += g.signals;
-    networkCounts.set(key, entry);
-  }
-  const networks = [...networkCounts.values()].sort((a, b) => b.ips - a.ips || b.signals - a.signals).slice(0, 10);
-  const maxIps = Math.max(1, ...networks.map((n) => n.ips));
+  const nothingAtAll = everyone.length === 0 && !focus;
 
   return (
     <>
       <PageHeading
         title="Signals"
-        description="What visitors did on the site, grouped by IP address, with the network, place and device behind each one."
+        description="Who came, what they read and what they did — page views, reading time, links followed, copies and messages on one timeline per visitor."
       />
 
-      {groups.length === 0 ? (
-        <EmptyState>No signals yet — browse the public site to generate some.</EmptyState>
+      <RangeNav current={range} href={(key) => link({ range: key })}>
+        {signalRows.length > 0 ? (
+          <a
+            href={`/admin/signals/export?range=${range.key}`}
+            download
+            className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm text-muted transition-colors hover:border-accent hover:text-foreground"
+          >
+            <Download aria-hidden className="size-3.5" />
+            Export CSV
+          </a>
+        ) : null}
+      </RangeNav>
+
+      {nothingAtAll ? (
+        <EmptyState>
+          Nothing recorded {range.days ? `in the last ${range.label}` : "yet"}. Activity is recorded on the live site
+          only, and not while you are signed in — open the site in a private window to see your own visit arrive.
+        </EmptyState>
+      ) : focus ? (
+        <FocusView person={listed[0] ?? null} range={range.key} back={link({ ip: null, show: null })} />
       ) : (
         <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
-          {networks.length > 0 ? (
-            <Card>
-              <h2 className="mb-4 font-mono text-xs uppercase tracking-widest text-faint">Networks</h2>
-              <ul className="grid gap-2.5">
-                {networks.map((row) => (
-                  <li key={`${row.network}-${row.cloud}`} className="grid gap-1">
-                    <div className="flex items-baseline justify-between gap-3 text-sm">
-                      <span className="flex min-w-0 items-center gap-2">
-                        <span className="truncate">{row.network}</span>
-                        {row.cloud ? <CloudTag /> : null}
-                      </span>
-                      <span className="tnum shrink-0">
-                        {row.ips}
-                        <span className="ml-1.5 text-xs text-faint">
-                          {row.signals} {row.signals === 1 ? "signal" : "signals"}
-                        </span>
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-line/60">
-                      <div className="h-full rounded-full bg-accent" style={{ width: `${(row.ips / maxIps) * 100}%` }} />
-                    </div>
-                  </li>
+          {/* ---------- Who to show ---------- */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {SHOWS.map((item) => (
+              <Pill key={item.key} href={link({ show: item.key })} active={item.key === show}>
+                {item.label}
+                <span className="tnum text-xs opacity-70">{counts[item.key]}</span>
+              </Pill>
+            ))}
+            {show !== "all" && (hiddenAutomated || hiddenUnaddressed) ? (
+              <span className="ml-1 text-xs text-faint">
+                Hidden:{" "}
+                {[
+                  hiddenAutomated ? `${plural(hiddenAutomated, "address", "addresses")} that look automated` : null,
+                  hiddenUnaddressed ? "older signals saved without an address" : null,
+                ]
+                  .filter(Boolean)
+                  .join(" and ")}
+              </span>
+            ) : null}
+          </div>
+
+          {/* ---------- Headline figures ---------- */}
+          <div className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-3 sm:grid-cols-[repeat(3,minmax(0,1fr))] xl:grid-cols-[repeat(6,minmax(0,1fr))]">
+            <Stat label="Visitors" value={summary.people.toLocaleString("en-US")} hint="by IP address" />
+            <Stat
+              label="Visits"
+              value={summary.visits.toLocaleString("en-US")}
+              hint={`${plural(summary.returning, "visitor")} came back`}
+            />
+            <Stat
+              label="Median read"
+              value={summary.reads ? duration(summary.medianRead) : "—"}
+              hint={summary.reads ? `${summary.averageScroll}% down a page, on average` : "no reading reports yet"}
+            />
+            <Stat label="Key actions" value={summary.actions.toLocaleString("en-US")} hint="contact, downloads, copies" />
+            <Stat label="Emails left" value={summary.leads.toLocaleString("en-US")} hint="exit card or message" />
+            <Stat label="Very interested" value={summary.hot.toLocaleString("en-US")} hint="visitors scoring high" />
+          </div>
+
+          {/* ---------- What deserves a reply ---------- */}
+          <Panel title="Worth a look">
+            {important.length === 0 ? (
+              <p className="text-sm text-muted">
+                Nobody in this range got in touch, downloaded a file, copied your details or printed a page. These
+                appear here the moment someone does.
+              </p>
+            ) : (
+              <ul className="-mx-5 border-t border-line">
+                {important.slice(0, 15).map(({ event, person }) => (
+                  <ImportantRow key={event.id} event={event} person={person} range={range.key} />
                 ))}
               </ul>
+            )}
+            {important.length > 15 ? (
+              <p className="mt-3 text-xs text-faint">
+                Showing the latest 15 of {important.length}. Every one is on its visitor&apos;s timeline below.
+              </p>
+            ) : null}
+          </Panel>
+
+          {daily.length > 1 ? (
+            <DailyBars
+              title="Visitors per day"
+              unit={["visitor", "visitors"]}
+              days={daily.map((row) => ({ day: row.day, value: row.people }))}
+            />
+          ) : null}
+
+          {/* ---------- Pages ---------- */}
+          {pages.length > 0 ? (
+            <Panel title="How each page is read">
+              <div className="-mx-5 overflow-x-auto">
+                <table className="w-full min-w-[44rem] text-left text-sm">
+                  <thead className="text-xs text-faint">
+                    <tr className="border-b border-line">
+                      <th className="px-5 py-2 font-medium">Page</th>
+                      <th className="px-2 py-2 text-right font-medium">Visitors</th>
+                      <th className="px-2 py-2 text-right font-medium">Views</th>
+                      <th className="px-2 py-2 text-right font-medium">Median read</th>
+                      <th className="px-2 py-2 font-medium">Scrolled, on average</th>
+                      <th className="px-2 py-2 text-right font-medium">Read to the end</th>
+                      <th className="px-5 py-2 text-right font-medium">Key actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pages.slice(0, 15).map((row) => (
+                      <tr key={row.path} className="border-b border-line last:border-0">
+                        <td className="max-w-[16rem] truncate px-5 py-2 font-mono text-xs">{row.path}</td>
+                        <td className="tnum px-2 py-2 text-right">{row.people}</td>
+                        <td className="tnum px-2 py-2 text-right text-muted">{row.views}</td>
+                        <td className="tnum px-2 py-2 text-right">{row.reads ? duration(row.medianSeconds) : "—"}</td>
+                        <td className="px-2 py-2">
+                          {row.reads ? (
+                            <span className="flex items-center gap-2">
+                              <span aria-hidden className="h-1.5 w-20 overflow-hidden rounded-full bg-line/60">
+                                <span className="block h-full rounded-full bg-accent" style={{ width: `${Math.max(3, row.averageScroll)}%` }} />
+                              </span>
+                              <span className="tnum text-xs text-muted">{row.averageScroll}%</span>
+                            </span>
+                          ) : (
+                            <span className="text-faint">—</span>
+                          )}
+                        </td>
+                        <td className="tnum px-2 py-2 text-right text-muted">
+                          {row.reads ? `${Math.round((row.finished / row.reads) * 100)}%` : "—"}
+                        </td>
+                        <td className="tnum px-5 py-2 text-right">{row.actions || <span className="text-faint">0</span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-3 border-t border-line pt-3 text-xs text-faint">
+                Reading time counts only while the tab is on screen. &ldquo;Read to the end&rdquo; is the share of reads
+                that got at least 90% of the way down.
+                {legacyReads
+                  ? ` ${plural(legacyReads, "reading report")} from the first version of the tracker ${legacyReads === 1 ? "is" : "are"} left out: it counted time on later pages too, so its figures were not reading time.`
+                  : ""}
+              </p>
+            </Panel>
+          ) : null}
+
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[repeat(2,minmax(0,1fr))]">
+            <Panel title="Links followed">
+              {clicks.length === 0 ? (
+                <p className="text-sm text-muted">
+                  No email, phone, WhatsApp, download or outside links followed in this range.
+                </p>
+              ) : (
+                <MeterList
+                  rows={clicks.slice(0, 10).map((row) => ({
+                    key: `${row.kind}-${row.label}`,
+                    label: <span className="truncate">{row.label}</span>,
+                    value: row.people,
+                    note: plural(row.clicks, "click"),
+                  }))}
+                />
+              )}
+              <p className="mt-4 border-t border-line pt-3 text-xs text-faint">Counted in visitors.</p>
+            </Panel>
+
+            <Panel title="Networks">
+              {networks.length === 0 ? (
+                <p className="text-sm text-muted">No network data in this range.</p>
+              ) : (
+                <MeterList
+                  rows={networks.slice(0, 8).map((row) => ({
+                    key: row.value,
+                    label: (
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="truncate">{row.value}</span>
+                        {cloudNetworks.has(row.value) ? <CloudTag /> : null}
+                      </span>
+                    ),
+                    value: row.count,
+                  }))}
+                />
+              )}
               <p className="mt-4 border-t border-line pt-3 text-xs text-faint">
-                Counted in IP addresses: the carrier, ISP, company or cloud host that owns each one. Data:{" "}
+                Counted in visitors: the carrier, ISP, company or cloud host that owns each address. Data:{" "}
                 <a href="https://db-ip.com" className="underline hover:text-foreground">
                   IP to ASN Lite by DB-IP
                 </a>
                 , CC BY 4.0.
               </p>
-            </Card>
-          ) : null}
+            </Panel>
 
-          <Card>
-            <h2 className="mb-4 font-mono text-xs uppercase tracking-widest text-faint">Signals by IP</h2>
-            <p className="-mt-2 mb-3 text-xs text-faint">
-              Select an address to see each session in order. Older signals saved before IPs were recorded are matched
-              to the page view closest in time.
-            </p>
-            <div className="-mx-5 border-t border-line">
-              {groups.map((group) => (
-                <IpRow key={group.ip ?? "no-ip"} group={group} />
-              ))}
+            <Panel title="Devices" className="lg:col-span-2">
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-6 sm:grid-cols-[repeat(2,minmax(0,1fr))] lg:grid-cols-[repeat(4,minmax(0,1fr))]">
+                <TallyBlock title="System" rows={platforms} />
+                <TallyBlock title="Browser" rows={browsers} />
+                <TallyBlock title="Screen" rows={screens} />
+                <TallyBlock title="Clock" rows={zones} />
+              </div>
+              <p className="mt-4 border-t border-line pt-3 text-xs text-faint">
+                Counted in visitors, from the last device each one used. A clock far from the address&apos;s country
+                usually means a VPN or a traveller; a clock on UTC is typical of servers.
+              </p>
+            </Panel>
+          </div>
+
+          {/* ---------- Everyone, one row each ---------- */}
+          <Panel
+            title={`Visitors${found.length > PEOPLE_LIMIT ? ` (showing ${PEOPLE_LIMIT} of ${found.length})` : ` (${found.length})`}`}
+            action={<SortLinks sort={sort} link={link} />}
+          >
+            <form action="/admin/signals" className="mb-4 flex gap-2">
+              <input type="hidden" name="range" value={range.key} />
+              {show !== "people" ? <input type="hidden" name="show" value={show} /> : null}
+              {sort !== "recent" ? <input type="hidden" name="sort" value={sort} /> : null}
+              <label className="relative flex-1">
+                <span className="sr-only">Search visitors</span>
+                <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" />
+                <input
+                  type="search"
+                  name="q"
+                  defaultValue={query}
+                  placeholder="IP, city, country, network, email, name or page"
+                  className="w-full rounded-lg border border-line bg-background py-2 pl-9 pr-3 text-sm placeholder:text-faint focus:border-accent focus:outline-none"
+                />
+              </label>
+              <button type="submit" className="rounded-lg border border-line px-4 text-sm text-muted transition-colors hover:border-accent hover:text-foreground">
+                Search
+              </button>
+              {query ? (
+                <Link href={link({ q: null })} className="self-center text-sm text-accent hover:underline">
+                  Clear
+                </Link>
+              ) : null}
+            </form>
+            {listed.length === 0 ? (
+              <p className="text-sm text-muted">
+                {query ? `Nobody matches “${query}”.` : "Nobody to show with this filter."}
+              </p>
+            ) : (
+              <>
+                <p className="-mt-1 mb-3 text-xs text-faint">
+                  Open a visitor to see every visit in order. Activity more than 30 minutes apart counts as a separate
+                  visit.
+                </p>
+                <div className="-mx-5 border-t border-line">
+                  {listed.map((person) => (
+                    <PersonRow key={person.key} person={person} range={range.key} />
+                  ))}
+                </div>
+              </>
+            )}
+          </Panel>
+
+          {/* ---------- Everything, newest first ---------- */}
+          <Panel title="Latest activity">
+            <div className="-mx-5 overflow-x-auto">
+              <table className="w-full min-w-[48rem] text-left text-sm">
+                <thead className="text-xs text-faint">
+                  <tr className="border-b border-line">
+                    <th className="px-5 py-2 font-medium">When</th>
+                    <th className="px-2 py-2 font-medium">Who</th>
+                    <th className="px-2 py-2 font-medium">What</th>
+                    <th className="px-5 py-2 font-medium">Page</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recent.map(({ event, person }) => (
+                    <tr key={event.id} className="border-b border-line last:border-0">
+                      <td className="tnum whitespace-nowrap px-5 py-2 text-muted">{when(event.at)}</td>
+                      <td className="max-w-[16rem] px-2 py-2">
+                        <Link href={personHref(person, range.key)} className="block truncate hover:text-accent">
+                          <span className="font-mono text-xs">{person.ip ?? "—"}</span>
+                          <span className="text-muted"> {place(person.identity)}</span>
+                        </Link>
+                      </td>
+                      <td className="px-2 py-2">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <EventTag event={event} />
+                          <span className="truncate">
+                            {event.kind === "view" ? (event.referrer ? `Arrived from ${event.referrer}` : "Opened the page") : event.text}
+                            {event.kind === "view" && event.read ? (
+                              <span className="text-muted">
+                                {" "}
+                                · read {duration(event.read.seconds)}, {event.read.scroll}% down
+                              </span>
+                            ) : null}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="max-w-[12rem] truncate px-5 py-2 font-mono text-xs text-muted">{event.path ?? ""}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </Card>
+          </Panel>
         </div>
       )}
+
+      {/* ---------- Housekeeping ---------- */}
+      <section className="mt-10 border-t border-line pt-6">
+        <h2 className="font-mono text-xs uppercase tracking-widest text-faint">Stored data</h2>
+        <p className="mt-2 max-w-2xl text-sm text-muted">
+          Signals keep IP addresses and any email a visitor leaves, which count as personal data, so it is good
+          practice not to keep them longer than you need. Clearing removes the signals for good; page views stay on the
+          Visitors page until you clear them there.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <ClearButton olderThanDays={90} label="Delete signals older than 90 days" />
+          <ClearButton olderThanDays={0} label="Delete all signals" />
+        </div>
+      </section>
     </>
   );
 }
 
-/**
- * One address: a summary line (where, which network, how much it did) that
- * opens into every session's timeline. Plain <details>, so it needs no
- * client script — the same shape as the visitors page.
- */
-function IpRow({ group }: { group: Group }) {
-  const id = group.identity;
-  const sessions = group.stories.length;
-  const device = id ? [id.device, id.browser, id.os].filter(Boolean).join(" · ") : "";
-  const hasEmail = group.stories.some((s) => s.events.some((e) => e.type === "email_gate"));
-
+function SortLinks({ sort, link }: { sort: Sort; link: (changes: Record<string, string | null>) => string }) {
   return (
-    <details className="group border-b border-line last:border-0">
-      <summary className="flex cursor-pointer list-none items-start gap-2 px-5 py-3 transition-colors hover:bg-accent-soft/40 [&::-webkit-details-marker]:hidden">
-        <ChevronRight
-          aria-hidden
-          className="mt-0.5 size-4 shrink-0 text-faint transition-transform group-open:rotate-90"
-        />
-        <span className="grid min-w-0 flex-1 gap-0.5">
-          <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-            <span className="font-mono text-xs">{group.ip ?? "IP not recorded"}</span>
-            {id ? <span className="text-sm">{place(id) || "Unknown location"}</span> : null}
-            {id?.network ? (
-              <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted">
-                {id.network}
-                {id.cloud ? <CloudTag /> : null}
-              </span>
-            ) : null}
-            <span className="text-xs text-muted">
-              {sessions} {sessions === 1 ? "session" : "sessions"} · {group.signals}{" "}
-              {group.signals === 1 ? "signal" : "signals"}
-            </span>
-            {hasEmail ? (
-              <span className="rounded-full bg-red-500/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-red-600 dark:text-red-400">
-                Email!
-              </span>
-            ) : null}
-            <span className="tnum text-xs text-faint sm:ml-auto">last {when(group.last)}</span>
-          </span>
-          {group.pages.length > 0 ? (
-            <span className="truncate text-xs text-faint">
-              On <span className="font-mono">{group.pages.join("  ·  ")}</span>
-            </span>
-          ) : null}
-        </span>
-      </summary>
+    <span className="flex gap-3 text-xs">
+      {SORTS.map((item) => (
+        <Link
+          key={item.key}
+          href={link({ sort: item.key })}
+          aria-current={item.key === sort ? "true" : undefined}
+          className={item.key === sort ? "font-medium text-foreground" : "text-faint hover:text-foreground"}
+        >
+          {item.label}
+        </Link>
+      ))}
+    </span>
+  );
+}
 
-      <div className="grid gap-4 bg-accent-soft/20 px-5 pb-4 pl-11 pt-1">
-        <p className="text-xs text-muted">
-          {[
-            `First seen ${when(group.first)}`,
-            device,
-            id?.screen ? `window ${id.screen}` : null,
-            id?.lang ? `language ${id.lang}` : null,
-            id?.asn ? `AS${id.asn}` : null,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
-        <ol className="grid gap-3">
-          {group.stories.map((story, index) => (
-            <li key={story.session}>
-              <p className="text-xs font-medium">
-                Session {group.stories.length - index}
-                <span className="font-normal text-faint"> · {when(story.events[0].at)}</span>
-              </p>
-              <ol className="mt-1 grid gap-1 border-l border-line pl-3">
-                {story.events.map((e, i) => {
-                  const badge = TYPE_BADGES[e.type];
-                  return (
-                    <li key={i} className="flex min-w-0 flex-wrap items-center gap-2 text-sm">
-                      <span className="tnum shrink-0 text-xs leading-5 text-faint">{clock(e.at)}</span>
-                      {badge ? (
-                        <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest ${badge.cls}`}
-                        >
-                          {badge.label}
-                        </span>
-                      ) : null}
-                      <span className={e.type === "email_gate" ? "font-semibold" : ""}>{e.text}</span>
-                      <span className="ml-auto font-mono text-xs text-faint">{e.path ?? ""}</span>
-                    </li>
-                  );
-                })}
-              </ol>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </details>
+/** One thing that deserves attention: what, who, where and when, with a way to answer it. */
+function ImportantRow({ event, person, range }: { event: ActivityEvent; person: Person; range: string }) {
+  return (
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line px-5 py-2.5 text-sm last:border-0">
+      <EventTag event={event} />
+      <span className="font-medium">{event.text}</span>
+      {event.email ? (
+        <a
+          href={`mailto:${event.email}?subject=${encodeURIComponent("Your rate sheet")}`}
+          className="text-accent hover:underline"
+        >
+          {event.email}
+        </a>
+      ) : null}
+      {event.message ? (
+        <Link href="/admin/messages" className="text-accent hover:underline">
+          {event.message.email}
+        </Link>
+      ) : null}
+      {event.path ? <span className="font-mono text-xs text-faint">{event.path}</span> : null}
+      <Link href={personHref(person, range)} className="min-w-0 truncate text-xs text-muted hover:text-accent sm:ml-auto">
+        {[person.ip, whoLine(person)].filter(Boolean).join(" · ") || "Unknown visitor"}
+      </Link>
+      <span className="tnum shrink-0 text-xs text-faint">{when(event.at)}</span>
+    </li>
+  );
+}
+
+function TallyBlock({ title, rows }: { title: string; rows: { value: string; count: number }[] }) {
+  return (
+    <div className="min-w-0">
+      <h3 className="mb-2 text-xs font-medium text-muted">{title}</h3>
+      {rows.length === 0 ? (
+        <p className="text-sm text-faint">Not known yet.</p>
+      ) : (
+        <MeterList
+          rows={rows.slice(0, 5).map((row) => ({
+            key: row.value,
+            label: <span className="truncate">{row.value}</span>,
+            value: row.count,
+          }))}
+        />
+      )}
+    </div>
+  );
+}
+
+/** One visitor on their own: everything about them, opened. */
+function FocusView({ person, range, back }: { person: Person | null; range: string; back: string }) {
+  return (
+    <div className="grid gap-4">
+      <Link href={back} className="inline-flex items-center gap-1.5 justify-self-start text-sm text-accent hover:underline">
+        <ArrowLeft aria-hidden className="size-4" />
+        All visitors
+      </Link>
+      {person ? (
+        <Panel title="Visitor">
+          <div className="-mx-5 border-t border-line">
+            <PersonRow person={person} range={range} open />
+          </div>
+        </Panel>
+      ) : (
+        <EmptyState>Nothing from this address in the chosen range. Try a longer range.</EmptyState>
+      )}
+    </div>
+  );
+}
+
+function ClearButton({ olderThanDays, label }: { olderThanDays: number; label: string }) {
+  return (
+    <ConfirmForm
+      action={clearSignals}
+      message={
+        olderThanDays > 0
+          ? `Delete every signal older than ${olderThanDays} days? This cannot be undone.`
+          : "Delete every recorded signal? This cannot be undone."
+      }
+    >
+      <input type="hidden" name="olderThanDays" value={olderThanDays} />
+      <button
+        type="submit"
+        className="rounded-full border border-line px-4 py-2 text-sm text-muted transition-colors hover:border-danger hover:text-danger"
+      >
+        {label}
+      </button>
+    </ConfirmForm>
   );
 }

@@ -238,6 +238,28 @@ IPs to lookup services such as ip-api.com.
 IP addresses are personal data under GDPR and Georgia's data-protection law.
 The page has buttons to delete visits older than 90 days, or all of them.
 
+### Signals
+
+`/admin/signals` joins page views (`visits`) with engagement signals
+(`signals`, sent by `components/engagement-signals.tsx`) into one timeline
+per visitor. `lib/signal-types.ts` lists what each signal stores; the
+interpretation — visits, reading, interest score, "likely automated" — is all
+in `lib/activity.ts`, and the page only displays it.
+
+- **Reading time** is the time the tab was on screen, one report per page
+  view, keyed by a page-view id. It is re-sent each time the tab is hidden and
+  the latest report wins. Reports keyed `scroll_seconds` are from the first
+  tracker, which counted time on later pages too and fired in bursts; they
+  are left out of every figure.
+- **Joined by address and time**, not by id: page views carry no session id.
+  More than 30 minutes apart is a new visit, as on the Visitors page.
+- **The same skips as visits** (`isUntracked` in `lib/request-identity.ts`):
+  nothing from development, bots or the signed-in owner. Test in a private
+  window on the live site.
+- **The contact form** sends a `message` signal on success (never the text);
+  the page matches it to the `messages` row sent within five minutes, which
+  puts a name to an address.
+
 ---
 
 ## Small things that will bite

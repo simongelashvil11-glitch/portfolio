@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 import { db } from "@/db";
 import { visits } from "@/db/schema";
 import { getSession } from "@/lib/auth";
+import { csvResponse } from "@/lib/csv";
 import { inRange, pickRange } from "@/lib/visit-ranges";
 
 /*
@@ -34,34 +35,11 @@ const COLUMNS = [
   ["language", (row) => row.lang],
 ] as const satisfies readonly (readonly [string, (row: typeof visits.$inferSelect) => unknown])[];
 
-/**
- * One CSV cell. Quoted when needed, and a leading = + - @ is defused so a
- * crafted path or referrer cannot run as a formula when the file is opened.
- */
-function cell(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  let text = String(value);
-  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
-  return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
-}
-
 export async function GET(request: NextRequest) {
   if (!(await getSession())) return new Response("Not signed in", { status: 401 });
 
   const range = pickRange(request.nextUrl.searchParams.get("range"));
   const rows = await db.select().from(visits).where(inRange(range)).orderBy(desc(visits.createdAt));
 
-  const lines = [
-    COLUMNS.map(([name]) => name).join(","),
-    ...rows.map((row) => COLUMNS.map(([, read]) => cell(read(row))).join(",")),
-  ];
-
-  // The byte-order mark makes Excel read the file as UTF-8 (Georgian city names, etc.).
-  return new Response(`﻿${lines.join("\r\n")}\r\n`, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="visits-${range.key}.csv"`,
-      "Cache-Control": "no-store",
-    },
-  });
+  return csvResponse(`visits-${range.key}.csv`, COLUMNS, rows);
 }

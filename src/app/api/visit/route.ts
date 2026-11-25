@@ -1,11 +1,10 @@
-import { after, type NextRequest, userAgent } from "next/server";
+import { after, type NextRequest } from "next/server";
 
 import { db } from "@/db";
 import { visits } from "@/db/schema";
 import { lookupNetwork } from "@/lib/network";
 import { rateLimit, requestIp } from "@/lib/rate-limit";
-import { requestIdentity } from "@/lib/request-identity";
-import { SESSION_COOKIE, verifySession } from "@/lib/session";
+import { isUntracked, requestIdentity } from "@/lib/request-identity";
 
 /*
  * Records one page view, sent by the visit beacon on every public page.
@@ -48,18 +47,12 @@ export async function POST(request: NextRequest) {
   const nothing = new Response(null, { status: 204 });
   const refused = new Response(null, { status: 400 });
 
-  if (process.env.NODE_ENV !== "production") return nothing;
-
   // A flood from one address is dropped quietly: the answer looks the same,
   // so it gives nothing away about the limit.
   if (!rateLimit(`visit:${requestIp(request.headers)}`, 60, 60_000)) return nothing;
 
-  const ua = userAgent(request);
-  // Headless browsers are scrapers, previews and screenshot tools, not people,
-  // and the bot check does not catch them.
-  if (ua.isBot || /headless/i.test(ua.browser.name ?? "") || /headless/i.test(ua.ua)) return nothing;
-
-  if (await verifySession(request.cookies.get(SESSION_COOKIE)?.value)) return nothing;
+  // Development, bots and the signed-in owner (see isUntracked).
+  if (await isUntracked(request)) return nothing;
 
   let body: Record<string, unknown>;
   try {

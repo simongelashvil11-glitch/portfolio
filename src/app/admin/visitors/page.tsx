@@ -1,37 +1,20 @@
 import { and, count, countDistinct, desc, inArray, isNotNull, max, sql, type SQL } from "drizzle-orm";
 import { ChevronRight, Download } from "lucide-react";
-import Link from "next/link";
 
 import { clearVisits } from "@/actions/admin";
 import { ConfirmForm } from "@/components/admin/confirm-form";
 import { CloudTag, countryName } from "@/components/admin/network";
-import { Card, EmptyState, PageHeading } from "@/components/admin/ui";
+import { DailyBars, MeterList, Panel, RangeNav, Stat } from "@/components/admin/stats";
+import { EmptyState, PageHeading } from "@/components/admin/ui";
 import { db } from "@/db";
 import { visits, type Visit } from "@/db/schema";
+import { clock, TIME_ZONE, when } from "@/lib/admin-time";
 import { requireSession } from "@/lib/auth";
-import { cn } from "@/lib/utils";
-import { pickRange, RANGES, rangeCutoff, inRange as rangeWhere } from "@/lib/visit-ranges";
+import { pickRange, rangeCutoff, inRange as rangeWhere } from "@/lib/visit-ranges";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Visitors" };
-
-/** Times are shown in Tbilisi, where the site's owner reads them. */
-const TIME_ZONE = "Asia/Tbilisi";
-
-function when(date: Date): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: TIME_ZONE,
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
-
-function clock(date: Date): string {
-  return new Intl.DateTimeFormat("en-GB", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit" }).format(date);
-}
 
 function place(row: Pick<Visit, "city" | "country">): string {
   return [row.city, countryName(row.country)].filter(Boolean).join(", ");
@@ -197,22 +180,7 @@ export default async function VisitorsPage({
       />
 
       {/* ---------- Range ---------- */}
-      <nav aria-label="Time range" className="mb-6 flex flex-wrap gap-1.5">
-        {RANGES.map((item) => (
-          <Link
-            key={item.key}
-            href={`/admin/visitors?range=${item.key}`}
-            aria-current={item.key === range.key ? "page" : undefined}
-            className={cn(
-              "rounded-full border px-3 py-1.5 text-sm transition-colors",
-              item.key === range.key
-                ? "border-accent bg-accent-soft font-medium text-accent-hover"
-                : "border-line text-muted hover:border-accent hover:text-foreground",
-            )}
-          >
-            {item.label}
-          </Link>
-        ))}
+      <RangeNav current={range} href={(key) => `/admin/visitors?range=${key}`}>
         {totals.views > 0 ? (
           <a
             href={`/admin/visitors/export?range=${range.key}`}
@@ -223,7 +191,7 @@ export default async function VisitorsPage({
             Export CSV
           </a>
         ) : null}
-      </nav>
+      </RangeNav>
 
       {totals.views === 0 ? (
         <EmptyState>
@@ -246,7 +214,13 @@ export default async function VisitorsPage({
             <Stat label="Top page" value={topPage} small />
           </div>
 
-          {daily.length > 1 ? <DailyBars days={daily} /> : null}
+          {daily.length > 1 ? (
+            <DailyBars
+              title="Views per day"
+              unit={["view", "views"]}
+              days={daily.map((row) => ({ day: row.day, value: row.views }))}
+            />
+          ) : null}
 
           <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[repeat(2,minmax(0,1fr))]">
             <Panel title="Countries">
@@ -439,87 +413,6 @@ export default async function VisitorsPage({
         </div>
       </section>
     </>
-  );
-}
-
-function Stat({ label, value, hint, small }: { label: string; value: string; hint?: string; small?: boolean }) {
-  return (
-    <Card>
-      <p className={cn("tnum truncate", small ? "font-mono text-base leading-9" : "font-display text-3xl")}>{value}</p>
-      <p className="mt-1 font-mono text-xs uppercase tracking-widest text-faint">{label}</p>
-      {hint ? <p className="mt-0.5 text-xs text-faint">{hint}</p> : null}
-    </Card>
-  );
-}
-
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <Card>
-      <h2 className="mb-4 font-mono text-xs uppercase tracking-widest text-faint">{title}</h2>
-      {children}
-    </Card>
-  );
-}
-
-/**
- * A name, a bar and a figure per row, the bars sharing one scale so rows
- * compare at a glance. The figure is always printed, so the bar is never
- * the only way to read the number.
- */
-function MeterList({
-  rows,
-}: {
-  rows: { key: string; label: React.ReactNode; value: number; note?: string }[];
-}) {
-  const max = Math.max(1, ...rows.map((row) => row.value));
-
-  return (
-    <ul className="grid gap-2.5">
-      {rows.map((row) => (
-        <li key={row.key} className="grid gap-1">
-          <div className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="flex min-w-0">{row.label}</span>
-            <span className="tnum shrink-0">
-              {row.value.toLocaleString("en-US")}
-              {row.note ? <span className="ml-1.5 text-xs text-faint">{row.note}</span> : null}
-            </span>
-          </div>
-          <div className="h-1.5 rounded-full bg-line/60">
-            <div className="h-full rounded-full bg-accent" style={{ width: `${(row.value / max) * 100}%` }} />
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/** Views per day across the range, one bar each; the day and count show on hover. */
-function DailyBars({ days }: { days: { day: string; views: number }[] }) {
-  const max = Math.max(1, ...days.map((day) => day.views));
-  const label = (day: string) =>
-    new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${day}T00:00:00Z`));
-
-  return (
-    <Panel title="Views per day">
-      <div className="flex h-28 items-end gap-[2px]">
-        {days.map((day) => (
-          <div key={day.day} className="group relative flex h-full flex-1 items-end">
-            <div
-              className="w-full rounded-t-[3px] bg-accent/80 transition-colors group-hover:bg-accent"
-              style={{ height: `${Math.max(3, (day.views / max) * 100)}%` }}
-            />
-            <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-line bg-background px-2 py-1 text-xs shadow-sm group-hover:block">
-              {label(day.day)}: <span className="tnum font-medium">{day.views}</span>
-            </span>
-          </div>
-        ))}
-      </div>
-      <div className="mt-2 flex justify-between text-xs text-faint">
-        <span>{label(days[0].day)}</span>
-        <span>peak {max.toLocaleString("en-US")} a day</span>
-        <span>{label(days[days.length - 1].day)}</span>
-      </div>
-    </Panel>
   );
 }
 

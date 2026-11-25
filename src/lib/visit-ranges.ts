@@ -1,8 +1,9 @@
 import { gte, sql, type SQL } from "drizzle-orm";
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
 import { visits } from "@/db/schema";
 
-/** The time ranges the Visitors page and its CSV export offer. */
+/** The time ranges the Visitors and Signals pages and their CSV exports offer. */
 export const RANGES = [
   { key: "24h", label: "24 hours", days: 1 },
   { key: "7d", label: "7 days", days: 7 },
@@ -27,8 +28,16 @@ export function rangeCutoff(range: Range): SQL | null {
   return range.days ? sql`(now() at time zone 'UTC') - make_interval(days => ${range.days})` : null;
 }
 
-/** A where-clause for the range, or undefined for all time. */
-export function inRange(range: Range): SQL | undefined {
-  const since = rangeCutoff(range);
-  return since ? gte(visits.createdAt, since) : undefined;
+/**
+ * A where-clause for the range, or undefined for all time. `visits` keeps
+ * UTC without a zone; `signals` (created by hand) keeps a real timestamptz,
+ * which compares against now() directly — pass `zoned` for that one.
+ */
+export function inRange(
+  range: Range,
+  column: AnyPgColumn = visits.createdAt,
+  { zoned = false }: { zoned?: boolean } = {},
+): SQL | undefined {
+  if (!range.days) return undefined;
+  return gte(column, zoned ? sql`now() - make_interval(days => ${range.days})` : rangeCutoff(range)!);
 }
