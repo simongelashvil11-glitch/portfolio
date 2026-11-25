@@ -67,6 +67,19 @@ Three things interact here, and all three are needed.
    catching up. Released on `scrollend`, with a timer behind it — `scrollend` is
    not in every browser, and a jump with nowhere left to travel never fires one.
 
+**Page transitions** use the browser's View Transitions API through React's
+`<ViewTransition>` (`components/page-transition.tsx`, motion in `globals.css`).
+The site layout wraps each page in a boundary keyed by the path, so pages
+crossfade; `default="none"` keeps other updates (the contact form, a video
+opening) from animating the page. A project's picture morphs from its card
+into the top of its page, only on the way in (the card link's
+`transitionTypes`): the homepage cards sit in scroll `Reveal`s, which start
+invisible, so a morph back would land on a hidden card. For the same reason
+the project page's picture is not in a `Reveal`. Browser back/forward and the
+in-page jumps above start no transition, and scroll lands exactly where it did
+before. The morph only pairs when the project page is prefetched, so test it
+on a production build (`next build && next start`), not the dev server.
+
 The mobile drawer locks body scroll while open and releases it in an effect,
 which runs *after* the click handler. A jump chosen inside the drawer would
 scroll a page that cannot move, so the lock is released in the same tick as the

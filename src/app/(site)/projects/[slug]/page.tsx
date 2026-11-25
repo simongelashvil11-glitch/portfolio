@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import { ChevronRight, Code, Open } from "@/components/fluent-icons";
 import { Gallery } from "@/components/gallery";
+import { ProjectPicture } from "@/components/page-transition";
 import { ProjectPress } from "@/components/project-press";
 import { ProjectStats } from "@/components/project-stats";
 import { Prose } from "@/components/prose";
@@ -114,14 +115,21 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
         A video takes the lead when there is one — it reuses the cover image
         as its poster, so setting both loses nothing.
       */}
+      {/*
+        Not in a Reveal: the picture is the other end of the homepage card's
+        morph (components/page-transition), and a Reveal starts it invisible,
+        so the morph would land and the picture blink out and back.
+      */}
       {project.videoUrl ? (
-        <Reveal index={1}>
-          <div className="mt-8">
-            <VideoPoster url={project.videoUrl} title={project.title} posterUrl={project.imageUrl} />
-          </div>
-        </Reveal>
+        <div className="mt-8">
+          <ProjectPicture slug={project.slug}>
+            <div>
+              <VideoPoster url={project.videoUrl} title={project.title} posterUrl={project.imageUrl} />
+            </div>
+          </ProjectPicture>
+        </div>
       ) : project.imageUrl ? (
-        <Reveal index={1}>
+        <ProjectPicture slug={project.slug}>
           <div className="relative mt-8 aspect-[16/10] overflow-hidden rounded-[8px] bg-surface">
             <Image
               src={project.imageUrl}
@@ -132,7 +140,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
               priority
             />
           </div>
-        </Reveal>
+        </ProjectPicture>
       ) : null}
 
       {/* Coverage first: the independent word on the work, before the detail. */}

@@ -6,6 +6,7 @@ import { ContactButton } from "@/components/contact-window";
 import { Document, Mail, Open } from "@/components/fluent-icons";
 import { Greeting } from "@/components/greeting";
 import { Mark } from "@/components/mark";
+import { ProjectPicture } from "@/components/page-transition";
 import { ProjectStats } from "@/components/project-stats";
 import { Reveal } from "@/components/reveal";
 import { VideoCardPreview } from "@/components/video";
@@ -293,7 +294,7 @@ function WorkCard({ project }: { project: Project }) {
         {project.title}
       </a>
     ) : (
-      <Link href={target.href} className={stretch}>
+      <Link href={target.href} transitionTypes={["to-project"]} className={stretch}>
         {project.title}
       </Link>
     )
@@ -303,12 +304,20 @@ function WorkCard({ project }: { project: Project }) {
 
   return (
     <article className={`card relative flex h-full flex-col overflow-hidden ${target ? "card-interactive" : ""}`}>
+      {/* Named so it morphs into the top of the project's page (components/page-transition). */}
       {hasVideo ? (
-        <VideoCardPreview url={project.videoUrl!} title={project.title} posterUrl={project.imageUrl} />
+        <ProjectPicture slug={project.slug}>
+          {/* No positioning here: the player's dialog inside must not be trapped in a stacking context. */}
+          <div>
+            <VideoCardPreview url={project.videoUrl!} title={project.title} posterUrl={project.imageUrl} />
+          </div>
+        </ProjectPicture>
       ) : project.imageUrl ? (
-        <div className="relative aspect-video bg-surface">
-          <Image src={project.imageUrl} alt="" fill sizes="(max-width: 640px) 100vw, 480px" className="object-cover" />
-        </div>
+        <ProjectPicture slug={project.slug}>
+          <div className="relative aspect-video bg-surface">
+            <Image src={project.imageUrl} alt="" fill sizes="(max-width: 640px) 100vw, 480px" className="object-cover" />
+          </div>
+        </ProjectPicture>
       ) : null}
 
       <div className="flex flex-1 flex-col p-4">

@@ -310,7 +310,11 @@ export function SiteSidebar(props: SidebarProps) {
       </aside>
 
       {/* ---------- Mobile app bar ---------- */}
-      <div className="sticky top-0 z-40 border-b border-line bg-background lg:hidden">
+      {/* Named so page transitions keep it fixed above the fading page (globals.css). */}
+      <div
+        className="sticky top-0 z-40 border-b border-line bg-background lg:hidden"
+        style={{ viewTransitionName: "site-app-bar" }}
+      >
         <div className="flex h-12 items-center gap-2 px-2">
           <button
             type="button"
