@@ -227,6 +227,39 @@ figure, the rest as tiles on white. An empty list hides it.
 
 ---
 
+## Motion and light
+
+Five pieces, each in its own commit so any one can be reverted alone
+(`git revert <commit>`; each was checked to revert cleanly and still build).
+Their styles live beside their components, not in `globals.css`, for exactly
+that reason.
+
+- **Count-up figures** (`components/count-up.tsx` + `.css`): result figures
+  count up to the exact form they were typed in. The HTML carries the final
+  value; an inline script in `app/layout.tsx` adds `.js` to `<html>` before
+  paint so CSS can hide the figure until it starts counting — with a 2.5s
+  failsafe that shows it anyway. That script is the one thing on the site that
+  runs before paint.
+- **Results funnel** (`components/project-funnel.tsx` + `.css`): drawn from
+  the first group of three or more plain counts. Steps are shares of the top
+  figure, never step-to-step rates — the platform's results are not one
+  narrowing audience. Log-scale widths, stated in the footnote.
+- **Cursor light** (`components/cursor-light.tsx`, styles in `globals.css`
+  under `.card-interactive`): Fluent's Reveal highlight. Its ring sits above
+  the work cards' video button (z-index 20) or the picture hides it.
+- **Hover previews** (`components/video.tsx` + `video-preview.css`): a
+  project's `preview_url` clip, else its YouTube stills `hq1`–`hq3`.
+- **Showreel** (`components/showreel.tsx`): `profile.showreel_url`, a clip on
+  the site or a YouTube link; hidden while empty.
+
+`projects.preview_url` and `profile.showreel_url` were added to the database
+by hand (`alter table … add column … varchar(300)`), like `signals`. Clips
+must be files on this site: the CSP's `media-src 'self'` blocks video from
+anywhere else, and the admin refuses other URLs for that reason. If either
+feature is reverted, revert the code first and only then drop its column.
+
+---
+
 ## Visitor tracking
 
 `/admin/visitors` reads the `visits` table, one row per public page view.
