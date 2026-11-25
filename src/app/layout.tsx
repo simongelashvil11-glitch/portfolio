@@ -44,7 +44,17 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    // suppressHydrationWarning: the script below adds a class React did not render.
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        {/*
+          Marks the page as scripted before the first paint, so effects that
+          would otherwise flash (figures counting up from zero) can hold their
+          final state hidden until they start. Everything still works and
+          shows without it. See `.js` in globals.css.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+      </head>
       <body className="flex min-h-full flex-col">
         {children}
         {/* Page views for the admin's Visitors page; admin paths are dropped server-side. */}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { CountUp } from "@/components/count-up";
 import { ChevronRight } from "@/components/fluent-icons";
 import { ChartMark, Window } from "@/components/window";
 import type { ProjectCampaign, ProjectStat } from "@/db/schema";
@@ -11,7 +12,8 @@ import type { ProjectCampaign, ProjectStat } from "@/db/schema";
  * standout campaigns as cards.
  *
  * Nothing is formatted here. Each value is printed as written in the admin,
- * so "$88,265" and "72.99M" read exactly the way the source reported them.
+ * so "$88,265" and "72.99M" read exactly the way the source reported them —
+ * and count up to that same form as they scroll in (components/count-up).
  *
  * With `peek`, it is the homepage's preview of the same window: the project's
  * name in the title bar, the headline and the first group only, and a Read
@@ -57,7 +59,7 @@ export function ProjectStats({
               <span className="absolute inset-y-1 left-0 w-[3px] rounded-full bg-lavender" aria-hidden />
               <dt className="text-sm text-muted">{stat.label}</dt>
               <dd className="tnum mt-0.5 text-[40px] font-semibold leading-[48px] sm:text-[48px] sm:leading-[56px]">
-                {stat.value}
+                <CountUp value={stat.value} />
               </dd>
             </div>
           ))}
@@ -89,7 +91,9 @@ export function ProjectStats({
                     }`}
                   >
                     <dt className="text-xs leading-4 text-muted">{stat.label}</dt>
-                    <dd className="tnum text-xl font-semibold leading-7 sm:text-2xl sm:leading-8">{stat.value}</dd>
+                    <dd className="tnum text-xl font-semibold leading-7 sm:text-2xl sm:leading-8">
+                      <CountUp value={stat.value} />
+                    </dd>
                   </div>
                 ))}
               </dl>
@@ -135,7 +139,9 @@ function CampaignCard({ campaign }: { campaign: ProjectCampaign }) {
       {lead ? (
         <div className="self-end">
           <p className="text-xs leading-4 text-muted">{lead.label}</p>
-          <p className="tnum text-[28px] font-semibold leading-9">{lead.value}</p>
+          <p className="tnum text-[28px] font-semibold leading-9">
+            <CountUp value={lead.value} />
+          </p>
         </div>
       ) : (
         <div />
@@ -146,7 +152,9 @@ function CampaignCard({ campaign }: { campaign: ProjectCampaign }) {
           {rest.map((figure, i) => (
             <div key={i} className="flex items-baseline justify-between gap-3 py-1.5 last:pb-0">
               <dt className="text-xs text-muted">{figure.label}</dt>
-              <dd className="tnum text-sm font-semibold">{figure.value}</dd>
+              <dd className="tnum text-sm font-semibold">
+                <CountUp value={figure.value} />
+              </dd>
             </div>
           ))}
         </dl>

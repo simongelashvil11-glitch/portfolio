@@ -1,0 +1,24 @@
+/*
+ * Count-up figures (count-up.tsx). The server renders the final value; on a
+ * scripted page (the `.js` class set early in app/layout.tsx) it is held
+ * invisible until the component sets it to zero and starts counting, so
+ * the real number never flashes first. If the component never runs, the
+ * failsafe shows the value after 2.5s.
+ */
+.js [data-count=""] {
+  visibility: hidden;
+  animation: count-failsafe 0s 2.5s forwards;
+}
+
+@keyframes count-failsafe {
+  to {
+    visibility: visible;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js [data-count=""] {
+    visibility: visible;
+    animation: none;
+  }
+}
