@@ -1,4 +1,5 @@
 import { asc, eq } from "drizzle-orm";
+import Link from "next/link";
 
 import { deleteProduct, saveProduct } from "@/actions/creative-os";
 import { DeleteForm } from "@/components/admin/delete-form";
@@ -7,7 +8,7 @@ import { CosField, FieldGroup } from "@/components/creative-os/fields";
 import { CosForm } from "@/components/creative-os/forms";
 import { ChevronRight } from "@/components/fluent-icons";
 import { db } from "@/db";
-import { cosProducts, type CosProduct } from "@/db/creative-os";
+import { cosProductResearch, cosProducts, type CosProduct } from "@/db/creative-os";
 import { getProjectOr404 } from "@/lib/creative-os/queries";
 
 export const dynamic = "force-dynamic";
@@ -42,7 +43,11 @@ function ProductFields({ product }: { product?: CosProduct }) {
 
 export default async function ProductsPage({ params }: PageProps<"/admin/creative-os/p/[projectId]/products">) {
   const project = await getProjectOr404((await params).projectId);
-  const products = await db.select().from(cosProducts).where(eq(cosProducts.projectId, project.id)).orderBy(asc(cosProducts.name));
+  const [products, research] = await Promise.all([
+    db.select().from(cosProducts).where(eq(cosProducts.projectId, project.id)).orderBy(asc(cosProducts.name)),
+    db.selectDistinct({ productId: cosProductResearch.productId }).from(cosProductResearch).where(eq(cosProductResearch.projectId, project.id)),
+  ]);
+  const researched = new Set(research.map((row) => row.productId));
 
   return (
     <div className="grid max-w-3xl gap-6">
@@ -62,6 +67,9 @@ export default async function ProductsPage({ params }: PageProps<"/admin/creativ
                         {[product.price, product.description].filter(Boolean).join(" · ") || "No description yet"}
                       </span>
                     </span>
+                    <Link href={`/admin/creative-os/p/${project.id}/products/${product.id}`} className="btn btn-secondary shrink-0">
+                      {researched.has(product.id) ? "Open research" : "Research product"}
+                    </Link>
                   </summary>
                   <div className="grid gap-4 border-t border-line p-5">
                     <CosForm action={saveProduct} submitLabel="Save product">

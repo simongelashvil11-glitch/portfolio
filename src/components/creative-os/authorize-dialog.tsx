@@ -24,6 +24,15 @@ import { cn } from "@/lib/utils";
 
 export type ModelOption = { model: string; label: string; inputPerMtok: number; outputPerMtok: number; note: string | null };
 
+/** A choice that shapes the run (search depth, focus, how many), shown above the model. */
+export type RunChoice = {
+  name: string;
+  label: string;
+  options: { value: string; label: string; hint?: string }[];
+  defaultValue: string;
+  hint?: string;
+};
+
 type Phase =
   | { step: "choose" }
   | { step: "estimating" }
@@ -41,21 +50,31 @@ export function AuthorizeDialog({
   endpoint,
   body,
   disabledReason,
+  choices = [],
+  durationHint = "usually 20–90 seconds",
+  secondary = false,
 }: {
   triggerLabel: string;
   title: string;
   description: string;
   models: ModelOption[];
-  preview: (model: string) => Promise<Preview>;
+  preview: (model: string, options: Record<string, string>) => Promise<Preview>;
   endpoint: string;
   body: Record<string, unknown>;
   disabledReason?: string | null;
+  choices?: RunChoice[];
+  durationHint?: string;
+  /** A quieter trigger button, for a second paid action on the same page. */
+  secondary?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [model, setModel] = useState<string | null>(null);
   const [effort, setEffort] = useState<Effort>("medium");
   const [phase, setPhase] = useState<Phase>({ step: "choose" });
+  const [options, setOptions] = useState<Record<string, string>>(() =>
+    Object.fromEntries(choices.map((choice) => [choice.name, choice.defaultValue])),
+  );
   const [now, setNow] = useState(0);
   const controller = useRef<AbortController | null>(null);
 
@@ -75,7 +94,7 @@ export function AuthorizeDialog({
   async function estimate() {
     if (!model) return;
     setPhase({ step: "estimating" });
-    const result = await preview(model).catch(() => ({ ok: false as const, error: "The estimate could not be worked out." }));
+    const result = await preview(model, options).catch(() => ({ ok: false as const, error: "The estimate could not be worked out." }));
     setPhase(result.ok ? { step: "ready", preview: result } : { step: "error", message: result.error });
   }
 
@@ -93,15 +112,22 @@ export function AuthorizeDialog({
         signal: abort.signal,
         body: JSON.stringify({
           ...body,
+          options,
           model: phase.preview.model,
           effort,
           idempotencyKey: crypto.randomUUID(),
           authorizedMaxUsd: Number(phase.preview.high.toFixed(4)) + 0.0001,
         }),
       });
-      const result = (await response.json().catch(() => ({}))) as { ok?: boolean; error?: string; costUsd?: number | null };
+      const result = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        costUsd?: number | null;
+        added?: number | null;
+      };
       if (result.ok) {
-        setPhase({ step: "done", message: `Done. Cost ${usd(result.costUsd ?? null)} by the price table.` });
+        const added = typeof result.added === "number" ? ` ${count(result.added)} added.` : "";
+        setPhase({ step: "done", message: `Done.${added} Cost ${usd(result.costUsd ?? null)} by the price table.` });
         router.refresh();
       } else {
         setPhase({ step: "error", message: result.error ?? `The request failed (${response.status}).` });
@@ -129,7 +155,7 @@ export function AuthorizeDialog({
         onClick={() => setOpen(true)}
         disabled={Boolean(disabledReason)}
         title={disabledReason ?? undefined}
-        className="btn btn-primary"
+        className={secondary ? "btn btn-secondary" : "btn btn-primary"}
       >
         <Sparkle />
         {triggerLabel}
@@ -143,6 +169,49 @@ export function AuthorizeDialog({
 
         {phase.step === "choose" || phase.step === "estimating" ? (
           <div className="grid gap-5">
+            {choices.map((choice) => (
+              <fieldset key={choice.name}>
+                <legend className="mb-1.5 text-sm font-semibold">{choice.label}</legend>
+                {choice.options.length > 4 ? (
+                  <select
+                    value={options[choice.name]}
+                    onChange={(event) => setOptions((current) => ({ ...current, [choice.name]: event.target.value }))}
+                    className="field"
+                  >
+                    {choice.options.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {choice.options.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setOptions((current) => ({ ...current, [choice.name]: option.value }))}
+                        aria-pressed={options[choice.name] === option.value}
+                        title={option.hint}
+                        className={cn(
+                          "rounded-[4px] border px-3 py-1 text-sm",
+                          options[choice.name] === option.value
+                            ? "border-accent bg-accent-soft font-semibold text-accent-hover"
+                            : "border-line-strong",
+                        )}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {(() => {
+                  const hint = choice.options.find((option) => option.value === options[choice.name])?.hint ?? choice.hint;
+                  return hint ? <p className="mt-1.5 text-xs text-faint">{hint}</p> : null;
+                })()}
+              </fieldset>
+            ))}
+
             <fieldset className="grid gap-2">
               <legend className="mb-1 text-sm font-semibold">Model</legend>
               {models.map((option) => (
@@ -209,14 +278,24 @@ export function AuthorizeDialog({
             <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
               <Fact label="Model" value={phase.preview.modelLabel} />
               <Fact label="Effort" value={effort} />
-              <Fact label="Web searches" value="None" />
+              <Fact
+                label="Web access"
+                value={
+                  phase.preview.webSearches || phase.preview.webFetches
+                    ? `≤ ${phase.preview.webSearches} searches, ${phase.preview.webFetches} pages`
+                    : "None"
+                }
+              />
               <Fact label="Input, up to" value={`${count(phase.preview.inputTokens)} tokens`} />
               <Fact label="Output, up to" value={`${count(phase.preview.maxOutputTokens)} tokens`} />
               <Fact label="Likely cost" value={`${usd(phase.preview.low)} or more`} />
             </dl>
             <div className="rounded-[6px] bg-surface px-3 py-2.5 text-sm">
               <p>
-                <strong>At most {usd(phase.preview.high)}</strong> if the whole output allowance is used.
+                <strong>At most {usd(phase.preview.high)}</strong>{" "}
+                {phase.preview.webSearches
+                  ? "if every search and page read is used, each result is long, and the whole output allowance is used."
+                  : "if the whole output allowance is used."}
               </p>
               <p className="mt-0.5 text-xs text-muted">
                 This month: {usd(phase.preview.budget.spent)} of {usd(phase.preview.budget.monthlyLimit)} · per-operation limit{" "}
@@ -245,7 +324,7 @@ export function AuthorizeDialog({
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-[6px] border border-line px-3 py-2.5">
                 <p className="text-sm" role="status">
                   Running… {Math.max(0, Math.round((now - phase.startedAt) / 1000))}s
-                  <span className="ml-2 text-xs text-faint">usually 20–90 seconds</span>
+                  <span className="ml-2 text-xs text-faint">{durationHint}</span>
                 </p>
                 <button type="button" className="btn btn-secondary" onClick={() => controller.current?.abort()}>
                   Cancel

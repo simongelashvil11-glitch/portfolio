@@ -74,6 +74,13 @@ export async function getPricing(): Promise<CosPricing[]> {
   return db.select().from(cosPricing).orderBy(asc(cosPricing.sort), asc(cosPricing.model));
 }
 
+/** The models offered in the authorization dialog. */
+export async function enabledModels() {
+  return (await getPricing())
+    .filter((row) => row.enabled)
+    .map((row) => ({ model: row.model, label: row.label, inputPerMtok: row.inputPerMtok, outputPerMtok: row.outputPerMtok, note: row.note }));
+}
+
 export async function getModelPrice(model: string): Promise<CosPricing | null> {
   await ensureDefaults();
   const [row] = await db.select().from(cosPricing).where(eq(cosPricing.model, model)).limit(1);

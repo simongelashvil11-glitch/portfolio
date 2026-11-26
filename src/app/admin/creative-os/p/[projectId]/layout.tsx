@@ -1,11 +1,19 @@
-import { count, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 
 import { deleteProject, duplicateProject, setProjectArchived } from "@/actions/creative-os";
 import { ConfirmForm } from "@/components/admin/confirm-form";
 import { button } from "@/components/admin/ui";
 import { CosTabs } from "@/components/creative-os/tabs";
 import { db } from "@/db";
-import { cosAds, cosKnowledgeItems, cosProducts } from "@/db/creative-os";
+import {
+  cosAds,
+  cosAudienceSegments,
+  cosCompetitors,
+  cosCustomerInsights,
+  cosKnowledgeItems,
+  cosProducts,
+  cosSources,
+} from "@/db/creative-os";
 import { getProjectOr404 } from "@/lib/creative-os/queries";
 
 /*
@@ -18,10 +26,17 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
   const project = await getProjectOr404(projectId);
   const base = `/admin/creative-os/p/${project.id}`;
 
-  const [[products], [knowledge], [ads]] = await Promise.all([
+  const [[products], [knowledge], [ads], [insights], [segments], [competitors], [sources]] = await Promise.all([
     db.select({ value: count() }).from(cosProducts).where(eq(cosProducts.projectId, project.id)),
     db.select({ value: count() }).from(cosKnowledgeItems).where(eq(cosKnowledgeItems.projectId, project.id)),
     db.select({ value: count() }).from(cosAds).where(eq(cosAds.projectId, project.id)),
+    db.select({ value: count() }).from(cosCustomerInsights).where(eq(cosCustomerInsights.projectId, project.id)),
+    db.select({ value: count() }).from(cosAudienceSegments).where(eq(cosAudienceSegments.projectId, project.id)),
+    db
+      .select({ value: count() })
+      .from(cosCompetitors)
+      .where(and(eq(cosCompetitors.projectId, project.id), eq(cosCompetitors.status, "tracked"))),
+    db.select({ value: count() }).from(cosSources).where(eq(cosSources.projectId, project.id)),
   ]);
 
   const archived = project.status === "archived";
@@ -56,7 +71,7 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
           </form>
           <ConfirmForm
             action={deleteProject}
-            message={`Delete "${project.name}" and everything in it — products, knowledge base, ads and analyses? This cannot be undone.`}
+            message={`Delete "${project.name}" and everything in it — products, knowledge base, research, competitors, ads and analyses? This cannot be undone.`}
           >
             <input type="hidden" name="id" value={project.id} />
             <button type="submit" className={button.danger}>
@@ -71,8 +86,13 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
         items={[
           { href: base, label: "Details", exact: true },
           { href: `${base}/products`, label: "Products", badge: products.value || null },
-          { href: `${base}/knowledge`, label: "Knowledge base", badge: knowledge.value || null },
-          { href: `${base}/ads`, label: "Ad Deconstruction Lab", badge: ads.value || null },
+          { href: `${base}/knowledge`, label: "Knowledge", badge: knowledge.value || null },
+          { href: `${base}/customers`, label: "Voice of Customer", badge: insights.value || null },
+          { href: `${base}/audiences`, label: "Audiences", badge: segments.value || null },
+          { href: `${base}/awareness`, label: "Awareness" },
+          { href: `${base}/competitors`, label: "Competitors", badge: competitors.value || null },
+          { href: `${base}/ads`, label: "Ad Lab", badge: ads.value || null },
+          { href: `${base}/sources`, label: "Sources", badge: sources.value || null },
         ]}
       />
 

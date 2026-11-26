@@ -32,7 +32,7 @@ export function CosTabs({
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex items-center gap-1.5 px-3 py-2.5 text-sm transition-colors",
+                  "relative flex items-center gap-1.5 px-2.5 py-2.5 text-sm transition-colors",
                   active ? "font-semibold text-foreground" : "text-muted hover:text-foreground",
                 )}
               >
@@ -42,7 +42,7 @@ export function CosTabs({
                     {item.badge}
                   </span>
                 ) : null}
-                {active ? <span aria-hidden className="absolute inset-x-3 -bottom-px h-[3px] rounded-full bg-accent" /> : null}
+                {active ? <span aria-hidden className="absolute inset-x-2.5 -bottom-px h-[3px] rounded-full bg-accent" /> : null}
               </Link>
             </li>
           );

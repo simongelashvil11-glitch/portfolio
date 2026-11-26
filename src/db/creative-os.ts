@@ -343,6 +343,266 @@ export const cosAuditLog = creativeOs.table(
   (t) => [index("audit_log_at_idx").on(t.at)],
 );
 
+/* ------------------------------------------------------------------ */
+/* Phase 2 — research                                                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A finding as stored inside a research result: the claim, what kind of
+ * evidence it is, and each source it gave, marked by whether that address
+ * was actually returned by a search or read during the same call (`seen`).
+ */
+export type StoredFinding = {
+  text: string;
+  evidenceType: string;
+  sources: { url: string; seen: boolean }[];
+};
+
+/**
+ * Every web page a research call searched up or read, per project. One row
+ * per address; a later call that reads it again refreshes it. The text of a
+ * page that was read is kept (capped), so quotes can be checked against it.
+ */
+export const cosSources = creativeOs.table(
+  "sources",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => cosProjects.id, { onDelete: "cascade" }),
+    url: varchar("url", { length: 1000 }).notNull(),
+    domain: varchar("domain", { length: 255 }).notNull(),
+    title: varchar("title", { length: 500 }),
+    /** forum | review_site | marketplace | video | social | news | brand_site | website */
+    category: varchar("category", { length: 24 }).notNull(),
+    /** read | search_result | failed */
+    accessStatus: varchar("access_status", { length: 16 }).notNull(),
+    accessError: varchar("access_error", { length: 64 }),
+    /** The page's own date as the search reported it, when it did ("3 weeks ago", "2025-04-02"). */
+    published: varchar("published", { length: 80 }),
+    /** The text read from the page, capped; null when it was only a search result. */
+    content: text("content"),
+    operationId: integer("operation_id").references(() => cosAiOperations.id, { onDelete: "set null" }),
+    firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).defaultNow().notNull(),
+    accessedAt: timestamp("accessed_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex("sources_project_url_idx").on(t.projectId, t.url), index("sources_project_idx").on(t.projectId)],
+);
+
+/**
+ * What a research run said about itself: its summary, the searches it ran
+ * and its limitations (sites it could not read, information that was not
+ * available). One row per completed run, whatever the module.
+ */
+export const cosResearchRuns = creativeOs.table(
+  "research_runs",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => cosProjects.id, { onDelete: "cascade" }),
+    operationId: integer("operation_id").references(() => cosAiOperations.id, { onDelete: "set null" }),
+    kind: varchar("kind", { length: 40 }).notNull(),
+    targetId: integer("target_id"),
+    model: varchar("model", { length: 64 }).notNull(),
+    summary: text("summary"),
+    queries: jsonb("queries").$type<string[]>().default([]).notNull(),
+    limitations: jsonb("limitations").$type<string[]>().default([]).notNull(),
+    /** Pages read, search results and failures, counted. */
+    sourceCounts: jsonb("source_counts").$type<{ read: number; searched: number; failed: number }>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("research_runs_project_kind_idx").on(t.projectId, t.kind)],
+);
+
+/** One product-research run. Every run is kept; the newest is shown. */
+export const cosProductResearch = creativeOs.table(
+  "product_research",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => cosProjects.id, { onDelete: "cascade" }),
+    productId: integer("product_id")
+      .notNull()
+      .references(() => cosProducts.id, { onDelete: "cascade" }),
+    operationId: integer("operation_id").references(() => cosAiOperations.id, { onDelete: "set null" }),
+    model: varchar("model", { length: 64 }).notNull(),
+    /** { summary, sections: Record<section, StoredFinding[]>, matrix: [...], limitations: string[] } */
+    result: jsonb("result").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("product_research_product_idx").on(t.productId)],
+);
+
+/**
+ * The Voice of Customer bank: one row per finding, from research or added
+ * by hand. A quote is only marked verified when its words were found in the
+ * text of the page it is attributed to, read during the same call.
+ */
+export const cosCustomerInsights = creativeOs.table(
+  "customer_insights",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => cosProjects.id, { onDelete: "cascade" }),
+    productId: integer("product_id").references(() => cosProducts.id, { onDelete: "set null" }),
+    competitorId: integer("competitor_id").references(() => cosCompetitors.id, { onDelete: "set null" }),
+    /** Null for insights added by hand. */
+    operationId: integer("operation_id").references(() => cosAiOperations.id, { onDelete: "set null" }),
+    category: varchar("category", { length: 32 }).notNull(),
+    statement: text("statement").notNull(),
+    isQuote: boolean("is_quote").default(false).notNull(),
+    /** found | not_found | no_page (the page was not read, so it could not be checked) | manual */
+    quoteCheck: varchar("quote_check", { length: 12 }).notNull(),
+    interpretation: text("interpretation"),
+    sourceUrl: varchar("source_url", { length: 1000 }),
+    /** Whether the source address came back from a search or read in the same call. */
+    sourceSeen: boolean("source_seen").default(false).notNull(),
+    sourceId: integer("source_id").references(() => cosSources.id, { onDelete: "set null" }),
+    /** The product, competitor or category the statement is about, as named. */
+    subject: varchar("subject", { length: 200 }),
+    /** low | medium | high */
+    confidence: varchar("confidence", { length: 8 }).notNull(),
+    /** weak | moderate | strong */
+    evidenceStrength: varchar("evidence_strength", { length: 10 }).notNull(),
+    /** Only when it was actually observable ("in 4 of the 12 reviews read"); never estimated. */
+    frequencyNote: text("frequency_note"),
+    bookmarked: boolean("bookmarked").default(false).notNull(),
+    notes: text("notes"),
+    ...timestamps,
+  },
+  (t) => [
+    index("customer_insights_project_idx").on(t.projectId),
+    index("customer_insights_search_idx").using(
+      "gin",
+      sql`to_tsvector('simple', coalesce(${t.statement}, '') || ' ' || coalesce(${t.interpretation}, ''))`,
+    ),
+  ],
+);
+
+/** Audience segments: generated from the research, then edited freely. */
+export const cosAudienceSegments = creativeOs.table(
+  "audience_segments",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => cosProjects.id, { onDelete: "cascade" }),
+    operationId: integer("operation_id").references(() => cosAiOperations.id, { onDelete: "set null" }),
+    position: integer("position").default(0).notNull(),
+    personaName: varchar("persona_name", { length: 160 }).notNull(),
+    situation: text("situation").notNull(),
+    primaryProblem: text("primary_problem").notNull(),
+    secondaryProblems: jsonb("secondary_problems").$type<string[]>().default([]).notNull(),
+    desiredTransformation: text("desired_transformation").notNull(),
+    emotionalMotivations: jsonb("emotional_motivations").$type<string[]>().default([]).notNull(),
+    objections: jsonb("objections").$type<string[]>().default([]).notNull(),
+    beliefs: jsonb("beliefs").$type<string[]>().default([]).notNull(),
+    previousSolutions: jsonb("previous_solutions").$type<string[]>().default([]).notNull(),
+    buyingTriggers: jsonb("buying_triggers").$type<string[]>().default([]).notNull(),
+    relevantBenefits: jsonb("relevant_benefits").$type<string[]>().default([]).notNull(),
+    recommendedMessaging: jsonb("recommended_messaging").$type<string[]>().default([]).notNull(),
+    recommendedFormats: jsonb("recommended_formats").$type<string[]>().default([]).notNull(),
+    awarenessStage: varchar("awareness_stage", { length: 20 }).default("unclear").notNull(),
+    /** Ids of the customer insights the segment rests on. */
+    supportingInsightIds: jsonb("supporting_insight_ids").$type<number[]>().default([]).notNull(),
+    evidenceNote: text("evidence_note"),
+    /** The segment chosen for developing concepts. */
+    focus: boolean("focus").default(false).notNull(),
+    edited: boolean("edited").default(false).notNull(),
+    ...timestamps,
+  },
+  (t) => [index("audience_segments_project_idx").on(t.projectId)],
+);
+
+/** Awareness and sophistication analyses; the newest is shown and can be adjusted by hand. */
+export const cosAwarenessAnalyses = creativeOs.table(
+  "awareness_analyses",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => cosProjects.id, { onDelete: "cascade" }),
+    segmentId: integer("segment_id").references(() => cosAudienceSegments.id, { onDelete: "set null" }),
+    operationId: integer("operation_id").references(() => cosAiOperations.id, { onDelete: "set null" }),
+    model: varchar("model", { length: 64 }).notNull(),
+    dominantStage: varchar("dominant_stage", { length: 20 }).notNull(),
+    dominantReasoning: text("dominant_reasoning").notNull(),
+    sophisticationLevel: varchar("sophistication_level", { length: 8 }).notNull(),
+    sophisticationReasoning: text("sophistication_reasoning").notNull(),
+    /** One entry per stage: knowledge, beliefs, barrier, messaging, hooks, structure, proof, CTA. */
+    stages: jsonb("stages").notNull(),
+    limitations: jsonb("limitations").$type<string[]>().default([]).notNull(),
+    edited: boolean("edited").default(false).notNull(),
+    ...timestamps,
+  },
+  (t) => [index("awareness_analyses_project_idx").on(t.projectId)],
+);
+
+/** Competitors, added by hand or suggested by "Find my rivals" until accepted. */
+export const cosCompetitors = creativeOs.table(
+  "competitors",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => cosProjects.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 200 }).notNull(),
+    website: varchar("website", { length: 500 }),
+    facebookUrl: varchar("facebook_url", { length: 500 }),
+    instagramUrl: varchar("instagram_url", { length: 500 }),
+    tiktokUrl: varchar("tiktok_url", { length: 500 }),
+    /** direct | indirect | alternative */
+    kind: varchar("kind", { length: 12 }).default("direct").notNull(),
+    /** tracked | suggested | dismissed */
+    status: varchar("status", { length: 12 }).default("tracked").notNull(),
+    /** Why discovery suggested it, with its sources. */
+    discovery: jsonb("discovery"),
+    discoveredByOperationId: integer("discovered_by_operation_id").references(() => cosAiOperations.id, { onDelete: "set null" }),
+    notes: text("notes"),
+    ...timestamps,
+  },
+  (t) => [index("competitors_project_idx").on(t.projectId)],
+);
+
+/** One competitor-research run. Every run is kept; the newest is shown. */
+export const cosCompetitorProfiles = creativeOs.table(
+  "competitor_profiles",
+  {
+    id: serial("id").primaryKey(),
+    competitorId: integer("competitor_id")
+      .notNull()
+      .references(() => cosCompetitors.id, { onDelete: "cascade" }),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => cosProjects.id, { onDelete: "cascade" }),
+    operationId: integer("operation_id").references(() => cosAiOperations.id, { onDelete: "set null" }),
+    model: varchar("model", { length: 64 }).notNull(),
+    /** { overview, sections: Record<section, StoredFinding[]>, limitations } */
+    result: jsonb("result").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("competitor_profiles_competitor_idx").on(t.competitorId)],
+);
+
+/** Messaging patterns, saturated angles and gaps across the tracked competitors. */
+export const cosMarketAnalyses = creativeOs.table(
+  "market_analyses",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => cosProjects.id, { onDelete: "cascade" }),
+    operationId: integer("operation_id").references(() => cosAiOperations.id, { onDelete: "set null" }),
+    model: varchar("model", { length: 64 }).notNull(),
+    result: jsonb("result").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("market_analyses_project_idx").on(t.projectId)],
+);
+
 export type CosProject = typeof cosProjects.$inferSelect;
 export type CosProduct = typeof cosProducts.$inferSelect;
 export type CosAssignment = typeof cosAssignments.$inferSelect;
@@ -353,3 +613,12 @@ export type CosAdSegment = typeof cosAdSegments.$inferSelect;
 export type CosAiOperation = typeof cosAiOperations.$inferSelect;
 export type CosPricing = typeof cosPricing.$inferSelect;
 export type CosSettings = typeof cosSettings.$inferSelect;
+export type CosSource = typeof cosSources.$inferSelect;
+export type CosResearchRun = typeof cosResearchRuns.$inferSelect;
+export type CosProductResearch = typeof cosProductResearch.$inferSelect;
+export type CosCustomerInsight = typeof cosCustomerInsights.$inferSelect;
+export type CosAudienceSegment = typeof cosAudienceSegments.$inferSelect;
+export type CosAwarenessAnalysis = typeof cosAwarenessAnalyses.$inferSelect;
+export type CosCompetitor = typeof cosCompetitors.$inferSelect;
+export type CosCompetitorProfile = typeof cosCompetitorProfiles.$inferSelect;
+export type CosMarketAnalysis = typeof cosMarketAnalyses.$inferSelect;

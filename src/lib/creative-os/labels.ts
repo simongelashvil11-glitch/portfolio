@@ -21,7 +21,40 @@ export const KNOWLEDGE_KIND_LABEL: Record<(typeof KNOWLEDGE_KINDS)[number], stri
 
 export const OPERATION_KIND_LABEL: Record<string, string> = {
   ad_deconstruction: "Ad deconstruction",
+  product_research: "Product research",
+  voc_research: "Voice of Customer research",
+  audience_segments: "Audience segments",
+  awareness_analysis: "Awareness and sophistication",
+  competitor_discovery: "Find my rivals",
+  competitor_research: "Competitor research",
+  market_patterns: "Market patterns",
 };
+
+/** Where an operation's result is shown, for the history and usage pages. */
+export function operationHref(kind: string, projectId: number | null, targetId: number | null): string | null {
+  if (!projectId) return null;
+  const base = `/admin/creative-os/p/${projectId}`;
+  switch (kind) {
+    case "ad_deconstruction":
+      return targetId ? `${base}/ads/${targetId}` : null;
+    case "product_research":
+      return targetId ? `${base}/products/${targetId}` : null;
+    case "voc_research":
+      return `${base}/customers`;
+    case "audience_segments":
+      return `${base}/audiences`;
+    case "awareness_analysis":
+      return `${base}/awareness`;
+    case "competitor_discovery":
+      return `${base}/competitors`;
+    case "competitor_research":
+      return targetId ? `${base}/competitors/${targetId}` : null;
+    case "market_patterns":
+      return `${base}/competitors/matrix`;
+    default:
+      return null;
+  }
+}
 
 export const PLATFORMS = ["Meta", "TikTok", "YouTube", "Instagram", "Snapchat", "Pinterest", "Google", "LinkedIn", "X", "Other"];
 

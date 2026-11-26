@@ -144,9 +144,10 @@ export default async function CreativeOsOverview() {
         <Panel title="What is built so far">
           <p className="text-sm text-muted">
             Phase 1: projects and products, assignments, the knowledge base, the Ad Deconstruction Lab, research history,
-            API usage and spending limits. Next: product, customer, audience and competitor research (Phase 2), then the
-            swipe file and structure adaptation, angles, hooks, the copywriting studio, briefs, the creative director,
-            testing and performance.
+            API usage and spending limits. Phase 2: product research, Voice of Customer, audience segments, awareness and
+            sophistication, competitors (Find my rivals, profiles, the comparison matrix and market patterns) and the
+            sources behind them. Next: the swipe file and structure adaptation, angles, hooks, the copywriting studio,
+            briefs, the creative director, testing and performance.
           </p>
         </Panel>
       </div>

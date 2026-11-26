@@ -480,6 +480,8 @@ export type Preview =
       high: number;
       inputTokens: number;
       maxOutputTokens: number;
+      webSearches: number;
+      webFetches: number;
       materials: { label: string; chars: number }[];
       budget: { allowed: boolean; reason: string | null; spent: number; monthlyLimit: number | null; perOperationLimit: number | null };
     }
@@ -504,6 +506,8 @@ export async function previewDeconstruction(adId: number, model: string): Promis
     high: estimate.high,
     inputTokens: estimate.inputTokens,
     maxOutputTokens: estimate.maxOutputTokens,
+    webSearches: 0,
+    webFetches: 0,
     materials: materialsFor(ad, images),
     budget: {
       allowed: budget.ok,

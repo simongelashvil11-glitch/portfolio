@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import Link from "next/link";
 
 import { Panel } from "@/components/admin/stats";
@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { cosAds, cosAiOperations, cosProjects } from "@/db/creative-os";
 import { when } from "@/lib/admin-time";
 import { count, STATUS_LABEL, usd } from "@/lib/creative-os/format";
-import { OPERATION_KIND_LABEL } from "@/lib/creative-os/labels";
+import { OPERATION_KIND_LABEL, operationHref } from "@/lib/creative-os/labels";
 import { expireStaleOperations } from "@/lib/creative-os/operations";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +28,7 @@ export default async function HistoryPage() {
     .select({ operation: cosAiOperations, project: cosProjects.name, adTitle: cosAds.title, adProject: cosAds.projectId })
     .from(cosAiOperations)
     .leftJoin(cosProjects, eq(cosProjects.id, cosAiOperations.projectId))
-    .leftJoin(cosAds, eq(cosAds.id, cosAiOperations.targetId))
+    .leftJoin(cosAds, and(eq(cosAiOperations.targetType, "ad"), eq(cosAds.id, cosAiOperations.targetId)))
     .orderBy(desc(cosAiOperations.authorizedAt))
     .limit(200);
 
@@ -57,10 +57,11 @@ export default async function HistoryPage() {
               </thead>
               <tbody>
                 {rows.map(({ operation, project, adTitle, adProject }) => {
-                  const target =
-                    operation.targetType === "ad" && adTitle && adProject
-                      ? { href: `/admin/creative-os/p/${adProject}/ads/${operation.targetId}`, label: adTitle }
-                      : null;
+                  const href =
+                    operation.targetType === "ad" && adProject
+                      ? `/admin/creative-os/p/${adProject}/ads/${operation.targetId}`
+                      : operationHref(operation.kind, operation.projectId, operation.targetId);
+                  const target = href ? { href, label: operation.targetType === "ad" && adTitle ? adTitle : "Open result" } : null;
                   return (
                     <tr key={operation.id} className="border-b border-line align-top last:border-0">
                       <td className="tnum whitespace-nowrap px-5 py-2.5 text-muted">{when(operation.authorizedAt)}</td>

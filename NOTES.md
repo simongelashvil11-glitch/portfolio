@@ -264,9 +264,9 @@ feature is reverted, revert the code first and only then drop its column.
 
 A private creative-strategy workspace inside the admin. Phase 1: projects and
 products, assignments, a per-project knowledge base, the Ad Deconstruction
-Lab, research history, API usage and spending limits. Later phases (research,
-swipe file, angles, hooks, copy studio, briefs, testing, performance) build on
-the same tables and the same paid-operation path.
+Lab, research history, API usage and spending limits. Phase 2: research (see
+below). Later phases (swipe file, angles, hooks, copy studio, briefs, testing,
+performance) build on the same tables and the same paid-operation path.
 
 **Its own database schema.** Everything is in the Postgres schema
 `creative_os`, defined in `src/db/creative-os.ts`, with its own migrations in
@@ -310,6 +310,35 @@ notes (no web access), with a strict output schema. Every segment must quote
 the ad; the server looks for each quote in the source and stores where it
 was found, so only real quotes are highlighted and the rest are marked "not
 found word for word". It can't hear or watch video — transcripts are pasted.
+
+**Research (Phase 2)** — product research, Voice of Customer, audience
+segments, awareness and sophistication, Find my rivals, competitor profiles
+and market patterns. Each is a module in `lib/creative-os/research/` (what it
+loads, what it sends, the answer's schema, how it is stored); `research/index.ts`
+drives them all through one route (`/api/research`) and one cost preview
+(`previewResearch`), so all get the same budget path as the Ad Lab.
+
+- **Web research is one call with capped tools.** The basic
+  `web_search_20250305` and `web_fetch_20250910` tools, `max_uses` set from the
+  depth chosen (Quick 2+2, Standard 3+3, Deep 4+4 — at most 8 uses, under the
+  API's 10-step loop) and each page read capped at 6,000 tokens. The answer
+  comes back as the input of a strict `record_findings` tool. The "dynamic
+  filtering" tool versions are avoided on purpose: they hide results inside
+  code execution, and the checks below need to see them.
+- **The answer is checked against what the call actually saw.** Every search
+  result and page read is pulled from the response (`research/web.ts`) and
+  stored in `creative_os.sources` with its access status. A cited address the
+  call never returned is stored but shown "unverified"; a customer quote is
+  "found" only if its words are in the text of the page it is attributed to
+  (quote marks, dashes, case and spacing normalised).
+- **The worst case counts the loop.** Each tool use makes Claude re-read the
+  whole conversation, billed as input, so the estimate is
+  `(n+1)·base + r·n(n+1)/2` with `r` = 12,000 tokens a result, plus the full
+  output allowance and every search's fee. Sonnet 5.5 at Standard is about
+  $0.80 worst case, $0.15 likely. PDFs are not capped by the fetch limit; the
+  prompt tells Claude not to read them.
+- Modules without the web (audiences, awareness, market patterns) use
+  structured outputs, as the Ad Lab does, and work from research already saved.
 
 **Knowledge base**: text from pastes, imported pages (the server's own fetch,
 with every redirect hop checked against private addresses) and uploads
