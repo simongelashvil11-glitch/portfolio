@@ -31,6 +31,12 @@ export const STATUS_LABEL: Record<string, string> = {
   blocked: "Blocked by budget",
 };
 
+/** "New: started in the last day", "1 day running", "52 days running". */
+export function runningLabel(days: number): string {
+  if (days < 1) return "New: started in the last day";
+  return `${days} ${days === 1 ? "day" : "days"} running`;
+}
+
 /**
  * Days an Ad Library ad has been running: from its start date to the date it
  * stopped (from the Ad Library's date range), or to when it was last seen

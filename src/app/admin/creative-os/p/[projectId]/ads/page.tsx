@@ -7,7 +7,7 @@ import { Add } from "@/components/fluent-icons";
 import { db } from "@/db";
 import { cosAdAnalyses, cosAds, cosCompetitors } from "@/db/creative-os";
 import { when } from "@/lib/admin-time";
-import { adDaysRunning } from "@/lib/creative-os/format";
+import { adDaysRunning, runningLabel } from "@/lib/creative-os/format";
 import { getProjectOr404 } from "@/lib/creative-os/queries";
 
 export const dynamic = "force-dynamic";
@@ -115,7 +115,7 @@ export default async function AdsPage({ params, searchParams }: PageProps<"/admi
                   {days !== null ? (
                     <p className="mt-1.5 flex flex-wrap gap-x-3 text-sm">
                       <span className={days >= 30 ? "font-semibold text-[#0e700e]" : "font-semibold"}>
-                        {days} {days === 1 ? "day" : "days"} running
+                        {runningLabel(days)}
                       </span>
                       <span className="text-muted">since {ad.startedRunning}</span>
                       {ad.stillActive === false ? <span className="text-muted">stopped</span> : null}

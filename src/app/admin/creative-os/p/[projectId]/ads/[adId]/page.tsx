@@ -18,7 +18,7 @@ import { cosAdAnalyses, cosAdImages, cosAds, cosAdSegments, cosAiOperations } fr
 import { when } from "@/lib/admin-time";
 import { ELEMENT_STYLE, type Element } from "@/lib/creative-os/elements";
 import type { StoredOverview } from "@/lib/creative-os/export";
-import { adDaysRunning, usd } from "@/lib/creative-os/format";
+import { adDaysRunning, runningLabel, usd } from "@/lib/creative-os/format";
 import { getPricing } from "@/lib/creative-os/pricing";
 import { getProjectOr404 } from "@/lib/creative-os/queries";
 
@@ -77,7 +77,7 @@ export default async function AdPage({ params, searchParams }: PageProps<"/admin
             <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-sm">
               {running !== null ? (
                 <span className={running >= 30 ? "font-semibold text-[#0e700e]" : "font-semibold"}>
-                  {running} {running === 1 ? "day" : "days"} running{ad.stillActive === false ? " (stopped)" : ""}
+                  {runningLabel(running)}{ad.stillActive === false ? " (stopped)" : ""}
                 </span>
               ) : null}
               {ad.startedRunning ? <span className="text-muted">since {ad.startedRunning}</span> : null}

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "CreativeOS Capture",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Save ads you are looking at in the Meta Ad Library into CreativeOS, with one click.",
   "permissions": ["storage"],
   "host_permissions": [

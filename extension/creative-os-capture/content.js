@@ -20,6 +20,8 @@
     "Open link", "See more", "Book a test drive", "Get showtimes", "Order food", "Start order", "Visit Instagram profile",
   ];
   const CTA_SET = new Set(CTA_TEXTS.map((text) => text.toLowerCase()));
+  /** The link card's domain line, in any case: "SHOP.EXAMPLE.COM", "www.karebi.ge", "example.com/offer". */
+  const isDomainLine = (line) => /^(https?:\/\/)?(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(line);
 
   /* ---------------------------------------------------------------- */
   /* Reading a card                                                   */
@@ -90,7 +92,7 @@
       .sort((a, b) => b.length - a.length);
     let body = textBlocks[0] ?? null;
     if (!body && sponsoredAt >= 0) {
-      const after = text.slice(sponsoredAt + 1).filter((line) => !CTA_SET.has(line.toLowerCase()) && !/^[A-Z0-9.-]+\.[A-Z]{2,}$/.test(line));
+      const after = text.slice(sponsoredAt + 1).filter((line) => !CTA_SET.has(line.toLowerCase()) && !isDomainLine(line));
       body = after.slice(0, 12).join("\n") || null;
     }
 
@@ -104,7 +106,7 @@
       if (!landing) continue;
       landingUrl ||= landing;
       const linkLines = lines(link).filter((line) => line !== body);
-      const words = linkLines.filter((line) => !/^[A-Z0-9.-]+\.[A-Z]{2,}(\/.*)?$/.test(line));
+      const words = linkLines.filter((line) => !isDomainLine(line));
       for (const line of words) {
         if (CTA_SET.has(line.toLowerCase())) cta ||= line;
         else if (!headline) headline = line;

@@ -179,8 +179,12 @@ function composeCopy(ad: CapturedAdInput["ad"]): string | null {
   return cleanCardText(ad);
 }
 
+/** A link card's domain line ("www.karebi.ge", "SHOP.EXAMPLE.COM"), which is not a headline. */
+const isDomainLine = (line: string | null | undefined) =>
+  Boolean(line && /^(https?:\/\/)?(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(line.trim()));
+
 export async function saveCapturedAd(input: CapturedAdInput) {
-  const { ad } = input;
+  const ad = { ...input.ad, headline: isDomainLine(input.ad.headline) ? null : input.ad.headline };
   const [project] = await db.select({ id: cosProjects.id }).from(cosProjects).where(eq(cosProjects.id, input.projectId)).limit(1);
   if (!project) return { ok: false as const, status: 404, error: "That project no longer exists." };
 
