@@ -61,7 +61,11 @@ export default async function CompetitorsPage({ params }: PageProps<"/admin/crea
         <p className="max-w-2xl text-sm text-muted">
           The brands competing for the same customers. Add them yourself, or let Find my rivals search for them; suggestions
           wait here until you accept them. Ads are not scraped: each competitor links to its Meta Ad Library results
-          {country ? ` for ${country}` : ""}, for you to open.
+          {country ? ` for ${country}` : ""}, for you to open; save the ones worth studying with the{" "}
+          <Link href="/admin/creative-os/guide#extension" className="text-accent hover:underline">
+            Chrome extension
+          </Link>
+          .
         </p>
         <div className="flex flex-wrap gap-2">
           <Link href={`${base}/matrix`} className="btn btn-secondary">

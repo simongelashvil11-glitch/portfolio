@@ -18,7 +18,7 @@ import { cosAdAnalyses, cosAdImages, cosAds, cosAdSegments, cosAiOperations } fr
 import { when } from "@/lib/admin-time";
 import { ELEMENT_STYLE, type Element } from "@/lib/creative-os/elements";
 import type { StoredOverview } from "@/lib/creative-os/export";
-import { usd } from "@/lib/creative-os/format";
+import { adDaysRunning, usd } from "@/lib/creative-os/format";
 import { getPricing } from "@/lib/creative-os/pricing";
 import { getProjectOr404 } from "@/lib/creative-os/queries";
 
@@ -59,6 +59,7 @@ export default async function AdPage({ params, searchParams }: PageProps<"/admin
   const data = current ? (current.analysis.overview as StoredOverview) : null;
   const usedElements = [...new Set(segments.map((segment) => segment.element))];
   const base = `/admin/creative-os/p/${project.id}/ads/${ad.id}`;
+  const running = adDaysRunning(ad);
   const models = pricing
     .filter((row) => row.enabled)
     .map((row) => ({ model: row.model, label: row.label, inputPerMtok: row.inputPerMtok, outputPerMtok: row.outputPerMtok, note: row.note }));
@@ -71,7 +72,30 @@ export default async function AdPage({ params, searchParams }: PageProps<"/admin
             Ad Deconstruction Lab
           </Link>
           <h2 className="mt-1 text-xl font-semibold leading-7">{ad.title}</h2>
-          <p className="mt-0.5 text-sm text-muted">{[ad.advertiser, ad.platform, ad.format].filter(Boolean).join(" · ") || "No details"}</p>
+          <p className="mt-0.5 text-sm text-muted">{[ad.advertiser, ad.platform, ad.format ?? ad.mediaKind].filter(Boolean).join(" · ") || "No details"}</p>
+          {ad.source === "extension" ? (
+            <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-sm">
+              {running !== null ? (
+                <span className={running >= 30 ? "font-semibold text-[#0e700e]" : "font-semibold"}>
+                  {running} {running === 1 ? "day" : "days"} running{ad.stillActive === false ? " (stopped)" : ""}
+                </span>
+              ) : null}
+              {ad.startedRunning ? <span className="text-muted">since {ad.startedRunning}</span> : null}
+              {ad.variations && ad.variations > 1 ? <span className="text-muted">{ad.variations} versions</span> : null}
+              {ad.cta ? <span className="text-muted">CTA: {ad.cta}</span> : null}
+              {ad.landingUrl ? (
+                <a href={ad.landingUrl} target="_blank" rel="noopener noreferrer nofollow" className="text-accent hover:underline">
+                  Landing page ↗
+                </a>
+              ) : null}
+              {ad.sourceUrl ? (
+                <a href={ad.sourceUrl} target="_blank" rel="noopener noreferrer nofollow" className="text-accent hover:underline">
+                  In the Ad Library ↗
+                </a>
+              ) : null}
+              {ad.lastSeenAt ? <span className="text-faint">saved {when(ad.lastSeenAt)}</span> : null}
+            </p>
+          ) : null}
         </div>
         <AuthorizeDialog
           triggerLabel={current ? "Analyze again" : "Analyze ad"}

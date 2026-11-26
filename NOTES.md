@@ -340,6 +340,19 @@ drives them all through one route (`/api/research`) and one cost preview
 - Modules without the web (audiences, awareness, market patterns) use
   structured outputs, as the Ad Lab does, and work from research already saved.
 
+**Ad Library capture (Phase 3 start).** Claude can't read the Meta Ad
+Library (it needs a browser; Meta's API leaves out US commercial ads), so the
+Chrome extension in `extension/creative-os-capture/` saves ads from the page
+the owner is viewing, only on a button press. It finds cards by their visible
+"Library ID" text (class names are generated), reads the rest by text, and
+falls back to the card's whole text. It posts to `/api/creative-os/capture`,
+outside `/admin` because it has no session cookie: it sends a connection code
+made in Settings, stored only as a SHA-256 in `creative_os.settings`.
+Re-saving the same Library ID in a project updates the ad without blanking
+anything the new capture missed. When Meta changes the page, update
+`content.js` (`window.__cosParse(el)` shows what a card would save) and
+reload the extension at chrome://extensions.
+
 **Knowledge base**: text from pastes, imported pages (the server's own fetch,
 with every redirect hop checked against private addresses) and uploads
 (PDF/Word/text, extracted locally with `unpdf`/`mammoth`; the file itself is

@@ -198,9 +198,33 @@ export const cosAds = creativeOs.table(
     transcript: text("transcript"),
     notes: text("notes"),
     tags: jsonb("tags").$type<string[]>().default([]).notNull(),
+    /* Phase 3: ads saved from the Meta Ad Library by the Chrome extension. */
+    /** manual | extension */
+    source: varchar("source", { length: 16 }).default("manual").notNull(),
+    competitorId: integer("competitor_id").references(() => cosCompetitors.id, { onDelete: "set null" }),
+    /** The Ad Library's own id for the ad; saving the same ad again updates it. */
+    libraryId: varchar("library_id", { length: 40 }),
+    /** "Started running on", as the Ad Library shows it. */
+    startedRunning: date("started_running"),
+    /** The end of the date range the Ad Library shows for an ad that stopped. */
+    stoppedRunning: date("stopped_running"),
+    /** When the ad was last seen in the Ad Library, and whether it was still running then. */
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+    stillActive: boolean("still_active"),
+    /** "N ads use this creative and text". */
+    variations: integer("variations"),
+    headline: text("headline"),
+    cta: varchar("cta", { length: 60 }),
+    landingUrl: varchar("landing_url", { length: 1000 }),
+    /** image | video | carousel | text */
+    mediaKind: varchar("media_kind", { length: 12 }),
     ...timestamps,
   },
-  (t) => [index("ads_project_idx").on(t.projectId)],
+  (t) => [
+    index("ads_project_idx").on(t.projectId),
+    uniqueIndex("ads_project_library_idx").on(t.projectId, t.libraryId),
+    index("ads_competitor_idx").on(t.competitorId),
+  ],
 );
 
 export const cosAdImages = creativeOs.table(
@@ -327,6 +351,10 @@ export const cosSettings = creativeOs.table("settings", {
   monthlyLimitUsd: doublePrecision("monthly_limit_usd"),
   perOperationLimitUsd: doublePrecision("per_operation_limit_usd"),
   webSearchPer1k: doublePrecision("web_search_per_1k").default(10).notNull(),
+  /** SHA-256 of the Chrome extension's connection code; the code itself is shown once and never stored. */
+  captureTokenHash: varchar("capture_token_hash", { length: 64 }),
+  captureTokenCreatedAt: timestamp("capture_token_created_at", { withTimezone: true }),
+  captureTokenUsedAt: timestamp("capture_token_used_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

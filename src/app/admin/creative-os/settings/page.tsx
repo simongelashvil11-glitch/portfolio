@@ -1,7 +1,9 @@
 import { saveLimits, savePrice } from "@/actions/creative-os";
 import { Checkbox, Input, PageHeading } from "@/components/admin/ui";
 import { CosField, FieldGroup } from "@/components/creative-os/fields";
+import { CaptureCode } from "@/components/creative-os/capture-code";
 import { CosForm } from "@/components/creative-os/forms";
+import { when } from "@/lib/admin-time";
 import { usd } from "@/lib/creative-os/format";
 import { getPricing, getSettings } from "@/lib/creative-os/pricing";
 
@@ -79,6 +81,20 @@ export default async function SettingsPage() {
           <p className="text-xs text-faint">
             These limits are enforced by CreativeOS from its own estimates. The only hard cap is the spending limit on your Anthropic
             account (platform.claude.com, Settings → Limits); keep one set there too.
+          </p>
+        </FieldGroup>
+
+        <FieldGroup
+          title="Chrome extension"
+          description="Connects the CreativeOS Capture extension, so ads you look at in the Meta Ad Library can be saved into a project with one click. Free: no AI involved."
+        >
+          <CaptureCode
+            connected={Boolean(settings.captureTokenHash)}
+            createdAt={settings.captureTokenCreatedAt ? when(settings.captureTokenCreatedAt) : null}
+            usedAt={settings.captureTokenUsedAt ? when(settings.captureTokenUsedAt) : null}
+          />
+          <p className="text-xs text-faint">
+            How to install it is in the <a href="/admin/creative-os/guide#extension" className="text-accent hover:underline">Guide</a>.
           </p>
         </FieldGroup>
 

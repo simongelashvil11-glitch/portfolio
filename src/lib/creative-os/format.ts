@@ -30,3 +30,23 @@ export const STATUS_LABEL: Record<string, string> = {
   refused: "Declined by the model",
   blocked: "Blocked by budget",
 };
+
+/**
+ * Days an Ad Library ad has been running: from its start date to the date it
+ * stopped (from the Ad Library's date range), or to when it was last seen
+ * stopped, or to today while it is still running.
+ */
+export function adDaysRunning(ad: {
+  startedRunning: string | null;
+  stoppedRunning: string | null;
+  stillActive: boolean | null;
+  lastSeenAt: Date | null;
+}): number | null {
+  if (!ad.startedRunning) return null;
+  const end = ad.stoppedRunning
+    ? new Date(`${ad.stoppedRunning}T00:00:00Z`)
+    : ad.stillActive === false && ad.lastSeenAt
+      ? ad.lastSeenAt
+      : new Date();
+  return Math.max(0, Math.floor((end.getTime() - new Date(`${ad.startedRunning}T00:00:00Z`).getTime()) / 86_400_000));
+}

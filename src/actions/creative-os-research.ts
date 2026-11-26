@@ -15,6 +15,7 @@ import {
 } from "@/db/creative-os";
 import { requireSession } from "@/lib/auth";
 import { checkBudget } from "@/lib/creative-os/budget";
+import { createCaptureToken, revokeCaptureToken } from "@/lib/creative-os/capture";
 import { AWARENESS_STAGES, SOPHISTICATION_LEVELS } from "@/lib/creative-os/elements";
 import { getModelPrice, getSettings } from "@/lib/creative-os/pricing";
 import { cleanOptions, prepareResearch } from "@/lib/creative-os/research";
@@ -338,4 +339,27 @@ export async function deleteCompetitor(formData: FormData) {
   await db.delete(cosCompetitors).where(eq(cosCompetitors.id, competitorId));
   await log("deleted", "competitor", competitorId);
   refresh();
+}
+
+/* ------------------------------------------------------------------ */
+/* Chrome extension connection                                         */
+/* ------------------------------------------------------------------ */
+
+export type CodeState = { code?: string; error?: string; revoked?: boolean };
+
+/** Makes a new connection code for the Chrome extension, shown once; the previous one stops working. */
+export async function makeCaptureCode(): Promise<CodeState> {
+  await requireSession();
+  const code = await createCaptureToken();
+  await log("created", "capture_code", null);
+  refresh();
+  return { code };
+}
+
+export async function revokeCaptureCode(): Promise<CodeState> {
+  await requireSession();
+  await revokeCaptureToken();
+  await log("revoked", "capture_code", null);
+  refresh();
+  return { revoked: true };
 }

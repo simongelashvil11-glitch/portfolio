@@ -1,0 +1,1 @@
+ALTER TABLE "creative_os"."ads" ADD COLUMN "stopped_running" date;

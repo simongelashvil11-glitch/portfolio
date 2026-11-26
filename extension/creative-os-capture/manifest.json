@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "CreativeOS Capture",
+  "version": "1.0.0",
+  "description": "Save ads you are looking at in the Meta Ad Library into CreativeOS, with one click.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://www.simongelashvili.com/*",
+    "http://localhost:3000/*",
+    "https://*.fbcdn.net/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["https://www.facebook.com/ads/library/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": { "default_title": "CreativeOS Capture", "default_popup": "popup.html" }
+}

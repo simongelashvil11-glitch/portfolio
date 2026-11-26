@@ -62,6 +62,7 @@ const CONTENTS = [
   ["reading", "Reading the results: labels and checks"],
   ["costs", "What things cost"],
   ["errors", "When something goes wrong"],
+  ["extension", "Saving ads from the Meta Ad Library (Chrome extension)"],
   ["not-yet", "What it doesn't do yet"],
 ] as const;
 
@@ -426,9 +427,78 @@ export default function GuidePage() {
           </p>
         </Section>
 
+        <Section id="extension" title="Saving ads from the Meta Ad Library (Chrome extension)">
+          <p>
+            Claude can&apos;t open the Meta Ad Library, so the <strong>CreativeOS Capture</strong> extension saves ads from it
+            while you browse: one button per ad, or every ad on screen at once. It reads only the page you&apos;re looking
+            at, only when you press a button, and it costs nothing.
+          </p>
+          <p className="font-semibold">Install it (once, about two minutes)</p>
+          <ol className="grid list-decimal gap-1.5 pl-5">
+            <li>
+              In Chrome, open <code className="rounded bg-surface px-1">chrome://extensions</code> (type it in the address bar).
+            </li>
+            <li>
+              Switch on <strong>Developer mode</strong>, top right.
+            </li>
+            <li>
+              Click <strong>Load unpacked</strong> and choose the folder{" "}
+              <code className="rounded bg-surface px-1 break-all">C:\laragon\www\portfolio\extension\creative-os-capture</code>. Leave the
+              folder where it is: Chrome runs the extension from there.
+            </li>
+            <li>
+              Click the puzzle-piece icon in Chrome&apos;s toolbar and pin <strong>CreativeOS Capture</strong>, so its icon is
+              always visible.
+            </li>
+          </ol>
+          <p className="font-semibold">Connect it</p>
+          <ol className="grid list-decimal gap-1.5 pl-5">
+            <li>
+              Here, open <Link href="/admin/creative-os/settings" className="text-accent hover:underline">Settings</Link> →{" "}
+              <strong>Chrome extension</strong> → <strong>Make a connection code</strong> → <strong>Copy</strong>.
+            </li>
+            <li>
+              Click the extension&apos;s icon, paste the code under <strong>Connection code</strong>, press <strong>Connect</strong>.
+            </li>
+            <li>
+              Choose the project the ads go into. Leave Competitor on <strong>Match by advertiser name</strong> to link each ad to
+              the tracked competitor with the same name, or pick one.
+            </li>
+          </ol>
+          <p className="font-semibold">Use it</p>
+          <ol className="grid list-decimal gap-1.5 pl-5">
+            <li>
+              Open a competitor&apos;s <strong>Meta Ad Library</strong> link (on the Competitors tab), or any Ad Library search.
+            </li>
+            <li>
+              Each ad gets a blue <strong>Save to CreativeOS</strong> button under its Library ID. A small panel bottom right has{" "}
+              <strong>Save all on screen</strong>; scroll first to load more ads.
+            </li>
+            <li>
+              Saved ads appear in the project&apos;s <strong>Ad Lab</strong> with the text, headline, button, landing page, the
+              picture (or a video&apos;s first frame), the start date and how many days it has run. Sort by{" "}
+              <strong>Longest running</strong>: ads that run for months are usually the ones making money.
+            </li>
+            <li>
+              Saving the same ad again updates it rather than adding a copy. Your own edits (title, transcript, notes) stay.
+            </li>
+            <li>
+              For a video ad, paste what is said into its <strong>Transcript</strong> before pressing Analyze ad.
+            </li>
+          </ol>
+          <p>
+            <strong>If the buttons stop appearing or saves fail</strong>, Meta has probably changed the Ad Library page. Save
+            the page (Ctrl+S, “Webpage, HTML only”) and send me the file; the fix is usually quick. After any update to the
+            extension, click its reload arrow on <code className="rounded bg-surface px-1">chrome://extensions</code>.
+          </p>
+          <p>
+            <strong>Disconnect</strong> in Settings stops the extension saving at once; a new code replaces the old one.
+          </p>
+        </Section>
+
         <Section id="not-yet" title="What it doesn't do yet">
           <ul className="grid list-disc gap-1 pl-5">
-            <li>Watch videos or pull ads from ad libraries: paste transcripts, and open the Ad Library links yourself.</li>
+            <li>Watch videos or hear audio: paste a video ad&apos;s script into its transcript.</li>
             <li>Write hooks, scripts, angles or briefs: that is the next phase, and it will use your bookmarks, segments and brand voice.</li>
             <li>Run anything automatically: every paid run waits for your Authorize.</li>
           </ul>

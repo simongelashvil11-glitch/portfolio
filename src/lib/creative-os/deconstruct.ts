@@ -92,6 +92,12 @@ function metaText(ad: CosAd): string {
     ad.format ? `Format: ${ad.format}` : null,
     ad.productCategory ? `Product category: ${ad.productCategory}` : null,
     ad.notes ? `Analyst's notes: ${ad.notes}` : null,
+    ad.startedRunning
+      ? `Meta Ad Library: running since ${ad.startedRunning}${ad.stillActive === false ? " (no longer running)" : ""}${
+          ad.variations && ad.variations > 1 ? `, ${ad.variations} versions` : ""
+        }. Long-running ads are often profitable, but running time is a signal, not proof of performance.`
+      : null,
+    ad.landingUrl ? `Landing page: ${ad.landingUrl}` : null,
   ]
     .filter(Boolean)
     .join("\n");
