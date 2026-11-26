@@ -8,13 +8,57 @@ import { getPricing, getSettings } from "@/lib/creative-os/pricing";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Settings" };
 
+/**
+ * Whether this server can call Claude, without revealing the key: only
+ * whether it is present and its first characters' shape. Plus which server
+ * this is, so "not set" can be told apart from "looking at the wrong place".
+ */
+function keyStatus() {
+  const key = process.env.ANTHROPIC_API_KEY ?? "";
+  const trimmed = key.trim();
+  const where =
+    process.env.VERCEL_ENV === "production"
+      ? "the live site (Vercel production)"
+      : process.env.VERCEL_ENV
+        ? `a Vercel ${process.env.VERCEL_ENV} deployment`
+        : "your own computer (local), where the key is deliberately absent";
+  const commit = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null;
+  const problem = !key
+    ? "Not found on this server."
+    : trimmed !== key
+      ? "Found, but it has spaces or line breaks around it. Re-paste it in Vercel without them."
+      : /^["']/.test(key)
+        ? "Found, but it starts with a quote mark. Remove the quotes in Vercel."
+        : !key.startsWith("sk-ant-")
+          ? "Found, but it doesn't start with sk-ant-, so it may not be an Anthropic API key."
+          : null;
+  return { found: Boolean(key), problem, where, commit };
+}
+
 export default async function SettingsPage() {
   const [settings, pricing] = await Promise.all([getSettings(), getPricing()]);
+  const status = keyStatus();
 
   return (
     <>
       <PageHeading title="Settings" description="Spending limits and the prices CreativeOS estimates with." />
       <div className="grid max-w-3xl gap-6">
+        <div
+          role="status"
+          className={
+            status.found && !status.problem
+              ? "rounded-[6px] border border-[#9fd89f] bg-[#f1faf1] px-4 py-3 text-sm"
+              : "rounded-[6px] border border-[#f1bbbc] bg-[#fdf3f4] px-4 py-3 text-sm"
+          }
+        >
+          <p className="font-semibold">
+            Anthropic API key: {status.found && !status.problem ? "found on this server" : (status.problem ?? "")}
+          </p>
+          <p className="mt-0.5 text-xs text-muted">
+            You are looking at {status.where}
+            {status.commit ? `, running version ${status.commit}` : ""}. The key itself is never shown.
+          </p>
+        </div>
         <FieldGroup
           title="Spending limits"
           description="Both must be set before any paid operation runs. Every operation is checked against them at its worst case before it is sent."
