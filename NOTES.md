@@ -260,6 +260,69 @@ feature is reverted, revert the code first and only then drop its column.
 
 ---
 
+## CreativeOS (`/admin/creative-os`)
+
+A private creative-strategy workspace inside the admin. Phase 1: projects and
+products, assignments, a per-project knowledge base, the Ad Deconstruction
+Lab, research history, API usage and spending limits. Later phases (research,
+swipe file, angles, hooks, copy studio, briefs, testing, performance) build on
+the same tables and the same paid-operation path.
+
+**Its own database schema.** Everything is in the Postgres schema
+`creative_os`, defined in `src/db/creative-os.ts`, with its own migrations in
+`drizzle-creative-os/` and its own history table
+(`creative_os.__migrations`). It never touches the portfolio's tables, and the
+portfolio's drifted migration history never touches it. To change it:
+
+```bash
+npx drizzle-kit generate --config drizzle.creative-os.config.ts --name <change>
+node --env-file=.env.local scripts/migrate-creative-os.mjs
+```
+
+drizzle-kit's own `migrate` cannot reach Neon here (it needs a WebSocket
+driver the project doesn't ship); the script uses drizzle's HTTP migrator
+instead. Keep migrations additive — local scripts write to the live database.
+
+**Paid operations go through one function.** `lib/creative-os/operations.ts`
+is the only code that calls the Claude API, and only from
+`/admin/creative-os/api/*` routes the owner triggers from the Authorize
+dialog. Opening pages, editing, searching, exporting never call it. The rules:
+
+- No default model: the dialog makes the owner choose one every time.
+- The estimate is local (text counted at 3 characters a token; worst case =
+  the whole output allowance) — no API call, not even token counting, before
+  authorization.
+- Both limits in Settings must be set or nothing runs. Each call's worst case
+  must fit the per-operation limit and, with everything else this month
+  (unknown costs counted at their worst case), the monthly one. The row is
+  recorded as running before the call and the month is re-checked with it
+  included, so two calls started together can't both slip under.
+- The browser's idempotency key is unique in the table: a resent request
+  never calls Claude twice. `maxRetries: 0` — a retry is a new authorization.
+- Errors the API answers with are recorded at $0 (not billed); a cancelled or
+  lost call keeps its worst case counted, because it may have been billed.
+- Costs are from the editable price table (seeded with Anthropic's prices of
+  2026-11-26), not the invoice. The real hard cap is the spending limit on the
+  Anthropic account.
+
+**The Ad Deconstruction Lab** sends only the ad's saved words, screenshots and
+notes (no web access), with a strict output schema. Every segment must quote
+the ad; the server looks for each quote in the source and stores where it
+was found, so only real quotes are highlighted and the rest are marked "not
+found word for word". It can't hear or watch video — transcripts are pasted.
+
+**Knowledge base**: text from pastes, imported pages (the server's own fetch,
+with every redirect hop checked against private addresses) and uploads
+(PDF/Word/text, extracted locally with `unpdf`/`mammoth`; the file itself is
+not kept), split into passages with a Postgres full-text index.
+
+**Security**: every route checks the session itself and refuses writes whose
+Origin isn't this site; uploads are size-capped and image types are checked
+by their bytes. `ANTHROPIC_API_KEY` is a server-only environment variable
+(set in Vercel; absent locally, so local runs can't spend).
+
+---
+
 ## Visitor tracking
 
 `/admin/visitors` reads the `visits` table, one row per public page view.

@@ -1,0 +1,297 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+
+import type { Preview } from "@/actions/creative-os";
+import { Dialog } from "@/components/dialog";
+import { Sparkle } from "@/components/fluent-icons";
+import { count, EFFORTS, usd, type Effort } from "@/lib/creative-os/format";
+import { cn } from "@/lib/utils";
+
+/*
+ * The only way a paid operation starts. The owner picks a model (there is no
+ * default: it is chosen every time), sees the estimate worked out on the
+ * server without any AI call — materials sent, token caps, likely and worst-
+ * case cost, the budget it fits in — and presses Authorize. Only then is the
+ * request sent, with a fresh idempotency key and the worst case that was
+ * shown, which the server will not exceed.
+ *
+ * While it runs, the dialog shows real elapsed time (no invented progress)
+ * and a Cancel button that aborts the request; a request already sent may
+ * still be billed, and the dialog says so.
+ */
+
+export type ModelOption = { model: string; label: string; inputPerMtok: number; outputPerMtok: number; note: string | null };
+
+type Phase =
+  | { step: "choose" }
+  | { step: "estimating" }
+  | { step: "ready"; preview: Extract<Preview, { ok: true }> }
+  | { step: "running"; preview: Extract<Preview, { ok: true }>; startedAt: number }
+  | { step: "done"; message: string }
+  | { step: "error"; message: string };
+
+export function AuthorizeDialog({
+  triggerLabel,
+  title,
+  description,
+  models,
+  preview,
+  endpoint,
+  body,
+  disabledReason,
+}: {
+  triggerLabel: string;
+  title: string;
+  description: string;
+  models: ModelOption[];
+  preview: (model: string) => Promise<Preview>;
+  endpoint: string;
+  body: Record<string, unknown>;
+  disabledReason?: string | null;
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [model, setModel] = useState<string | null>(null);
+  const [effort, setEffort] = useState<Effort>("medium");
+  const [phase, setPhase] = useState<Phase>({ step: "choose" });
+  const [now, setNow] = useState(0);
+  const controller = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (phase.step !== "running") return;
+    const timer = window.setInterval(() => setNow(Date.now()), 500);
+    return () => window.clearInterval(timer);
+  }, [phase.step]);
+
+  function close() {
+    if (phase.step === "running") return; // cancel first
+    setOpen(false);
+    setPhase({ step: "choose" });
+    setModel(null);
+  }
+
+  async function estimate() {
+    if (!model) return;
+    setPhase({ step: "estimating" });
+    const result = await preview(model).catch(() => ({ ok: false as const, error: "The estimate could not be worked out." }));
+    setPhase(result.ok ? { step: "ready", preview: result } : { step: "error", message: result.error });
+  }
+
+  async function run() {
+    if (phase.step !== "ready") return;
+    const abort = new AbortController();
+    controller.current = abort;
+    const startedAt = Date.now();
+    setNow(startedAt);
+    setPhase({ step: "running", preview: phase.preview, startedAt });
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: abort.signal,
+        body: JSON.stringify({
+          ...body,
+          model: phase.preview.model,
+          effort,
+          idempotencyKey: crypto.randomUUID(),
+          authorizedMaxUsd: Number(phase.preview.high.toFixed(4)) + 0.0001,
+        }),
+      });
+      const result = (await response.json().catch(() => ({}))) as { ok?: boolean; error?: string; costUsd?: number | null };
+      if (result.ok) {
+        setPhase({ step: "done", message: `Done. Cost ${usd(result.costUsd ?? null)} by the price table.` });
+        router.refresh();
+      } else {
+        setPhase({ step: "error", message: result.error ?? `The request failed (${response.status}).` });
+        router.refresh();
+      }
+    } catch {
+      setPhase({
+        step: "error",
+        message: abort.signal.aborted
+          ? "Cancelled. If the request had already reached Claude, it may still be billed; History shows what was recorded."
+          : "The connection was lost. Check History before running again.",
+      });
+      router.refresh();
+    } finally {
+      controller.current = null;
+    }
+  }
+
+  const selected = models.find((option) => option.model === model) ?? null;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        disabled={Boolean(disabledReason)}
+        title={disabledReason ?? undefined}
+        className="btn btn-primary"
+      >
+        <Sparkle />
+        {triggerLabel}
+      </button>
+
+      <Dialog open={open} title={title} onClose={close} widthClassName="max-w-2xl">
+        <p className="-mt-2 mb-4 text-sm text-muted">{description}</p>
+        <p className="mb-5 rounded-[4px] border border-[#f9d5a7] bg-[#fff9f2] px-3 py-2 text-sm">
+          This uses the Claude API and costs money. Nothing is sent until you press <strong>Authorize</strong>.
+        </p>
+
+        {phase.step === "choose" || phase.step === "estimating" ? (
+          <div className="grid gap-5">
+            <fieldset className="grid gap-2">
+              <legend className="mb-1 text-sm font-semibold">Model</legend>
+              {models.map((option) => (
+                <label
+                  key={option.model}
+                  className={cn(
+                    "flex cursor-pointer items-start gap-3 rounded-[6px] border px-3 py-2.5 text-sm transition-colors",
+                    model === option.model ? "border-accent bg-accent-soft" : "border-line hover:border-line-strong",
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="model"
+                    value={option.model}
+                    checked={model === option.model}
+                    onChange={() => setModel(option.model)}
+                    className="mt-1 accent-[var(--accent)]"
+                  />
+                  <span className="grid gap-0.5">
+                    <span className="font-semibold">{option.label}</span>
+                    <span className="text-xs text-muted">
+                      ${option.inputPerMtok} input · ${option.outputPerMtok} output per million tokens
+                    </span>
+                    {option.note ? <span className="text-xs text-faint">{option.note}</span> : null}
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+
+            <fieldset>
+              <legend className="mb-1.5 text-sm font-semibold">Effort</legend>
+              <div className="flex gap-1.5">
+                {EFFORTS.map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => setEffort(level)}
+                    aria-pressed={effort === level}
+                    className={cn(
+                      "rounded-[4px] border px-3 py-1 text-sm capitalize",
+                      effort === level ? "border-accent bg-accent-soft font-semibold text-accent-hover" : "border-line-strong",
+                    )}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-xs text-faint">More effort means more thinking: often better, always more output tokens.</p>
+            </fieldset>
+
+            <div className="flex justify-end gap-2">
+              <button type="button" className="btn btn-secondary" onClick={close}>
+                Close
+              </button>
+              <button type="button" className="btn btn-primary" disabled={!selected || phase.step === "estimating"} onClick={estimate}>
+                {phase.step === "estimating" ? "Working out the cost…" : "Show the cost"}
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {phase.step === "ready" || phase.step === "running" ? (
+          <div className="grid gap-4">
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+              <Fact label="Model" value={phase.preview.modelLabel} />
+              <Fact label="Effort" value={effort} />
+              <Fact label="Web searches" value="None" />
+              <Fact label="Input, up to" value={`${count(phase.preview.inputTokens)} tokens`} />
+              <Fact label="Output, up to" value={`${count(phase.preview.maxOutputTokens)} tokens`} />
+              <Fact label="Likely cost" value={`${usd(phase.preview.low)} or more`} />
+            </dl>
+            <div className="rounded-[6px] bg-surface px-3 py-2.5 text-sm">
+              <p>
+                <strong>At most {usd(phase.preview.high)}</strong> if the whole output allowance is used.
+              </p>
+              <p className="mt-0.5 text-xs text-muted">
+                This month: {usd(phase.preview.budget.spent)} of {usd(phase.preview.budget.monthlyLimit)} · per-operation limit{" "}
+                {usd(phase.preview.budget.perOperationLimit)}. Estimates from your price table, not Anthropic&apos;s invoice.
+              </p>
+            </div>
+            <div>
+              <p className="mb-1 text-sm font-semibold">What will be sent to Claude</p>
+              <ul className="grid gap-0.5 text-sm text-muted">
+                {phase.preview.materials.map((item) => (
+                  <li key={item.label}>
+                    · {item.label}
+                    {item.chars ? <span className="text-faint"> ({count(item.chars)} characters)</span> : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {!phase.preview.budget.allowed ? (
+              <p role="alert" className="rounded-[4px] border border-[#f1bbbc] bg-[#fdf3f4] px-3 py-2 text-sm">
+                {phase.preview.budget.reason}
+              </p>
+            ) : null}
+
+            {phase.step === "running" ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-[6px] border border-line px-3 py-2.5">
+                <p className="text-sm" role="status">
+                  Running… {Math.max(0, Math.round((now - phase.startedAt) / 1000))}s
+                  <span className="ml-2 text-xs text-faint">usually 20–90 seconds</span>
+                </p>
+                <button type="button" className="btn btn-secondary" onClick={() => controller.current?.abort()}>
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex justify-end gap-2">
+                <button type="button" className="btn btn-secondary" onClick={() => setPhase({ step: "choose" })}>
+                  Back
+                </button>
+                <button type="button" className="btn btn-primary" disabled={!phase.preview.budget.allowed} onClick={run}>
+                  Authorize · up to {usd(phase.preview.high)}
+                </button>
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        {phase.step === "done" || phase.step === "error" ? (
+          <div className="grid gap-4">
+            <p
+              role={phase.step === "error" ? "alert" : "status"}
+              className={cn(
+                "rounded-[4px] border px-3 py-2.5 text-sm",
+                phase.step === "error" ? "border-[#f1bbbc] bg-[#fdf3f4]" : "border-[#9fd89f] bg-[#f1faf1]",
+              )}
+            >
+              {phase.message}
+            </p>
+            <div className="flex justify-end">
+              <button type="button" className="btn btn-primary" onClick={close}>
+                Close
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </Dialog>
+    </>
+  );
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-xs text-faint">{label}</dt>
+      <dd className="truncate first-letter:uppercase">{value}</dd>
+    </div>
+  );
+}

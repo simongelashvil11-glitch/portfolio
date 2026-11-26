@@ -13,6 +13,7 @@ import {
   News,
   Person,
   Pulse,
+  Sparkle,
   Wrench,
   type FluentIcon,
 } from "@/components/fluent-icons";
@@ -30,6 +31,10 @@ const GROUPS: { heading: string | null; items: NavItem[] }[] = [
   {
     heading: null,
     items: [{ href: "/admin", label: "Overview", icon: Grid }],
+  },
+  {
+    heading: "Workspace",
+    items: [{ href: "/admin/creative-os", label: "CreativeOS", icon: Sparkle }],
   },
   {
     heading: "Home page",
