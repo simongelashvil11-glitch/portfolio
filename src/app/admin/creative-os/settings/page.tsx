@@ -1,4 +1,5 @@
 import { saveLimits, savePrice } from "@/actions/creative-os";
+import { saveTranscriptionSettings } from "@/actions/creative-os-research";
 import { Checkbox, Input, PageHeading } from "@/components/admin/ui";
 import { CosField, FieldGroup } from "@/components/creative-os/fields";
 import { CaptureCode } from "@/components/creative-os/capture-code";
@@ -81,6 +82,31 @@ export default async function SettingsPage() {
           <p className="text-xs text-faint">
             These limits are enforced by CreativeOS from its own estimates. The only hard cap is the spending limit on your Anthropic
             account (platform.claude.com, Settings → Limits); keep one set there too.
+          </p>
+        </FieldGroup>
+
+        <FieldGroup
+          title="Video transcripts"
+          description="Video ads are transcribed by ElevenLabs Scribe (Claude can't hear audio). It handles Georgian and English, and costs about $0.20 per hour of audio, so a 30-second ad is a fifth of a cent. Each transcript is checked against your limits and listed in Research history."
+        >
+          <p className={process.env.ELEVENLABS_API_KEY ? "text-sm font-semibold text-[#0e700e]" : "text-sm font-semibold text-danger"}>
+            ElevenLabs API key: {process.env.ELEVENLABS_API_KEY ? "found on this server" : "not found on this server (ELEVENLABS_API_KEY)"}
+          </p>
+          <CosForm action={saveTranscriptionSettings} submitLabel="Save">
+            <Checkbox
+              name="autoTranscribe"
+              label="Transcribe video ads automatically when the Chrome extension saves them"
+              defaultChecked={settings.autoTranscribe}
+            />
+            <div className="max-w-xs">
+              <CosField label="Price per hour of audio (USD)" name="transcriptionPerHour" hint="ElevenLabs' published batch price on 27 November 2026.">
+                <Input name="transcriptionPerHour" inputMode="decimal" defaultValue={settings.transcriptionPerHour} />
+              </CosField>
+            </div>
+          </CosForm>
+          <p className="text-xs text-faint">
+            Off: each video ad shows a Transcribe button with its cost. On: video ads are transcribed as you save them. Setup is
+            in the <a href="/admin/creative-os/guide#transcripts" className="text-accent hover:underline">Guide</a>.
           </p>
         </FieldGroup>
 

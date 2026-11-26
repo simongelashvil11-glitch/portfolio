@@ -63,6 +63,7 @@ const CONTENTS = [
   ["costs", "What things cost"],
   ["errors", "When something goes wrong"],
   ["extension", "Saving ads from the Meta Ad Library (Chrome extension)"],
+  ["transcripts", "Video transcripts"],
   ["not-yet", "What it doesn't do yet"],
 ] as const;
 
@@ -496,11 +497,53 @@ export default function GuidePage() {
           </p>
         </Section>
 
+        <Section id="transcripts" title="Video transcripts">
+          <p>
+            Claude can&apos;t hear audio, so video ads are transcribed by <strong>ElevenLabs Scribe</strong>, which handles
+            Georgian and English. It costs about <strong>$0.20 per hour of audio</strong>, billed by the second: a 30-second ad
+            is about $0.002, and ElevenLabs&apos; free plan includes 4.5 hours. The transcript lands in the ad&apos;s Transcript
+            with real timestamps, ready for Analyze ad.
+          </p>
+          <p className="font-semibold">Set it up (once)</p>
+          <ol className="grid list-decimal gap-1.5 pl-5">
+            <li>Create a free account at elevenlabs.io.</li>
+            <li>
+              In ElevenLabs, open your profile → <strong>API Keys</strong> → <strong>Create API key</strong>. If it asks which
+              permissions to give, <strong>Speech to Text</strong> is the only one needed. Copy the key.
+            </li>
+            <li>
+              In Vercel → <strong>portfolio</strong> → <strong>Settings → Environment Variables</strong>, add a variable named
+              exactly <code className="rounded bg-surface px-1">ELEVENLABS_API_KEY</code> (check every letter), paste the key as
+              the value, tick <strong>Production</strong> and <strong>Preview</strong>, and save. Then redeploy (or ask me to).
+            </li>
+            <li>
+              Here, <Link href="/admin/creative-os/settings" className="text-accent hover:underline">Settings</Link> →{" "}
+              <strong>Video transcripts</strong> should say the key is found. Tick <strong>Transcribe video ads automatically</strong>{" "}
+              if you want every saved video transcribed; otherwise each video ad has a <strong>Transcribe video</strong> button
+              showing its cost.
+            </li>
+          </ol>
+          <ul className="grid list-disc gap-1 pl-5">
+            <li>
+              The extension saves the video&apos;s address only when the page has loaded it. If an ad says no video address was
+              saved, play the video for a second in the Ad Library and press Save again.
+            </li>
+            <li>
+              Facebook&apos;s video links expire after some days, so transcribe soon after saving (automatic mode does it at once).
+            </li>
+            <li>
+              Every transcript is in Research history with its cost, and counts against your monthly and per-operation limits.
+              A transcript you pasted is never overwritten.
+            </li>
+            <li>Automatic transcripts can mishear names, prices and brand terms: check those before quoting.</li>
+          </ul>
+        </Section>
+
         <Section id="not-yet" title="What it doesn't do yet">
           <ul className="grid list-disc gap-1 pl-5">
-            <li>Watch videos or hear audio: paste a video ad&apos;s script into its transcript.</li>
+            <li>See the video itself: the analysis reads the transcript and the saved picture, not the moving images.</li>
             <li>Write hooks, scripts, angles or briefs: that is the next phase, and it will use your bookmarks, segments and brand voice.</li>
-            <li>Run anything automatically: every paid run waits for your Authorize.</li>
+            <li>Run anything without your say-so: paid runs wait for your Authorize, except transcripts if you switch automatic transcripts on.</li>
           </ul>
         </Section>
       </div>

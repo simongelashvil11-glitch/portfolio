@@ -353,6 +353,17 @@ anything the new capture missed. When Meta changes the page, update
 `content.js` (`window.__cosParse(el)` shows what a card would save) and
 reload the extension at chrome://extensions.
 
+**Video transcripts** come from ElevenLabs Scribe (`lib/creative-os/transcribe.ts`,
+model `scribe_v2`, rated high accuracy for Georgian; about $0.20 per audio
+hour). The extension saves the video's fbcdn address and length; the server
+downloads the file and uploads it to ElevenLabs, so nothing large passes
+through the extension. Same rules as Claude runs: key required
+(`ELEVENLABS_API_KEY`), budget checked at the worst case (the video's length,
+or 10 minutes), a ledger row before the call, real cost from the audio
+length, error answers at $0. Runs from the ad's Transcribe button, or after
+a save when "Transcribe automatically" is on (via `after()`, one attempt per
+ad per day). Never overwrites a pasted transcript.
+
 **Knowledge base**: text from pastes, imported pages (the server's own fetch,
 with every redirect hop checked against private addresses) and uploads
 (PDF/Word/text, extracted locally with `unpdf`/`mammoth`; the file itself is

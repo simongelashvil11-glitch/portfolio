@@ -28,6 +28,7 @@ export const OPERATION_KIND_LABEL: Record<string, string> = {
   competitor_discovery: "Find my rivals",
   competitor_research: "Competitor research",
   market_patterns: "Market patterns",
+  transcription: "Video transcript",
 };
 
 /** Where an operation's result is shown, for the history and usage pages. */

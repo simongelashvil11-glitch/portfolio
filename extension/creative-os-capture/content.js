@@ -124,6 +124,10 @@
       .sort((a, b) => (b.naturalWidth || b.width) * (b.naturalHeight || b.height) - (a.naturalWidth || a.width) * (a.naturalHeight || a.height));
     const mediaKind = video ? "video" : images.length >= 2 ? "carousel" : images.length === 1 ? "image" : "text";
     const imageUrl = (video && video.poster) || images[0]?.currentSrc || images[0]?.src || null;
+    // The video file's own address, for the transcript: only a real https address (a "blob:" stream can't be fetched later).
+    const videoSource = video ? video.currentSrc || video.src || video.querySelector("source")?.src || "" : "";
+    const videoUrl = /^https:\/\/[^/]*fbcdn\.net\//.test(videoSource) ? videoSource : null;
+    const videoSeconds = video && Number.isFinite(video.duration) && video.duration > 0 ? Math.round(video.duration * 10) / 10 : null;
 
     return {
       libraryId,
@@ -138,6 +142,8 @@
       active,
       variations: variationsMatch ? Number(variationsMatch[1]) : null,
       mediaKind,
+      videoUrl,
+      videoSeconds,
       cardText: all.slice(0, 20000),
       imageUrl,
     };
@@ -177,7 +183,7 @@
     setState(button, "saving");
     const result = await chrome.runtime.sendMessage({ type: "save", ad }).catch((error) => ({ ok: false, error: String(error) }));
     if (result?.ok) {
-      setState(button, result.created ? "saved" : "updated", "Open it in CreativeOS from the Ad Lab.");
+      setState(button, result.created ? "saved" : "updated", result.transcribing ? "Saved. The video is being transcribed; the transcript appears in the Ad Lab within a minute or so." : "Open it in CreativeOS from the Ad Lab.");
       button.dataset.url = result.url || "";
       return true;
     }

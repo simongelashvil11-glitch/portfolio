@@ -1,7 +1,12 @@
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 
+import { db } from "@/db";
+import { cosAds } from "@/db/creative-os";
 import { CapturedAd, captureTargets, saveCapturedAd, verifyCaptureRequest } from "@/lib/creative-os/capture";
+import { getSettings } from "@/lib/creative-os/pricing";
+import { transcribeAd, wantsAutoTranscript } from "@/lib/creative-os/transcribe";
 import { rateLimit, requestIp } from "@/lib/rate-limit";
 
 /*
@@ -9,10 +14,14 @@ import { rateLimit, requestIp } from "@/lib/rate-limit";
  * Outside /admin on purpose: the extension has no admin cookie, so it proves
  * itself with the connection code from CreativeOS Settings instead (see
  * lib/creative-os/capture.ts). GET lists projects and competitors for its
- * pickers; POST saves one ad. No AI is involved and nothing costs money.
+ * pickers; POST saves one ad. Saving is free. If the owner switched on
+ * automatic transcripts in Settings, a saved video ad is then transcribed
+ * after the response is sent (a small paid run, within the spending limits).
  */
 
 export const dynamic = "force-dynamic";
+// Room for an automatic transcript to finish after the response.
+export const maxDuration = 300;
 
 async function authorize(request: NextRequest) {
   if (!rateLimit(`capture:${requestIp(request.headers)}`, 120, 60_000)) {
@@ -43,11 +52,29 @@ export async function POST(request: NextRequest) {
   if (!saved.ok) return Response.json({ error: saved.error }, { status: saved.status });
 
   revalidatePath("/admin/creative-os", "layout");
+
+  const settings = await getSettings();
+  const [ad] = await db
+    .select({ mediaKind: cosAds.mediaKind, videoUrl: cosAds.videoUrl, transcript: cosAds.transcript })
+    .from(cosAds)
+    .where(eq(cosAds.id, saved.adId))
+    .limit(1);
+  const transcribing = Boolean(ad && wantsAutoTranscript(ad, settings.autoTranscribe) && process.env.ELEVENLABS_API_KEY);
+  if (transcribing) {
+    // One automatic attempt per ad per day; a failure is in Research history, and Transcribe on the ad's page retries.
+    const key = `auto-transcript-${saved.adId}-${new Date().toISOString().slice(0, 10)}`;
+    after(async () => {
+      await transcribeAd(saved.adId, { trigger: "auto", key });
+      revalidatePath("/admin/creative-os", "layout");
+    });
+  }
+
   const origin = request.nextUrl.origin;
   return Response.json({
     ok: true,
     created: saved.created,
     imageSaved: saved.imageSaved,
+    transcribing,
     url: `${origin}/admin/creative-os/p/${saved.projectId}/ads/${saved.adId}`,
   });
 }

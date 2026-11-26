@@ -67,7 +67,7 @@ chrome.runtime.onMessage.addListener((message, _sender, reply) => {
         code: config.code,
         body: { projectId: Number(config.projectId), competitorId: config.competitorId ? Number(config.competitorId) : null, ad: { ...ad, image } },
       });
-      return { ok: true, created: result.created, url: result.url };
+      return { ok: true, created: result.created, transcribing: Boolean(result.transcribing), url: result.url };
     }
     throw new Error("Unknown request.");
   })().then(reply, (error) => reply({ ok: false, error: error.message || String(error) }));

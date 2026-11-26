@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { deleteAd, deleteAdImage, previewDeconstruction, saveAd } from "@/actions/creative-os";
+import { transcribeVideo } from "@/actions/creative-os-research";
 import { ConfirmForm } from "@/components/admin/confirm-form";
 import { DeleteForm } from "@/components/admin/delete-form";
 import { Panel } from "@/components/admin/stats";
@@ -19,10 +20,13 @@ import { when } from "@/lib/admin-time";
 import { ELEMENT_STYLE, type Element } from "@/lib/creative-os/elements";
 import type { StoredOverview } from "@/lib/creative-os/export";
 import { adDaysRunning, runningLabel, usd } from "@/lib/creative-os/format";
-import { getPricing } from "@/lib/creative-os/pricing";
+import { getPricing, getSettings } from "@/lib/creative-os/pricing";
 import { getProjectOr404 } from "@/lib/creative-os/queries";
+import { isFacebookVideoUrl, transcriptWorstCase } from "@/lib/creative-os/transcribe";
 
 export const dynamic = "force-dynamic";
+// Transcribe runs as a server action on this page: room for the download and the transcription.
+export const maxDuration = 300;
 
 export async function generateMetadata({ params }: PageProps<"/admin/creative-os/p/[projectId]/ads/[adId]">) {
   const [ad] = await db.select({ title: cosAds.title }).from(cosAds).where(eq(cosAds.id, Number((await params).adId) || 0)).limit(1);
@@ -39,7 +43,7 @@ export default async function AdPage({ params, searchParams }: PageProps<"/admin
     .limit(1);
   if (!ad) notFound();
 
-  const [images, analyses, pricing] = await Promise.all([
+  const [images, analyses, pricing, { transcriptionPerHour }] = await Promise.all([
     db.select({ id: cosAdImages.id, size: cosAdImages.size }).from(cosAdImages).where(eq(cosAdImages.adId, ad.id)).orderBy(asc(cosAdImages.id)),
     db
       .select({ analysis: cosAdAnalyses, cost: cosAiOperations.costUsd, effort: cosAiOperations.effort })
@@ -48,6 +52,7 @@ export default async function AdPage({ params, searchParams }: PageProps<"/admin
       .where(eq(cosAdAnalyses.adId, ad.id))
       .orderBy(desc(cosAdAnalyses.createdAt)),
     getPricing(),
+    getSettings(),
   ]);
 
   const requested = Number((await searchParams).analysis);
@@ -108,6 +113,38 @@ export default async function AdPage({ params, searchParams }: PageProps<"/admin
           disabledReason={!ad.transcript && !ad.adCopy ? "Add the transcript or copy first." : null}
         />
       </div>
+
+      {ad.mediaKind === "video" && !ad.transcript?.trim() ? (
+        <Panel title="Video transcript">
+          {!isFacebookVideoUrl(ad.videoUrl) ? (
+            <p className="text-sm text-muted">
+              No video address was saved, so it can&apos;t be transcribed automatically. In the Ad Library, play this video for a
+              second, then press Save to CreativeOS again; or paste what is said into the transcript below.
+            </p>
+          ) : !process.env.ELEVENLABS_API_KEY ? (
+            <p className="text-sm text-muted">
+              Automatic transcripts need an ElevenLabs API key on the server (ELEVENLABS_API_KEY). See the{" "}
+              <Link href="/admin/creative-os/guide#transcripts" className="text-accent hover:underline">
+                Guide
+              </Link>
+              ; until then, paste what is said into the transcript below.
+            </p>
+          ) : (
+            <CosForm action={transcribeVideo} submitLabel="Transcribe video" pendingLabel="Transcribing… (usually under a minute)">
+              <input type="hidden" name="adId" value={ad.id} />
+              <input type="hidden" name="key" value={crypto.randomUUID()} />
+              <p className="text-sm text-muted">
+                Writes what is said in the video into the transcript, with timestamps, using ElevenLabs Scribe (handles Georgian
+                and English).{" "}
+                {ad.videoSeconds
+                  ? `About ${Math.round(ad.videoSeconds)} seconds of audio: roughly ${usd((ad.videoSeconds / 3600) * transcriptionPerHour)}.`
+                  : `The length is unknown; at most ${usd(transcriptWorstCase(null, transcriptionPerHour))} (10 minutes).`}{" "}
+                Counted in your spending limits.
+              </p>
+            </CosForm>
+          )}
+        </Panel>
+      ) : null}
 
       {!current ? (
         <EmptyState>
@@ -181,8 +218,11 @@ export default async function AdPage({ params, searchParams }: PageProps<"/admin
                 </section>
               ) : null}
               <p className="mt-4 border-t border-line pt-3 text-xs text-faint">
-                Numbers match the segments below. No timestamps are shown because none were measured; the analysis worked from the words
-                {images.length ? " and screenshots" : ""} you saved.
+                Numbers match the segments below.{" "}
+                {ad.transcriptSource === "scribe"
+                  ? "The transcript's timestamps were measured by the automatic transcription; check names and numbers in it before quoting."
+                  : "No timestamps are shown because none were measured."}{" "}
+                The analysis worked from the words{images.length ? " and screenshots" : ""} you saved.
               </p>
             </Panel>
           ) : null}

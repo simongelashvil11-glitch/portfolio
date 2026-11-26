@@ -12,6 +12,7 @@ import {
   cosAwarenessAnalyses,
   cosCompetitors,
   cosCustomerInsights,
+  cosSettings,
 } from "@/db/creative-os";
 import { requireSession } from "@/lib/auth";
 import { checkBudget } from "@/lib/creative-os/budget";
@@ -21,6 +22,7 @@ import { getModelPrice, getSettings } from "@/lib/creative-os/pricing";
 import { cleanOptions, prepareResearch } from "@/lib/creative-os/research";
 import { CONFIDENCE, EVIDENCE_STRENGTH, VOC_CATEGORIES } from "@/lib/creative-os/research-labels";
 import type { StoredStage } from "@/lib/creative-os/research/strategy";
+import { transcribeAd } from "@/lib/creative-os/transcribe";
 
 import type { FormState, Preview } from "./creative-os";
 
@@ -362,4 +364,36 @@ export async function revokeCaptureCode(): Promise<CodeState> {
   await log("revoked", "capture_code", null);
   refresh();
   return { revoked: true };
+}
+
+/* ------------------------------------------------------------------ */
+/* Video transcripts                                                   */
+/* ------------------------------------------------------------------ */
+
+/** Transcribes one ad's video now (a small paid run, checked against the spending limits). */
+export async function transcribeVideo(_previous: FormState, formData: FormData): Promise<FormState> {
+  await requireSession();
+  const adId = id(formData.get("adId"));
+  const key = text(formData.get("key"));
+  if (!adId || !/^[a-zA-Z0-9-]{16,64}$/.test(key)) return { error: "Invalid request." };
+  const outcome = await transcribeAd(adId, { trigger: "manual", key: `manual-transcript-${key}` });
+  refresh();
+  if (!outcome.ok) return { error: outcome.reason };
+  return {
+    success: `Transcribed ${Math.round(outcome.seconds)} seconds${outcome.language ? ` (${outcome.language})` : ""} for $${outcome.costUsd.toFixed(4)}.`,
+  };
+}
+
+export async function saveTranscriptionSettings(_previous: FormState, formData: FormData): Promise<FormState> {
+  await requireSession();
+  const perHour = Number(text(formData.get("transcriptionPerHour")));
+  if (!Number.isFinite(perHour) || perHour < 0 || perHour > 100) return { error: "Enter the price per hour, e.g. 0.20." };
+  await getSettings();
+  await db
+    .update(cosSettings)
+    .set({ autoTranscribe: formData.get("autoTranscribe") === "on", transcriptionPerHour: perHour, updatedAt: new Date() })
+    .where(eq(cosSettings.id, 1));
+  await log("changed", "transcription_settings", null, { autoTranscribe: formData.get("autoTranscribe") === "on", perHour });
+  refresh();
+  return { success: "Saved." };
 }

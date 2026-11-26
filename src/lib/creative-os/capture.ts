@@ -9,6 +9,7 @@ import { db } from "@/db";
 import { cosAdImages, cosAds, cosAuditLog, cosCompetitors, cosProjects, cosSettings } from "@/db/creative-os";
 
 import { ensureDefaults } from "./pricing";
+import { isFacebookVideoUrl } from "./transcribe";
 
 /*
  * Ads saved from the Meta Ad Library by the owner's Chrome extension.
@@ -98,6 +99,9 @@ export const CapturedAd = z.object({
     active: z.boolean().nullish(),
     variations: z.number().int().min(1).max(10_000).nullish(),
     mediaKind: z.enum(["image", "video", "carousel", "text"]).nullish(),
+    /** The video file's address as the page played it (Facebook's CDN), and its length in seconds. */
+    videoUrl: z.url().max(2000).nullish().catch(null),
+    videoSeconds: z.number().min(0).max(36_000).nullish().catch(null),
     platforms: z.array(z.string().max(40)).max(10).nullish(),
     /** The whole card's visible text, kept when the body could not be told apart. */
     cardText: optionalText(20_000),
@@ -232,6 +236,8 @@ export async function saveCapturedAd(input: CapturedAdInput) {
     stillActive: ad.active ?? null,
     variations: ad.variations ?? null,
     mediaKind: ad.mediaKind ?? null,
+    videoUrl: isFacebookVideoUrl(ad.videoUrl) ? ad.videoUrl! : null,
+    videoSeconds: ad.videoSeconds && Number.isFinite(ad.videoSeconds) ? ad.videoSeconds : null,
     lastSeenAt: new Date(),
     source: "extension",
     updatedAt: new Date(),

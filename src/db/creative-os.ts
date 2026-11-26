@@ -218,6 +218,12 @@ export const cosAds = creativeOs.table(
     landingUrl: varchar("landing_url", { length: 1000 }),
     /** image | video | carousel | text */
     mediaKind: varchar("media_kind", { length: 12 }),
+    /** The video file's address on Facebook's CDN, as the page had it. Signed links expire after some days. */
+    videoUrl: varchar("video_url", { length: 2000 }),
+    /** The video's length as the page reported it, used to price a transcript before making it. */
+    videoSeconds: doublePrecision("video_seconds"),
+    /** manual (pasted) | scribe (transcribed automatically) */
+    transcriptSource: varchar("transcript_source", { length: 12 }),
     ...timestamps,
   },
   (t) => [
@@ -355,6 +361,10 @@ export const cosSettings = creativeOs.table("settings", {
   captureTokenHash: varchar("capture_token_hash", { length: 64 }),
   captureTokenCreatedAt: timestamp("capture_token_created_at", { withTimezone: true }),
   captureTokenUsedAt: timestamp("capture_token_used_at", { withTimezone: true }),
+  /** Transcribe video ads as soon as the extension saves them (still within the spending limits). */
+  autoTranscribe: boolean("auto_transcribe").default(false).notNull(),
+  /** ElevenLabs Scribe batch price, USD per hour of audio. */
+  transcriptionPerHour: doublePrecision("transcription_per_hour").default(0.2).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
