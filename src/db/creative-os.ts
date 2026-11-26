@@ -641,6 +641,179 @@ export const cosMarketAnalyses = creativeOs.table(
   (t) => [index("market_analyses_project_idx").on(t.projectId)],
 );
 
+/* ------------------------------------------------------------------ */
+/* Phase 4 — creative strategy and copywriting                         */
+/* ------------------------------------------------------------------ */
+
+/** Marketing angles: generated from the research or written by hand, then prioritised, approved or rejected. */
+export const cosAngles = creativeOs.table(
+  "angles",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => cosProjects.id, { onDelete: "cascade" }),
+    operationId: integer("operation_id").references(() => cosAiOperations.id, { onDelete: "set null" }),
+    productId: integer("product_id").references(() => cosProducts.id, { onDelete: "set null" }),
+    segmentId: integer("segment_id").references(() => cosAudienceSegments.id, { onDelete: "set null" }),
+    name: varchar("name", { length: 200 }).notNull(),
+    category: varchar("category", { length: 32 }).notNull(),
+    hypothesis: text("hypothesis").notNull(),
+    audience: text("audience"),
+    awarenessStage: varchar("awareness_stage", { length: 20 }).default("unclear").notNull(),
+    painPoint: text("pain_point"),
+    desire: text("desire"),
+    motivation: text("motivation"),
+    coreMessage: text("core_message").notNull(),
+    productBenefit: text("product_benefit"),
+    customerEvidence: text("customer_evidence"),
+    evidenceInsightIds: jsonb("evidence_insight_ids").$type<number[]>().default([]).notNull(),
+    recommendedFormat: text("recommended_format"),
+    potentialHooks: jsonb("potential_hooks").$type<string[]>().default([]).notNull(),
+    proofRequirements: text("proof_requirements"),
+    weaknesses: text("weaknesses"),
+    testingRecommendation: text("testing_recommendation"),
+    /** idea | prioritized | approved | rejected | archived */
+    status: varchar("status", { length: 12 }).default("idea").notNull(),
+    notes: text("notes"),
+    edited: boolean("edited").default(false).notNull(),
+    ...timestamps,
+  },
+  (t) => [index("angles_project_idx").on(t.projectId)],
+);
+
+/** The hook library. */
+export const cosHooks = creativeOs.table(
+  "hooks",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => cosProjects.id, { onDelete: "cascade" }),
+    operationId: integer("operation_id").references(() => cosAiOperations.id, { onDelete: "set null" }),
+    angleId: integer("angle_id").references(() => cosAngles.id, { onDelete: "set null" }),
+    segmentId: integer("segment_id").references(() => cosAudienceSegments.id, { onDelete: "set null" }),
+    productId: integer("product_id").references(() => cosProducts.id, { onDelete: "set null" }),
+    text: text("text").notNull(),
+    category: varchar("category", { length: 24 }).notNull(),
+    awarenessStage: varchar("awareness_stage", { length: 20 }).default("unclear").notNull(),
+    trigger: text("trigger"),
+    supportingResearch: text("supporting_research"),
+    evidenceInsightIds: jsonb("evidence_insight_ids").$type<number[]>().default([]).notNull(),
+    visualOpening: text("visual_opening"),
+    format: varchar("format", { length: 120 }),
+    /** draft | approved | rejected | archived */
+    status: varchar("status", { length: 12 }).default("draft").notNull(),
+    bookmarked: boolean("bookmarked").default(false).notNull(),
+    tags: jsonb("tags").$type<string[]>().default([]).notNull(),
+    notes: text("notes"),
+    ...timestamps,
+  },
+  (t) => [index("hooks_project_idx").on(t.projectId), index("hooks_angle_idx").on(t.angleId)],
+);
+
+/** A section of a script or piece of copy: what is said or written, and how it should look. */
+export type ScriptSection = { label: string; text: string; direction: string };
+
+/**
+ * A piece of copy or a script: the brief it was written to (chosen in the
+ * New script form, no AI involved), its working text (autosaved as you
+ * edit), and every version in script_versions.
+ */
+export const cosScripts = creativeOs.table(
+  "scripts",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => cosProjects.id, { onDelete: "cascade" }),
+    productId: integer("product_id").references(() => cosProducts.id, { onDelete: "set null" }),
+    segmentId: integer("segment_id").references(() => cosAudienceSegments.id, { onDelete: "set null" }),
+    angleId: integer("angle_id").references(() => cosAngles.id, { onDelete: "set null" }),
+    hookId: integer("hook_id").references(() => cosHooks.id, { onDelete: "set null" }),
+    title: varchar("title", { length: 200 }).notNull(),
+    /** What it is: ugc_script, meta_primary_text, advertorial… (see COPY_KINDS) */
+    kind: varchar("kind", { length: 32 }).notNull(),
+    platform: varchar("platform", { length: 40 }),
+    format: varchar("format", { length: 60 }),
+    framework: varchar("framework", { length: 32 }).default("freeform").notNull(),
+    awarenessStage: varchar("awareness_stage", { length: 20 }),
+    durationSeconds: integer("duration_seconds"),
+    language: varchar("language", { length: 40 }).default("English").notNull(),
+    offer: text("offer"),
+    cta: varchar("cta", { length: 200 }),
+    instructions: text("instructions"),
+    /** The text being edited now; autosaved without any AI call. */
+    working: jsonb("working").$type<ScriptSection[]>().default([]).notNull(),
+    /** draft | approved | archived */
+    status: varchar("status", { length: 12 }).default("draft").notNull(),
+    notes: text("notes"),
+    ...timestamps,
+  },
+  (t) => [index("scripts_project_idx").on(t.projectId)],
+);
+
+/** Every saved state of a script: AI variations, section rewrites and versions you saved by hand. Never overwritten. */
+export const cosScriptVersions = creativeOs.table(
+  "script_versions",
+  {
+    id: serial("id").primaryKey(),
+    scriptId: integer("script_id")
+      .notNull()
+      .references(() => cosScripts.id, { onDelete: "cascade" }),
+    number: integer("number").notNull(),
+    /** generated | rewrite | manual | restored */
+    source: varchar("source", { length: 12 }).notNull(),
+    label: varchar("label", { length: 200 }),
+    sections: jsonb("sections").$type<ScriptSection[]>().notNull(),
+    /** What the writer said about its approach, or what a rewrite changed. */
+    note: text("note"),
+    operationId: integer("operation_id").references(() => cosAiOperations.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("script_versions_script_idx").on(t.scriptId)],
+);
+
+/** Creative-director reviews of a script version: scored criteria, editorial notes and compliance flags. */
+export const cosScriptReviews = creativeOs.table(
+  "script_reviews",
+  {
+    id: serial("id").primaryKey(),
+    scriptId: integer("script_id")
+      .notNull()
+      .references(() => cosScripts.id, { onDelete: "cascade" }),
+    /** The text that was reviewed, as it stood. */
+    sections: jsonb("sections").$type<ScriptSection[]>().notNull(),
+    operationId: integer("operation_id").references(() => cosAiOperations.id, { onDelete: "set null" }),
+    model: varchar("model", { length: 64 }).notNull(),
+    result: jsonb("result").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("script_reviews_script_idx").on(t.scriptId)],
+);
+
+/** Production briefs for editors, designers and UGC creators, with a scene-by-scene storyboard. */
+export const cosBriefs = creativeOs.table(
+  "briefs",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => cosProjects.id, { onDelete: "cascade" }),
+    scriptId: integer("script_id").references(() => cosScripts.id, { onDelete: "set null" }),
+    operationId: integer("operation_id").references(() => cosAiOperations.id, { onDelete: "set null" }),
+    model: varchar("model", { length: 64 }).notNull(),
+    title: varchar("title", { length: 200 }).notNull(),
+    /** Who it is for: ugc_creator | video_editor | designer | actor */
+    audience: varchar("audience", { length: 20 }).notNull(),
+    result: jsonb("result").notNull(),
+    /** draft | approved | archived */
+    status: varchar("status", { length: 12 }).default("draft").notNull(),
+    ...timestamps,
+  },
+  (t) => [index("briefs_project_idx").on(t.projectId)],
+);
+
 export type CosProject = typeof cosProjects.$inferSelect;
 export type CosProduct = typeof cosProducts.$inferSelect;
 export type CosAssignment = typeof cosAssignments.$inferSelect;
@@ -660,3 +833,9 @@ export type CosAwarenessAnalysis = typeof cosAwarenessAnalyses.$inferSelect;
 export type CosCompetitor = typeof cosCompetitors.$inferSelect;
 export type CosCompetitorProfile = typeof cosCompetitorProfiles.$inferSelect;
 export type CosMarketAnalysis = typeof cosMarketAnalyses.$inferSelect;
+export type CosAngle = typeof cosAngles.$inferSelect;
+export type CosHook = typeof cosHooks.$inferSelect;
+export type CosScript = typeof cosScripts.$inferSelect;
+export type CosScriptVersion = typeof cosScriptVersions.$inferSelect;
+export type CosScriptReview = typeof cosScriptReviews.$inferSelect;
+export type CosBrief = typeof cosBriefs.$inferSelect;

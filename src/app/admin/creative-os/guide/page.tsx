@@ -59,6 +59,7 @@ const CONTENTS = [
   ["products", "Products and the knowledge base"],
   ["dialog", "The Authorize dialog"],
   ["tools", "What each tool gives you"],
+  ["writing", "Writing: angles, hooks, scripts and briefs"],
   ["reading", "Reading the results: labels and checks"],
   ["costs", "What things cost"],
   ["errors", "When something goes wrong"],
@@ -176,13 +177,32 @@ export default function GuidePage() {
               <strong>Ad Lab</strong>, any time: paste a winning ad&apos;s script or copy and break it down.
             </li>
           </ol>
+          <p className="font-semibold">Then write (the Create row of tabs)</p>
+          <ol className="grid list-decimal gap-2 pl-5" start={12}>
+            <li>
+              <strong>Angles → Generate angles.</strong> Approve the two or three you believe in; reject the rest.
+            </li>
+            <li>
+              <strong>Open an approved angle → Generate hooks.</strong> Bookmark the best ones.
+            </li>
+            <li>
+              <strong>Write a script with it</strong> (on the angle or a hook) → fill the short brief → <strong>Write it</strong>.
+              Edit freely, then use <strong>Creative director review</strong> before you call it done.
+            </li>
+            <li>
+              <strong>Make a brief</strong> on the finished script, and export it as a Word document for the creator or editor.
+            </li>
+          </ol>
+          <p>
+            More on these in <a href="#writing" className="text-accent hover:underline">Writing: angles, hooks, scripts and briefs</a>.
+          </p>
         </Section>
 
         <Section id="project-fields" title="Filling in a project (and what to do when you don't know)">
           <p>
             Only the name is required. On the form, each field has a tag: <strong>Used by research</strong> (sent to Claude
-            with every run, so it shapes results), <strong>For later tools</strong> (saved now, used by the copywriting tools
-            in a later phase) or <strong>Private</strong> (never sent). An empty field is never a problem: research simply
+            with research and writing runs, so it shapes results), <strong>Used by writing tools</strong> (sent with angles, hooks,
+            scripts, reviews and briefs) or <strong>Private</strong> (never sent). An empty field is never a problem: research simply
             works without it. Don&apos;t guess to fill a gap; a wrong guess misleads the research more than an empty field does.
           </p>
           <Table
@@ -205,8 +225,8 @@ export default function GuidePage() {
               ["Advertising platforms", "Context for the research.", "“Meta”, or leave empty."],
               ["Target audience", "What the client says about their buyers.", "Leave empty. Voice of Customer and Audiences find it from real customers."],
               ["Marketing objectives", "What the ads are for; context for the research.", "Leave empty, or one line such as “first orders from cold traffic”."],
-              ["Brand voice", "Not sent to research. For the copywriting tools later.", "Leave empty until the client shares guidelines."],
-              ["Client instructions", "Not sent to research. For briefs and copy later.", "Leave empty."],
+              ["Brand voice", "The writing tools match it. Not sent to research.", "Leave empty until the client shares guidelines; the writing stays plain and natural without it."],
+              ["Client instructions", "The writing tools follow it. Not sent to research.", "Leave empty."],
               ["Approved claims", "Claims the client signed off; research treats them as given.", "Leave empty."],
               ["Prohibited claims", "What you must never say; research is told.", "Leave empty, or add the obvious risky words for the category (e.g. “cure”, “guaranteed”)."],
               [
@@ -235,7 +255,8 @@ export default function GuidePage() {
               <strong>The knowledge base is optional.</strong> Use it for what the client gives you. The <strong>type</strong>{" "}
               you pick decides which research reads it: product documents, specs, landing pages, brief, approved messaging and
               testimonials go to product research; customer research, testimonials and the brief go to Voice of Customer and
-              Audiences. Brand guidelines, tone of voice, compliance and ad scripts are kept for the copywriting tools later.
+              Audiences; brand guidelines, tone of voice, approved messaging, compliance, past scripts and winning ad examples go
+              to the writing tools.
             </li>
             <li>
               Importing a web page or uploading a file is done by this site, not by Claude: free. Some pages block it; paste
@@ -320,6 +341,65 @@ export default function GuidePage() {
           </p>
         </Section>
 
+        <Section id="writing" title="Writing: angles, hooks, scripts and briefs">
+          <p>
+            The <strong>Create</strong> row of tabs turns the research into ads. Everything is written from what the project
+            already holds: product facts, the segment, the angle, customers&apos; own words (bookmarked ones first), the brand
+            voice, client instructions, approved and prohibited claims, the brand documents in the knowledge base, and the
+            angles competitors have worn out. It never invents results, testimonials, prices or deadlines.
+          </p>
+          <Table
+            head={["Tool", "What you do", "Good to know"]}
+            rows={[
+              [
+                "Angles",
+                "Generate angles, then Approve, Prioritise, Reject or Archive each. Open one to edit any field.",
+                "Each cites the customer insights it rests on. Bookmark strong insights in Voice of Customer first: they lead.",
+              ],
+              [
+                "Hooks",
+                "Generate hooks for an angle (on the angle's page or the Hooks tab), in English, Georgian or Russian. Bookmark, approve, reject, edit, tag, filter.",
+                "Genuinely different openings across 12 types, each with its trigger and the first visual.",
+              ],
+              [
+                "Scripts and copy",
+                "New script or copy → a short brief (type, product, segment, angle, hook, framework, length, language, offer, CTA, your instructions). Creating it is free. Then Write it.",
+                "13 types: UGC, direct-response, TikTok, founder, demo and VSL scripts; Meta primary text and headlines; static, retargeting, advertorial, landing page, email.",
+              ],
+              [
+                "The editor",
+                "Type anywhere. Each section has the words and, for video, what is on screen. Move, add or remove sections.",
+                "Saves itself a moment after you stop typing (no AI, no cost). Word count and spoken seconds update as you type. Copy all puts it on your clipboard.",
+              ],
+              [
+                "Versions",
+                "Every AI draft, variation and rewrite is a version; Save current text as a version keeps your own. Compare shows any version beside the current text; Use this version brings it back.",
+                "Nothing is ever overwritten: restoring first keeps your unsaved text as a version.",
+              ],
+              [
+                "Rewrite a section",
+                "Pick one section and say what to change (“shorter, and name the problem in the customer's words”).",
+                "Only that section changes, so it still fits the rest. Costs about a cent.",
+              ],
+              [
+                "Creative director review",
+                "A strict review of the current text: 19 criteria scored 1–5 with evidence and a fix each, exact phrases that sound generic or robotic, and compliance flags.",
+                "It doesn't rewrite anything. Use its notes with Rewrite a section, or edit by hand.",
+              ],
+              [
+                "Make a brief",
+                "Turns the script into a production brief for a UGC creator, editor, designer or actor: concept, voiceover, shot list, b-roll, editing, music, assets, compliance, alternative hooks, and a scene-by-scene storyboard.",
+                "Export it as a Word document to send. Timings are estimates.",
+              ],
+            ]}
+          />
+          <p>
+            Language: scripts are written in the language you choose in the brief (English, Georgian or Russian); briefs are in
+            English with the script&apos;s own lines kept as written. Mark finished pieces <strong>Approved</strong>; Archive hides
+            the rest without deleting them.
+          </p>
+        </Section>
+
         <Section id="reading" title="Reading the results: labels and checks">
           <p>
             <strong>Every finding has an evidence label</strong>, so you always know what you are looking at:
@@ -385,6 +465,12 @@ export default function GuidePage() {
               ["Audiences / Awareness / Market patterns", "≈ $0.03", "≈ $0.13"],
               ["Ad Lab", "$0.03–0.10", "≈ $0.20"],
               ["Any web run at Deep", "≈ $0.20", "≈ $1.20"],
+              ["Angles (5)", "≈ $0.06", "≈ $0.20"],
+              ["Hooks (10)", "≈ $0.03", "≈ $0.10"],
+              ["A script (1 variation)", "≈ $0.04", "≈ $0.20"],
+              ["A section rewrite", "≈ $0.01", "≈ $0.05"],
+              ["Creative director review", "≈ $0.05", "≈ $0.12"],
+              ["Production brief", "≈ $0.05", "≈ $0.15"],
             ]}
           />
           <ul className="grid list-disc gap-1 pl-5">
@@ -542,7 +628,7 @@ export default function GuidePage() {
         <Section id="not-yet" title="What it doesn't do yet">
           <ul className="grid list-disc gap-1 pl-5">
             <li>See the video itself: the analysis reads the transcript and the saved picture, not the moving images.</li>
-            <li>Write hooks, scripts, angles or briefs: that is the next phase, and it will use your bookmarks, segments and brand voice.</li>
+            <li>Adapt a competitor ad&apos;s structure to your product side by side, or plan tests and read performance data: later phases.</li>
             <li>Run anything without your say-so: paid runs wait for your Authorize, except transcripts if you switch automatic transcripts on.</li>
           </ul>
         </Section>

@@ -6,6 +6,7 @@ import type { CosAiOperation, CosPricing } from "@/db/creative-os";
 
 import type { Effort } from "../format";
 import { competitorDiscovery, competitorResearch, marketPatterns } from "./competitors";
+import { angleGeneration, briefGeneration, hookGeneration, scriptReview, scriptWriting, sectionRewrite } from "./creative";
 import type { Material } from "./context";
 import type { AnyModule, ModuleOptions } from "./module";
 import { productResearch } from "./product";
@@ -23,18 +24,35 @@ import { collectEvidence, normalizeUrl, saveSources } from "./web";
  */
 
 export const RESEARCH_MODULES: Record<string, AnyModule> = Object.fromEntries(
-  [productResearch, vocResearch, audienceSegments, awarenessAnalysis, competitorDiscovery, competitorResearch, marketPatterns].map(
-    (item) => [item.kind, item],
-  ),
+  [
+    productResearch,
+    vocResearch,
+    audienceSegments,
+    awarenessAnalysis,
+    competitorDiscovery,
+    competitorResearch,
+    marketPatterns,
+    angleGeneration,
+    hookGeneration,
+    scriptWriting,
+    sectionRewrite,
+    scriptReview,
+    briefGeneration,
+  ].map((item) => [item.kind, item]),
 );
 
-/** Option values are short codes; anything else is dropped. */
+/** Free-text options (a rewrite instruction); every other option is a short code. */
+const TEXT_OPTIONS = new Set(["instruction"]);
+
+/** Option values are short codes, or short free text for the keys above; anything else is dropped. */
 export function cleanOptions(raw: unknown): ModuleOptions {
   if (!raw || typeof raw !== "object") return {};
   return Object.fromEntries(
     Object.entries(raw as Record<string, unknown>)
-      .filter(([key, value]) => /^[a-z]{1,20}$/.test(key) && typeof value === "string" && /^[a-z0-9_:]{1,40}$/.test(value))
-      .slice(0, 8),
+      .filter(([key, value]) => /^[a-z]{1,20}$/.test(key) && typeof value === "string")
+      .map(([key, value]) => [key, TEXT_OPTIONS.has(key) ? (value as string).replace(/[\u0000-\u0008\u000b-\u001f]/g, "").trim().slice(0, 600) : value])
+      .filter(([key, value]) => TEXT_OPTIONS.has(key as string) || /^[a-z0-9_:]{1,40}$/.test(value as string))
+      .slice(0, 10),
   ) as ModuleOptions;
 }
 

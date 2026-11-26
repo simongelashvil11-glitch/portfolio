@@ -353,6 +353,21 @@ anything the new capture missed. When Meta changes the page, update
 `content.js` (`window.__cosParse(el)` shows what a card would save) and
 reload the extension at chrome://extensions.
 
+**Writing tools (Phase 4)** — angles, hooks, scripts and copy, section
+rewrites, the creative-director review and production briefs. They are
+research modules too (`research/creative.ts`, no web), so they share the
+dialog, budget checks and ledger. `research/creative-context.ts` assembles
+what they are given: brand (voice, client instructions, claims), the
+product's latest research, the segment (the starred focus segment by
+default), awareness, customer insights (bookmarked first; an angle's cited
+ones when it has them), saturated angles from market patterns, and the
+brand documents from the knowledge base. Scripts keep a `working` copy the
+editor autosaves (no AI) and every AI draft, rewrite and hand-saved state in
+`script_versions`; restoring keeps unsaved text as a version first. The
+rewrite instruction is the one free-text option `cleanOptions` lets through
+(600 characters, control characters stripped). Exports: Word via `docx`,
+Markdown and text (`lib/creative-os/export-docs.ts`).
+
 **Video transcripts** come from ElevenLabs Scribe (`lib/creative-os/transcribe.ts`,
 model `scribe_v2`, rated high accuracy for Georgian; about $0.20 per audio
 hour). The extension saves the video's fbcdn address and length; the server

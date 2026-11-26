@@ -13,15 +13,23 @@ import { cn } from "@/lib/utils";
 export function CosTabs({
   items,
   label,
+  heading,
 }: {
   items: { href: string; label: string; exact?: boolean; badge?: string | number | null; also?: string[] }[];
   label: string;
+  /** A small label at the start of the row, when a page has more than one row of tabs. */
+  heading?: string;
 }) {
   const pathname = usePathname();
   const under = (prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
   return (
     <nav aria-label={label} className="-mx-1 overflow-x-auto">
-      <ul className="flex min-w-max gap-1 border-b border-line px-1">
+      <ul className="flex min-w-max items-center gap-1 border-b border-line px-1">
+        {heading ? (
+          <li aria-hidden className="w-[4.5rem] shrink-0 px-1 text-[11px] font-semibold uppercase tracking-wide text-faint">
+            {heading}
+          </li>
+        ) : null}
         {items.map((item) => {
           const active = item.exact
             ? pathname === item.href

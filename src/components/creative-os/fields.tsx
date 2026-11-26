@@ -8,18 +8,18 @@ import { cn } from "@/lib/utils";
 import { FieldError } from "./forms";
 
 /** Who reads a field: shown as a small tag beside its label, so it is clear what each input feeds. */
-export type FieldUse = "research" | "later" | "private";
+export type FieldUse = "research" | "writing" | "private";
 
 const USE_TAG: Record<FieldUse, { label: string; title: string; className: string }> = {
   research: {
     label: "Used by research",
-    title: "Sent to Claude with research runs, so it shapes the results.",
+    title: "Sent to Claude with research runs and the writing tools, so it shapes the results.",
     className: "border-[#b4d6fa] bg-[#ebf3fc] text-[#0f548c]",
   },
-  later: {
-    label: "For later tools",
-    title: "Saved now, not sent to research. The copywriting tools (a later phase) will use it.",
-    className: "border-line-strong bg-surface text-muted",
+  writing: {
+    label: "Used by writing tools",
+    title: "Sent with angles, hooks, scripts, reviews and briefs; not with research.",
+    className: "border-[#d4c1f0] bg-[#f5f0fc] text-[#5c2e91]",
   },
   private: {
     label: "Private",
@@ -148,16 +148,16 @@ export function ProjectFields({ project }: { project?: CosProject }) {
         <CosField
           label="Brand voice"
           name="brandVoice"
-          use="later"
-          hint="How the brand sounds, e.g. “warm, plain-spoken, a little cheeky; never clinical”. Not needed for research. Fill it in when the client shares guidelines."
+          use="writing"
+          hint="How the brand sounds, e.g. “warm, plain-spoken, a little cheeky; never clinical”. The writing tools follow it. Empty until the client shares guidelines."
         >
           <Textarea name="brandVoice" rows={3} defaultValue={project?.brandVoice ?? ""} />
         </CosField>
         <CosField
           label="Client instructions"
           name="clientInstructions"
-          use="later"
-          hint="Anything the client asked for: must-says, formats, tone notes. Kept for briefs and copy later."
+          use="writing"
+          hint="Anything the client asked for: must-says, formats, tone notes. The writing tools follow it."
         >
           <Textarea name="clientInstructions" rows={4} defaultValue={project?.clientInstructions ?? ""} />
         </CosField>

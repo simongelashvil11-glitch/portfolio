@@ -67,8 +67,11 @@ export default async function KnowledgePage({ params, searchParams }: PageProps<
               <strong>Voice of Customer and Audiences:</strong> customer research, testimonials, client brief.
             </li>
             <li>
-              <strong>Not read by research yet:</strong> brand guidelines, tone of voice, compliance, existing ad scripts,
-              successful ad examples, internal notes, other. The copywriting tools will use these later.
+              <strong>The writing tools (angles, hooks, scripts, reviews, briefs):</strong> brand guidelines, tone of voice,
+              approved messaging, compliance, existing ad scripts, successful ad examples.
+            </li>
+            <li>
+              <strong>Not read by anything:</strong> internal notes, other.
             </li>
           </ul>
           <p className="mt-2">

@@ -73,8 +73,13 @@ export async function POST(request: NextRequest) {
   );
 
   if (outcome.status === "completed") {
-    const added = (outcome.result as { added?: number } | null)?.added;
-    return Response.json({ ok: true, costUsd: outcome.operation.costUsd, added: typeof added === "number" ? added : null });
+    const result = outcome.result as { added?: number; href?: string } | null;
+    return Response.json({
+      ok: true,
+      costUsd: outcome.operation.costUsd,
+      added: typeof result?.added === "number" ? result.added : null,
+      href: typeof result?.href === "string" && result.href.startsWith("/admin/") ? result.href : null,
+    });
   }
   if (outcome.status === "duplicate") {
     return Response.json({ ok: false, duplicate: true, status: outcome.operation.status, error: "Already run with this authorization." });

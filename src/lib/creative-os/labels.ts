@@ -29,6 +29,12 @@ export const OPERATION_KIND_LABEL: Record<string, string> = {
   competitor_research: "Competitor research",
   market_patterns: "Market patterns",
   transcription: "Video transcript",
+  angle_generation: "Angles",
+  hook_generation: "Hooks",
+  script_writing: "Script writing",
+  section_rewrite: "Section rewrite",
+  script_review: "Creative director review",
+  brief_generation: "Production brief",
 };
 
 /** Where an operation's result is shown, for the history and usage pages. */
@@ -52,6 +58,15 @@ export function operationHref(kind: string, projectId: number | null, targetId: 
       return targetId ? `${base}/competitors/${targetId}` : null;
     case "market_patterns":
       return `${base}/competitors/matrix`;
+    case "angle_generation":
+      return `${base}/angles`;
+    case "hook_generation":
+      return `${base}/hooks`;
+    case "script_writing":
+    case "section_rewrite":
+    case "script_review":
+    case "brief_generation":
+      return targetId ? `${base}/scripts/${targetId}` : null;
     default:
       return null;
   }

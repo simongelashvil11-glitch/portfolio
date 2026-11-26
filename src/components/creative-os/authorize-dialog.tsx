@@ -31,6 +31,8 @@ export type RunChoice = {
   options: { value: string; label: string; hint?: string }[];
   defaultValue: string;
   hint?: string;
+  /** A free-text box instead of options (a rewrite instruction). */
+  text?: { placeholder: string; maxLength: number };
 };
 
 type Phase =
@@ -38,7 +40,7 @@ type Phase =
   | { step: "estimating" }
   | { step: "ready"; preview: Extract<Preview, { ok: true }> }
   | { step: "running"; preview: Extract<Preview, { ok: true }>; startedAt: number }
-  | { step: "done"; message: string }
+  | { step: "done"; message: string; href: string | null }
   | { step: "error"; message: string };
 
 export function AuthorizeDialog({
@@ -124,10 +126,11 @@ export function AuthorizeDialog({
         error?: string;
         costUsd?: number | null;
         added?: number | null;
+        href?: string | null;
       };
       if (result.ok) {
         const added = typeof result.added === "number" ? ` ${count(result.added)} added.` : "";
-        setPhase({ step: "done", message: `Done.${added} Cost ${usd(result.costUsd ?? null)} by the price table.` });
+        setPhase({ step: "done", message: `Done.${added} Cost ${usd(result.costUsd ?? null)} by the price table.`, href: result.href ?? null });
         router.refresh();
       } else {
         setPhase({ step: "error", message: result.error ?? `The request failed (${response.status}).` });
@@ -172,7 +175,16 @@ export function AuthorizeDialog({
             {choices.map((choice) => (
               <fieldset key={choice.name}>
                 <legend className="mb-1.5 text-sm font-semibold">{choice.label}</legend>
-                {choice.options.length > 4 ? (
+                {choice.text ? (
+                  <textarea
+                    value={options[choice.name] ?? ""}
+                    onChange={(event) => setOptions((current) => ({ ...current, [choice.name]: event.target.value }))}
+                    placeholder={choice.text.placeholder}
+                    maxLength={choice.text.maxLength}
+                    rows={3}
+                    className="field resize-y"
+                  />
+                ) : choice.options.length > 4 ? (
                   <select
                     value={options[choice.name]}
                     onChange={(event) => setOptions((current) => ({ ...current, [choice.name]: event.target.value }))}
@@ -354,8 +366,21 @@ export function AuthorizeDialog({
             >
               {phase.message}
             </p>
-            <div className="flex justify-end">
-              <button type="button" className="btn btn-primary" onClick={close}>
+            <div className="flex justify-end gap-2">
+              {phase.step === "done" && phase.href ? (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    const href = phase.href!;
+                    close();
+                    router.push(href);
+                  }}
+                >
+                  Open it
+                </button>
+              ) : null}
+              <button type="button" className={phase.step === "done" && phase.href ? "btn btn-secondary" : "btn btn-primary"} onClick={close}>
                 Close
               </button>
             </div>

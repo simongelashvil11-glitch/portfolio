@@ -1,4 +1,4 @@
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, ne, notInArray } from "drizzle-orm";
 
 import { deleteProject, duplicateProject, setProjectArchived } from "@/actions/creative-os";
 import { ConfirmForm } from "@/components/admin/confirm-form";
@@ -7,11 +7,15 @@ import { CosTabs } from "@/components/creative-os/tabs";
 import { db } from "@/db";
 import {
   cosAds,
+  cosAngles,
   cosAudienceSegments,
+  cosBriefs,
   cosCompetitors,
   cosCustomerInsights,
+  cosHooks,
   cosKnowledgeItems,
   cosProducts,
+  cosScripts,
   cosSources,
 } from "@/db/creative-os";
 import { getProjectOr404 } from "@/lib/creative-os/queries";
@@ -26,7 +30,7 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
   const project = await getProjectOr404(projectId);
   const base = `/admin/creative-os/p/${project.id}`;
 
-  const [[products], [knowledge], [ads], [insights], [segments], [competitors], [sources]] = await Promise.all([
+  const [[products], [knowledge], [ads], [insights], [segments], [competitors], [sources], [angles], [hooks], [scripts], [briefs]] = await Promise.all([
     db.select({ value: count() }).from(cosProducts).where(eq(cosProducts.projectId, project.id)),
     db.select({ value: count() }).from(cosKnowledgeItems).where(eq(cosKnowledgeItems.projectId, project.id)),
     db.select({ value: count() }).from(cosAds).where(eq(cosAds.projectId, project.id)),
@@ -37,6 +41,16 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
       .from(cosCompetitors)
       .where(and(eq(cosCompetitors.projectId, project.id), eq(cosCompetitors.status, "tracked"))),
     db.select({ value: count() }).from(cosSources).where(eq(cosSources.projectId, project.id)),
+    db
+      .select({ value: count() })
+      .from(cosAngles)
+      .where(and(eq(cosAngles.projectId, project.id), notInArray(cosAngles.status, ["rejected", "archived"]))),
+    db
+      .select({ value: count() })
+      .from(cosHooks)
+      .where(and(eq(cosHooks.projectId, project.id), notInArray(cosHooks.status, ["rejected", "archived"]))),
+    db.select({ value: count() }).from(cosScripts).where(and(eq(cosScripts.projectId, project.id), ne(cosScripts.status, "archived"))),
+    db.select({ value: count() }).from(cosBriefs).where(and(eq(cosBriefs.projectId, project.id), ne(cosBriefs.status, "archived"))),
   ]);
 
   const archived = project.status === "archived";
@@ -81,20 +95,33 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
         </div>
       </div>
 
-      <CosTabs
-        label="Project"
-        items={[
-          { href: base, label: "Details", exact: true },
-          { href: `${base}/products`, label: "Products", badge: products.value || null },
-          { href: `${base}/knowledge`, label: "Knowledge", badge: knowledge.value || null },
-          { href: `${base}/customers`, label: "Voice of Customer", badge: insights.value || null },
-          { href: `${base}/audiences`, label: "Audiences", badge: segments.value || null },
-          { href: `${base}/awareness`, label: "Awareness" },
-          { href: `${base}/competitors`, label: "Competitors", badge: competitors.value || null },
-          { href: `${base}/ads`, label: "Ad Lab", badge: ads.value || null },
-          { href: `${base}/sources`, label: "Sources", badge: sources.value || null },
-        ]}
-      />
+      <div className="grid gap-1">
+        <CosTabs
+          label="Research"
+          heading="Research"
+          items={[
+            { href: base, label: "Details", exact: true },
+            { href: `${base}/products`, label: "Products", badge: products.value || null },
+            { href: `${base}/knowledge`, label: "Knowledge", badge: knowledge.value || null },
+            { href: `${base}/customers`, label: "Voice of Customer", badge: insights.value || null },
+            { href: `${base}/audiences`, label: "Audiences", badge: segments.value || null },
+            { href: `${base}/awareness`, label: "Awareness" },
+            { href: `${base}/competitors`, label: "Competitors", badge: competitors.value || null },
+            { href: `${base}/sources`, label: "Sources", badge: sources.value || null },
+          ]}
+        />
+        <CosTabs
+          label="Create"
+          heading="Create"
+          items={[
+            { href: `${base}/angles`, label: "Angles", badge: angles.value || null },
+            { href: `${base}/hooks`, label: "Hooks", badge: hooks.value || null },
+            { href: `${base}/scripts`, label: "Scripts and copy", badge: scripts.value || null },
+            { href: `${base}/briefs`, label: "Briefs", badge: briefs.value || null },
+            { href: `${base}/ads`, label: "Ad Lab", badge: ads.value || null },
+          ]}
+        />
+      </div>
 
       <div className="min-w-0">{children}</div>
     </div>
