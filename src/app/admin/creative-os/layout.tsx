@@ -25,6 +25,7 @@ export default async function CreativeOsLayout({ children }: LayoutProps<"/admin
             { href: "/admin/creative-os/history", label: "Research history" },
             { href: "/admin/creative-os/usage", label: "API usage" },
             { href: "/admin/creative-os/settings", label: "Settings" },
+            { href: "/admin/creative-os/guide", label: "Guide" },
           ]}
         />
       </div>

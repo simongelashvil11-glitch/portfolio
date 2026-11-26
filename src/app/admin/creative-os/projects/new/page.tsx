@@ -8,7 +8,7 @@ export const metadata = { title: "New project" };
 export default function NewProjectPage() {
   return (
     <>
-      <PageHeading title="New project" description="A brand or client. Only the name is required; fill in the rest as you learn it." />
+      <PageHeading title="New project" description="One brand or client. Everything you research for it lives inside the project." />
       <div className="max-w-3xl">
         <CosForm action={createProject} submitLabel="Create project" pendingLabel="Creating…">
           <ProjectFields />

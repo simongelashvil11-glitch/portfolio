@@ -50,11 +50,33 @@ export default async function KnowledgePage({ params, searchParams }: PageProps<
 
   return (
     <div className="grid gap-6">
-      <p className="max-w-3xl text-sm text-muted">
-        Brand guidelines, briefs, product documents, existing scripts, testimonials and notes for this project. Only the
-        text is kept. When a paid operation uses this, you choose which items go with it and see them listed before you
-        authorize.
-      </p>
+      <div className="grid max-w-3xl gap-2 text-sm text-muted">
+        <p>
+          Anything the client gave you: briefs, brand guidelines, product documents, landing pages, testimonials, existing
+          scripts. Optional: research works without it, but it gets better with it. Only the text is kept, and adding things
+          here is free.
+        </p>
+        <details className="rounded-[6px] bg-surface px-3 py-2">
+          <summary className="cursor-pointer select-none font-semibold text-foreground">Which research reads which type</summary>
+          <ul className="mt-2 grid list-disc gap-1 pl-5">
+            <li>
+              <strong>Product research:</strong> product documentation, product specifications, landing page copy, client brief,
+              approved messaging, testimonials, and anything tied to that product.
+            </li>
+            <li>
+              <strong>Voice of Customer and Audiences:</strong> customer research, testimonials, client brief.
+            </li>
+            <li>
+              <strong>Not read by research yet:</strong> brand guidelines, tone of voice, compliance, existing ad scripts,
+              successful ad examples, internal notes, other. The copywriting tools will use these later.
+            </li>
+          </ul>
+          <p className="mt-2">
+            The newest items go first, up to a size cap. Each item sent is listed by name before you authorize, and the
+            dialog lets you leave the knowledge base out.
+          </p>
+        </details>
+      </div>
 
       <form action={base} className="flex max-w-3xl gap-2">
         <label className="relative flex-1">

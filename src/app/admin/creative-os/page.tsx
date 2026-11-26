@@ -79,10 +79,15 @@ export default async function CreativeOsOverview() {
         title="Overview"
         description="Your creative-strategy workspace. Everything here is saved: reading it never costs anything."
         action={
-          <Link href="/admin/creative-os/projects/new" className={button.primary}>
-            <Add />
-            New project
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/admin/creative-os/guide" className={button.secondary}>
+              How it works
+            </Link>
+            <Link href="/admin/creative-os/projects/new" className={button.primary}>
+              <Add />
+              New project
+            </Link>
+          </div>
         }
       />
 

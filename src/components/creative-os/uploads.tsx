@@ -85,6 +85,7 @@ export function KindAndTitle({ products }: { products: { id: number; name: strin
             </option>
           ))}
         </select>
+        <span className="text-xs leading-4 text-faint">The type decides which research reads it: see the list at the top of this page.</span>
       </label>
       <label className="grid gap-1">
         <span className="text-sm font-semibold">Title</span>

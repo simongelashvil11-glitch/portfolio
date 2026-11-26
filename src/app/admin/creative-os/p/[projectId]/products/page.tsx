@@ -18,23 +18,33 @@ function ProductFields({ product }: { product?: CosProduct }) {
   return (
     <div className="grid gap-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <CosField label="Product name" name="name">
+        <CosField label="Product name" name="name" use="research" hint="As customers know it.">
           <Input name="name" required defaultValue={product?.name} />
         </CosField>
-        <CosField label="Product or landing page URL" name="url">
+        <CosField
+          label="Product or landing page URL"
+          name="url"
+          use="research"
+          hint="The product's own page. Product research reads it first, so this is the most useful field here."
+        >
           <Input name="url" type="url" defaultValue={product?.url ?? ""} placeholder="https://" />
         </CosField>
-        <CosField label="Price" name="price">
+        <CosField label="Price" name="price" use="research" hint="As sold. Empty if you don't know; research may find it.">
           <Input name="price" defaultValue={product?.price ?? ""} placeholder="$49, or $39/month" />
         </CosField>
       </div>
-      <CosField label="Description" name="description">
+      <CosField
+        label="Description"
+        name="description"
+        use="research"
+        hint="A few sentences in your words: what it is and what it does. Needed if you run product research with the web off."
+      >
         <Textarea name="description" rows={4} defaultValue={product?.description ?? ""} />
       </CosField>
-      <CosField label="Current offer" name="offer">
+      <CosField label="Current offer" name="offer" use="research" hint="The deal running now, if any. Empty if none.">
         <Textarea name="offer" rows={2} defaultValue={product?.offer ?? ""} placeholder="20% off the first order, free shipping over $50" />
       </CosField>
-      <CosField label="Notes" name="notes">
+      <CosField label="Notes" name="notes" use="research" hint="Anything else worth knowing about it. Sent with research.">
         <Textarea name="notes" rows={2} defaultValue={product?.notes ?? ""} />
       </CosField>
     </div>
@@ -51,6 +61,10 @@ export default async function ProductsPage({ params }: PageProps<"/admin/creativ
 
   return (
     <div className="grid max-w-3xl gap-6">
+      <p className="text-sm text-muted">
+        What the client sells. Add at least one product with its page URL: product research starts there, and Voice of
+        Customer, Find my rivals and the strategy tools all use the product details. Open a product&apos;s research to run it.
+      </p>
       {products.length === 0 ? (
         <EmptyState>No products yet. Add the ones you write ads for.</EmptyState>
       ) : (
