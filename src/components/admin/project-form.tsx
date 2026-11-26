@@ -115,8 +115,8 @@ export function ProjectForm({ project }: { project?: Project }) {
 
       {/* Not a Field: that is a <label>, and a label around a list of inputs
           sends every click inside it to the first one. */}
-      <fieldset className="grid gap-4 rounded-xl border border-line p-4">
-        <legend className="px-1.5 font-mono text-xs uppercase tracking-widest text-muted">Statistics</legend>
+      <fieldset className="grid gap-4 rounded-[8px] border border-line p-4">
+        <legend className="px-1.5 text-base font-semibold leading-[22px]">Statistics</legend>
         <p className="-mt-1 text-xs text-faint">
           Shown as a results window on the case study. Write each value exactly as it should read
           ($88,265, 72.99M, 0.68%). Figures sharing a group sit together; tick Headline to set one large
@@ -150,8 +150,8 @@ export function ProjectForm({ project }: { project?: Project }) {
         </div>
       </fieldset>
 
-      <fieldset className="grid gap-4 rounded-xl border border-line p-4">
-        <legend className="px-1.5 font-mono text-xs uppercase tracking-widest text-muted">In the press</legend>
+      <fieldset className="grid gap-4 rounded-[8px] border border-line p-4">
+        <legend className="px-1.5 text-base font-semibold leading-[22px]">In the press</legend>
         <p className="-mt-1 text-xs text-faint">
           Articles about this project, shown as a press window under the cover. Remove every article to hide it.
         </p>

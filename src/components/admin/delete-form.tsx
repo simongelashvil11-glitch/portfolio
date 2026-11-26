@@ -1,6 +1,7 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Delete } from "@/components/fluent-icons";
+import { cn } from "@/lib/utils";
 
 type DeleteFormProps = {
   /** A server action bound in the parent server component. */
@@ -11,6 +12,7 @@ type DeleteFormProps = {
   compact?: boolean;
 };
 
+/** A subtle icon button that asks before it deletes. */
 export function DeleteForm({
   action,
   id,
@@ -28,11 +30,13 @@ export function DeleteForm({
       <button
         type="submit"
         aria-label="Delete"
-        className={`grid place-items-center rounded-lg text-faint transition-colors hover:bg-surface hover:text-red-500 ${
-          compact ? "size-6" : "size-8"
-        }`}
+        title="Delete"
+        className={cn(
+          "btn btn-subtle btn-icon text-faint hover:!text-danger",
+          compact && "!min-h-6 !min-w-6 !p-0.5 [&_svg]:!text-base",
+        )}
       >
-        <Trash2 className={compact ? "size-3" : "size-4"} />
+        <Delete />
       </button>
     </form>
   );

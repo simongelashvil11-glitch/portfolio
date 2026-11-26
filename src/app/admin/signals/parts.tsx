@@ -1,18 +1,18 @@
+import { WhatsAppIcon } from "@/components/brand-icons";
 import {
+  ArrowDownload,
   BookOpen,
+  Call,
+  Chat,
   ChevronRight,
   Copy,
-  Download,
-  ExternalLink,
   Eye,
   Mail,
-  MessageCircle,
-  MessageSquare,
-  Phone,
-  Printer,
-  Share2,
-  type LucideIcon,
-} from "lucide-react";
+  Open,
+  Print,
+  Share,
+  type FluentIcon,
+} from "@/components/fluent-icons";
 import Link from "next/link";
 import { createElement } from "react";
 
@@ -24,22 +24,22 @@ import { cn } from "@/lib/utils";
 
 /* The pieces of the Signals page: a person's row, their timeline, and the tags in both. */
 
-const KIND_ICONS: Record<Exclude<ActivityEvent["kind"], "click">, LucideIcon> = {
+const KIND_ICONS: Record<Exclude<ActivityEvent["kind"], "click">, FluentIcon> = {
   view: Eye,
   read: BookOpen,
   copy: Copy,
-  print: Printer,
+  print: Print,
   email: Mail,
-  message: MessageSquare,
+  message: Chat,
 };
 
-const CLICK_ICONS: Record<ClickKind, LucideIcon> = {
+const CLICK_ICONS: Record<ClickKind, FluentIcon> = {
   email: Mail,
-  phone: Phone,
-  whatsapp: MessageCircle,
-  download: Download,
-  social: Share2,
-  outbound: ExternalLink,
+  phone: Call,
+  whatsapp: WhatsAppIcon,
+  download: ArrowDownload,
+  social: Share,
+  outbound: Open,
 };
 
 function EventIcon({ event }: { event: ActivityEvent }) {

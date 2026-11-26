@@ -37,7 +37,7 @@ export default async function AdminMessagesPage() {
                       {item.email}
                     </a>
                   </p>
-                  <time className="font-mono text-xs text-faint">
+                  <time className="tnum text-xs text-faint">
                     {formatDate(item.createdAt)}
                   </time>
                 </div>
@@ -52,7 +52,7 @@ export default async function AdminMessagesPage() {
                     <input type="hidden" name="read" value={item.read ? "false" : "true"} />
                     <button
                       type="submit"
-                      className="font-mono text-xs uppercase tracking-widest text-muted transition-colors hover:text-foreground"
+                      className="btn btn-subtle !min-h-7 !px-2 text-xs"
                     >
                       {item.read ? "Mark unread" : "Mark read"}
                     </button>

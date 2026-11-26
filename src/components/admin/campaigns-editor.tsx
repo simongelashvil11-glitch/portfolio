@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Plus, Trash2, X } from "lucide-react";
+import { Add, ArrowDown, ArrowUp, Delete, Dismiss } from "@/components/fluent-icons";
 import { useState } from "react";
 
 import { Input } from "@/components/admin/ui";
@@ -95,7 +95,7 @@ export function CampaignsEditor({ campaigns, error }: { campaigns: ProjectCampai
                 aria-label="Remove campaign"
                 className={`${iconButton} hover:text-danger`}
               >
-                <Trash2 className="size-4" />
+                <Delete className="size-4" />
               </button>
             </div>
           </div>
@@ -144,7 +144,7 @@ export function CampaignsEditor({ campaigns, error }: { campaigns: ProjectCampai
                   aria-label="Remove figure"
                   className={`${iconButton} hover:text-danger`}
                 >
-                  <X className="size-4" />
+                  <Dismiss className="size-4" />
                 </button>
               </li>
             ))}
@@ -156,7 +156,7 @@ export function CampaignsEditor({ campaigns, error }: { campaigns: ProjectCampai
                 }
                 className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted transition-colors hover:bg-background hover:text-foreground"
               >
-                <Plus className="size-3.5" />
+                <Add className="size-3.5" />
                 Add figure
               </button>
             </li>
@@ -183,7 +183,7 @@ export function CampaignsEditor({ campaigns, error }: { campaigns: ProjectCampai
           }
           className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-line-strong px-3 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-foreground"
         >
-          <Plus className="size-4" />
+          <Add className="size-4" />
           Add campaign
         </button>
       </div>

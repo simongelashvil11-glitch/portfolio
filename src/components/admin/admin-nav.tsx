@@ -1,24 +1,24 @@
 "use client";
 
-import {
-  BarChart3,
-  Briefcase,
-  FileText,
-  FolderKanban,
-  Inbox,
-  LayoutDashboard,
-  Newspaper,
-  User,
-  Wrench,
-  Activity,
-  type LucideIcon,
-} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import {
+  Briefcase,
+  DataTrending,
+  DocumentText,
+  Folder,
+  Grid,
+  MailInbox,
+  News,
+  Person,
+  Pulse,
+  Wrench,
+  type FluentIcon,
+} from "@/components/fluent-icons";
 import { cn } from "@/lib/utils";
 
-type NavItem = { href: string; label: string; icon: LucideIcon };
+type NavItem = { href: string; label: string; icon: FluentIcon };
 
 /**
  * Grouped by where the content actually appears on the site, and labelled
@@ -29,84 +29,95 @@ type NavItem = { href: string; label: string; icon: LucideIcon };
 const GROUPS: { heading: string | null; items: NavItem[] }[] = [
   {
     heading: null,
-    items: [{ href: "/admin", label: "Overview", icon: LayoutDashboard }],
+    items: [{ href: "/admin", label: "Overview", icon: Grid }],
   },
   {
     heading: "Home page",
     items: [
-      { href: "/admin/profile", label: "Profile", icon: User },
-      { href: "/admin/projects", label: "Selected work", icon: FolderKanban },
+      { href: "/admin/profile", label: "Profile", icon: Person },
+      { href: "/admin/projects", label: "Selected work", icon: Folder },
     ],
   },
-
-   {
-  heading: "Insights",
-  items: [{ href: "/admin/signals", label: "Signals", icon: Activity }],
-   },
-
   {
     heading: "About page",
     items: [
-      { href: "/admin/about", label: "Page copy", icon: FileText },
-      { href: "/admin/updates", label: "Personal updates", icon: Newspaper },
+      { href: "/admin/about", label: "Page copy", icon: DocumentText },
+      { href: "/admin/updates", label: "Personal updates", icon: News },
       { href: "/admin/skills", label: "Tech stack", icon: Wrench },
       { href: "/admin/experience", label: "Career", icon: Briefcase },
     ],
   },
   {
-    heading: null,
+    heading: "Insights",
     items: [
-      { href: "/admin/messages", label: "Messages", icon: Inbox },
-      { href: "/admin/visitors", label: "Visitors", icon: BarChart3 },
+      { href: "/admin/signals", label: "Signals", icon: Pulse },
+      { href: "/admin/visitors", label: "Visitors", icon: DataTrending },
     ],
+  },
+  {
+    heading: null,
+    items: [{ href: "/admin/messages", label: "Messages", icon: MailInbox }],
   },
 ];
 
-export function AdminNav({ unread }: { unread: number }) {
+/** Row metrics shared with the site's own drawer, after Fluent's NavItem. */
+export const NAV_ROW =
+  "relative flex min-h-10 w-full items-center gap-2.5 rounded-[4px] px-2.5 py-2 text-left text-sm transition-colors duration-100";
+
+/**
+ * The admin's navigation, drawn exactly like the public site's drawer: the
+ * selected row gets a filled icon, a semibold label, a white fill and the
+ * lavender indicator bar on its leading edge.
+ */
+export function AdminNav({ unread, onNavigate }: { unread: number; onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
-    // `contents` collapses the groups on small screens so every item flows
-    // into one scrollable row; from md up they become real blocks again.
-    <nav className="flex gap-1 overflow-x-auto md:flex-col md:gap-5 md:overflow-visible">
+    <nav aria-label="Admin" className="grid gap-5">
       {GROUPS.map((group, groupIndex) => (
-        <div key={group.heading ?? `group-${groupIndex}`} className="contents md:block">
-          {group.heading ? (
-            <h2 className="mb-1.5 hidden px-3 text-xs font-medium text-faint md:block">
-              {group.heading}
-            </h2>
-          ) : null}
+        <div key={group.heading ?? `group-${groupIndex}`}>
+          {group.heading ? <h2 className="px-2.5 pb-1 text-xs font-semibold text-faint">{group.heading}</h2> : null}
 
-          <div className="contents md:grid md:gap-0.5">
+          <ul className="grid gap-0.5">
             {group.items.map((item) => {
               // "/admin" would otherwise match every child route.
-              const active =
-                item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
+              const active = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
               const Icon = item.icon;
 
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
-                    active
-                      ? "bg-surface font-medium text-foreground"
-                      : "text-muted hover:bg-surface hover:text-foreground",
-                  )}
-                >
-                  <Icon className="size-4 shrink-0" />
-                  {item.label}
-                  {item.href === "/admin/messages" && unread > 0 ? (
-                    <span className="tnum ml-auto rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium text-background">
-                      {unread}
-                    </span>
-                  ) : null}
-                </Link>
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    onClick={onNavigate}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      NAV_ROW,
+                      active
+                        ? "bg-white/80 font-semibold text-foreground shadow-fluent-2"
+                        : "text-muted hover:bg-white/60 hover:text-foreground",
+                    )}
+                  >
+                    {active ? (
+                      <span
+                        className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-lavender"
+                        aria-hidden
+                      />
+                    ) : null}
+                    <Icon filled={active} className={cn("size-5 shrink-0", active && "text-lavender")} />
+                    {item.label}
+                    {item.href === "/admin/messages" && unread > 0 ? (
+                      <span
+                        className="tnum ml-auto rounded-full bg-accent px-1.5 text-[11px] font-semibold leading-[18px] text-white"
+                        aria-label={`${unread} unread`}
+                      >
+                        {unread}
+                      </span>
+                    ) : null}
+                  </Link>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </div>
       ))}
     </nav>

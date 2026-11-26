@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Add } from "@/components/fluent-icons";
 import Link from "next/link";
 
 import { deleteUpdate } from "@/actions/admin";
@@ -25,9 +25,9 @@ export default async function AdminUpdatesPage() {
         action={
           <Link
             href="/admin/updates/new"
-            className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-85"
+            className="btn btn-primary"
           >
-            <Plus className="size-4" />
+            <Add />
             Add update
           </Link>
         }
@@ -45,7 +45,7 @@ export default async function AdminUpdatesPage() {
                   <p className="text-xs text-faint">
                     {formatPeriod(item.date)}
                     {!item.published ? (
-                      <span className="ml-2 uppercase tracking-widest text-accent">Draft</span>
+                      <span className="ml-2 rounded-[4px] border border-line-strong px-1.5 py-px text-[11px] font-semibold text-muted">Draft</span>
                     ) : null}
                   </p>
                   <h2 className="mt-1 text-sm font-medium transition-colors group-hover:text-accent">

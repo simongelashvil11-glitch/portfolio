@@ -10,8 +10,10 @@ export default async function LoginPage({ searchParams }: PageProps<"/admin/logi
 
   return (
     <main className="flex flex-1 items-center justify-center px-6 py-20">
-      <div className="w-full max-w-sm">
-        <h1 className="font-display text-3xl tracking-display">Sign in</h1>
+      {/* The site's shell gradient behind a white Fluent card. */}
+      <div className="shell-bg fixed inset-0 -z-10" aria-hidden />
+      <div className="card w-full max-w-sm p-8 shadow-fluent-16">
+        <h1 className="text-[28px] font-semibold leading-9">Sign in</h1>
         <p className="mt-2 text-sm text-muted">Admin access to the portfolio content.</p>
         <div className="mt-8">
           <LoginForm next={target} />

@@ -1,5 +1,5 @@
 import { and, count, countDistinct, desc, inArray, isNotNull, max, sql, type SQL } from "drizzle-orm";
-import { ChevronRight, Download } from "lucide-react";
+import { ArrowDownload, ChevronRight } from "@/components/fluent-icons";
 
 import { clearVisits } from "@/actions/admin";
 import { ConfirmForm } from "@/components/admin/confirm-form";
@@ -185,9 +185,9 @@ export default async function VisitorsPage({
           <a
             href={`/admin/visitors/export?range=${range.key}`}
             download
-            className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm text-muted transition-colors hover:border-accent hover:text-foreground"
+            className="btn btn-secondary ml-auto"
           >
-            <Download aria-hidden className="size-3.5" />
+            <ArrowDownload />
             Export CSV
           </a>
         ) : null}
@@ -402,7 +402,7 @@ export default async function VisitorsPage({
 
       {/* ---------- Housekeeping ---------- */}
       <section className="mt-10 border-t border-line pt-6">
-        <h2 className="font-mono text-xs uppercase tracking-widest text-faint">Stored data</h2>
+        <h2 className="text-base font-semibold leading-[22px]">Stored data</h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">
           IP addresses count as personal data in most countries, so it is good practice not to keep them longer than
           you need. Clearing removes the visits for good.
@@ -511,7 +511,7 @@ function ClearButton({ olderThanDays, label }: { olderThanDays: number; label: s
       <input type="hidden" name="olderThanDays" value={olderThanDays} />
       <button
         type="submit"
-        className="rounded-full border border-line px-4 py-2 text-sm text-muted transition-colors hover:border-danger hover:text-danger"
+        className="btn btn-secondary hover:!border-danger hover:!text-danger"
       >
         {label}
       </button>

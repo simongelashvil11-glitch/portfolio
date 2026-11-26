@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Add } from "@/components/fluent-icons";
 import Link from "next/link";
 
 import { deleteExperience } from "@/actions/admin";
@@ -25,9 +25,9 @@ export default async function AdminExperiencePage() {
         action={
           <Link
             href="/admin/experience/new"
-            className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-85"
+            className="btn btn-primary"
           >
-            <Plus className="size-4" />
+            <Add />
             Add role
           </Link>
         }
@@ -40,12 +40,12 @@ export default async function AdminExperiencePage() {
           {items.map((item) => (
             <li key={item.id}>
               <Card className="group flex items-start gap-4">
-                <Mark src={item.logoUrl} label={item.company} className="mt-0.5" />
+                <Mark src={item.logoUrl} label={item.company} fallback="work" className="mt-0.5" />
                 <Link href={`/admin/experience/${item.id}`} className="min-w-0 flex-1">
                   <p className="tnum text-xs text-faint">
                     {formatPeriod(item.startDate)} &ndash; {formatPeriod(item.endDate)}
                     {!item.published ? (
-                      <span className="ml-2 uppercase tracking-widest text-accent">Draft</span>
+                      <span className="ml-2 rounded-[4px] border border-line-strong px-1.5 py-px text-[11px] font-semibold text-muted">Draft</span>
                     ) : null}
                   </p>
                   <h2 className="mt-1 text-sm font-medium transition-colors group-hover:text-accent">

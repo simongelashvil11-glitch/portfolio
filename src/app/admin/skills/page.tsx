@@ -37,7 +37,7 @@ export default async function AdminSkillsPage() {
                 {group.items.map((skill) => (
                   <li
                     key={skill.id}
-                    className="group flex items-center gap-1 rounded-xl border border-line bg-surface py-1.5 pl-1.5 pr-1 text-sm transition-colors hover:border-accent"
+                    className="group flex items-center gap-1 rounded-[6px] border border-line bg-background py-1.5 pl-1.5 pr-1 text-sm transition-colors hover:border-line-strong hover:shadow-fluent-2"
                   >
                     <a
                       href={`/admin/skills/${skill.id}`}
@@ -80,7 +80,7 @@ export default async function AdminSkillsPage() {
             toolRows.map((tool) => (
               <li
                 key={tool.id}
-                className="flex items-center gap-3 rounded-xl border border-line bg-surface py-2 pl-4 pr-2 text-sm transition-colors hover:border-accent"
+                className="flex items-center gap-3 rounded-[6px] border border-line bg-background py-2 pl-4 pr-2 text-sm transition-colors hover:border-line-strong hover:shadow-fluent-2"
               >
                 <a
                   href={`/admin/skills/tools/${tool.id}`}

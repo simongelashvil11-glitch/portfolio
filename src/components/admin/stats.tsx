@@ -21,8 +21,8 @@ export function Stat({
 }) {
   return (
     <Card>
-      <p className={cn("tnum truncate", small ? "font-mono text-base leading-9" : "font-display text-3xl")}>{value}</p>
-      <p className="mt-1 font-mono text-xs uppercase tracking-widest text-faint">{label}</p>
+      <p className={cn("tnum truncate font-semibold", small ? "font-mono text-base leading-9" : "text-[28px] leading-9")}>{value}</p>
+      <p className="mt-0.5 text-sm text-muted">{label}</p>
       {hint ? <p className="mt-0.5 text-xs text-faint">{hint}</p> : null}
     </Card>
   );
@@ -42,7 +42,7 @@ export function Panel({
   return (
     <Card className={className}>
       <div className="mb-4 flex items-baseline justify-between gap-3">
-        <h2 className="font-mono text-xs uppercase tracking-widest text-faint">{title}</h2>
+        <h2 className="text-base font-semibold leading-[22px]">{title}</h2>
         {action}
       </div>
       {children}
@@ -164,10 +164,10 @@ export function Pill({
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
+        "inline-flex min-h-8 items-center gap-1.5 rounded-[4px] border px-3 py-1 text-sm transition-colors",
         active
           ? "border-accent bg-accent-soft font-medium text-accent-hover"
-          : "border-line text-muted hover:border-accent hover:text-foreground",
+          : "border-line-strong bg-background text-foreground hover:bg-surface",
         className,
       )}
     >

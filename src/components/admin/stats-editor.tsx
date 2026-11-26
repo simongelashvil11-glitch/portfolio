@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import { Add, ArrowDown, ArrowUp, Delete } from "@/components/fluent-icons";
 import { useId, useState } from "react";
 
 import { Input } from "@/components/admin/ui";
@@ -133,7 +133,7 @@ export function StatsEditor({ stats, error }: { stats: ProjectStat[]; error?: st
                     aria-label="Remove figure"
                     className={`${iconButton} hover:text-danger`}
                   >
-                    <Trash2 className="size-4" />
+                    <Delete className="size-4" />
                   </button>
                 </div>
               </li>
@@ -148,7 +148,7 @@ export function StatsEditor({ stats, error }: { stats: ProjectStat[]; error?: st
           onClick={add}
           className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-line-strong px-3 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-foreground"
         >
-          <Plus className="size-4" />
+          <Add className="size-4" />
           Add figure
         </button>
       </div>

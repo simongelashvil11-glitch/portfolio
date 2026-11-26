@@ -31,7 +31,7 @@ export function SkillForm({ categories, skill }: { categories: string[]; skill?:
       className={
         skill
           ? "grid max-w-2xl gap-5"
-          : "flex flex-wrap items-end gap-4 rounded-xl border border-line bg-surface p-5"
+          : "flex flex-wrap items-end gap-4 rounded-[8px] border border-line bg-surface-alt p-5"
       }
     >
       {skill ? <input type="hidden" name="id" value={skill.id} /> : null}

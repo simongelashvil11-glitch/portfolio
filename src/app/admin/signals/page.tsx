@@ -1,5 +1,5 @@
 import { and, desc, eq, isNull, sql, type SQL } from "drizzle-orm";
-import { ArrowLeft, Download, Search } from "lucide-react";
+import { ArrowDownload, ArrowLeft, Search } from "@/components/fluent-icons";
 import Link from "next/link";
 
 import { clearSignals } from "@/actions/admin";
@@ -194,9 +194,9 @@ export default async function SignalsPage({
           <a
             href={`/admin/signals/export?range=${range.key}`}
             download
-            className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm text-muted transition-colors hover:border-accent hover:text-foreground"
+            className="btn btn-secondary ml-auto"
           >
-            <Download aria-hidden className="size-3.5" />
+            <ArrowDownload />
             Export CSV
           </a>
         ) : null}
@@ -409,10 +409,10 @@ export default async function SignalsPage({
                   name="q"
                   defaultValue={query}
                   placeholder="IP, city, country, network, email, name or page"
-                  className="w-full rounded-lg border border-line bg-background py-2 pl-9 pr-3 text-sm placeholder:text-faint focus:border-accent focus:outline-none"
+                  className="field pl-9"
                 />
               </label>
-              <button type="submit" className="rounded-lg border border-line px-4 text-sm text-muted transition-colors hover:border-accent hover:text-foreground">
+              <button type="submit" className="btn btn-secondary">
                 Search
               </button>
               {query ? (
@@ -488,7 +488,7 @@ export default async function SignalsPage({
 
       {/* ---------- Housekeeping ---------- */}
       <section className="mt-10 border-t border-line pt-6">
-        <h2 className="font-mono text-xs uppercase tracking-widest text-faint">Stored data</h2>
+        <h2 className="text-base font-semibold leading-[22px]">Stored data</h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">
           Signals keep IP addresses and any email a visitor leaves, which count as personal data, so it is good
           practice not to keep them longer than you need. Clearing removes the signals for good; page views stay on the
@@ -601,7 +601,7 @@ function ClearButton({ olderThanDays, label }: { olderThanDays: number; label: s
       <input type="hidden" name="olderThanDays" value={olderThanDays} />
       <button
         type="submit"
-        className="rounded-full border border-line px-4 py-2 text-sm text-muted transition-colors hover:border-danger hover:text-danger"
+        className="btn btn-secondary hover:!border-danger hover:!text-danger"
       >
         {label}
       </button>

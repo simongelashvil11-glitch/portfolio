@@ -1,4 +1,4 @@
-import { ArrowUpRight } from "lucide-react";
+import { Open } from "@/components/fluent-icons";
 import Link from "next/link";
 
 import { AboutForm } from "@/components/admin/about-form";
@@ -22,10 +22,10 @@ export default async function AdminAboutPage() {
         action={
           <Link
             href="/about"
-            className="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+            className="btn btn-secondary"
           >
             View page
-            <ArrowUpRight className="size-3.5" />
+            <Open />
           </Link>
         }
       />
