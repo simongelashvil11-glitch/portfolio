@@ -20,7 +20,7 @@ import {
 
 import { AWARENESS_STAGES, SOPHISTICATION_LEVELS } from "../elements";
 import { VOC_LABEL, type VocCategory } from "../research-labels";
-import { brandDomains, knowledgePack, productBrief, projectBrief, projectCountry, SHARED_RULES, type KnowledgePack } from "./context";
+import { brandDomains, knowledgePack, productBrief, projectBrief, SHARED_RULES, type KnowledgePack } from "./context";
 import { defineModule, orNull, recordRun } from "./module";
 import type { StoredProductResult } from "./product";
 
@@ -155,7 +155,6 @@ export const audienceSegments = defineModule<AudienceCtx, z.infer<typeof Audienc
     return { ok: true, ctx: { ...loaded, digest, knowledge, count, replace: options.mode !== "add" } };
   },
   projectId: (ctx) => ctx.project.id,
-  country: (ctx) => projectCountry(ctx.project),
   brandDomains: (ctx) => brandDomains(ctx.project, ctx.products),
   providedUrls: () => [],
   system: AUDIENCE_SYSTEM,
@@ -323,7 +322,6 @@ export const awarenessAnalysis = defineModule<AwarenessCtx, z.infer<typeof Aware
     };
   },
   projectId: (ctx) => ctx.project.id,
-  country: (ctx) => projectCountry(ctx.project),
   brandDomains: (ctx) => brandDomains(ctx.project, ctx.products),
   providedUrls: () => [],
   system: AWARENESS_SYSTEM,

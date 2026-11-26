@@ -12,7 +12,6 @@ import {
   knowledgePack,
   productBrief,
   projectBrief,
-  projectCountry,
   SHARED_RULES,
   WEB_RULES,
   type KnowledgePack,
@@ -105,7 +104,6 @@ export const productResearch = defineModule<Ctx, z.infer<typeof ProductOut>>({
     return { ok: true, ctx: { project: row.project, product: row.product, knowledge, web } };
   },
   projectId: (ctx) => ctx.project.id,
-  country: (ctx) => projectCountry(ctx.project),
   brandDomains: (ctx) => brandDomains(ctx.project, [ctx.product]),
   providedUrls: (ctx) => [ctx.project.website, ctx.product.url],
   system: SYSTEM,

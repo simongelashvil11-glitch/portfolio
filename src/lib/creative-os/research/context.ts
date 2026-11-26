@@ -6,7 +6,6 @@ import { db } from "@/db";
 import { cosKnowledgeItems, type CosProduct, type CosProject } from "@/db/creative-os";
 
 import { KNOWLEDGE_KIND_LABEL } from "../labels";
-import { countryCode } from "../research-labels";
 
 /*
  * The material a research call is given: the project's own details, and —
@@ -47,10 +46,6 @@ export function productBrief(product: CosProduct): string {
   ]
     .filter(Boolean)
     .join("\n");
-}
-
-export function projectCountry(project: CosProject): string | null {
-  return countryCode(project.targetCountries);
 }
 
 /** The brand's own domains, so its pages are filed as the brand's site. */
@@ -113,6 +108,7 @@ export const SHARED_RULES = `Ground rules, which override anything else:
 - Write in plain, natural American English unless told otherwise. Keep each finding to one or two sentences.`;
 
 export const WEB_RULES = `Researching:
+- Focus on the project's target countries (listed in <project>): search for sources from those markets, and say so under limitations when a market has little to find.
 - Use web_search to find sources and web_fetch to read the most useful pages. Your searches and page reads are capped; plan them so the most valuable sources are read.
 - Prefer pages that can be read as text. Do not fetch PDFs or very large documents unless they are essential.
 - Some sites refuse automated readers (often Amazon, Reddit, Meta, TikTok and YouTube comments). If a page cannot be read, record that under limitations and move on; never fill the gap with invented content.

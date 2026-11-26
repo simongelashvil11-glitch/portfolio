@@ -115,7 +115,7 @@ export function ProjectFields({ project }: { project?: CosProject }) {
             label="Target countries"
             name="targetCountries"
             use="research"
-            hint="Separate with commas. The first one sets where searches run from and the Ad Library country: write “United States” or “US”."
+            hint="Separate with commas. Research focuses on these markets, and the first one sets the Ad Library country on competitor links. Write “United States” or “US”."
           >
             <Input name="targetCountries" defaultValue={join(project?.targetCountries)} placeholder="United States, Canada" />
           </CosField>

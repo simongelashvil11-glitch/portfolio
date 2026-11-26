@@ -33,7 +33,6 @@ export function webResearchCall<T extends z.ZodType>({
   schema,
   maxTokens,
   depth,
-  country,
 }: {
   model: string;
   effort: Effort;
@@ -42,7 +41,6 @@ export function webResearchCall<T extends z.ZodType>({
   schema: T;
   maxTokens: number;
   depth: Depth;
-  country: string | null;
 }) {
   const inputSchema = zodOutputFormat(schema).schema as Anthropic.Tool.InputSchema;
   return (client: Anthropic, signal: AbortSignal) =>
@@ -53,7 +51,7 @@ export function webResearchCall<T extends z.ZodType>({
         system,
         output_config: { effort },
         tools: [
-          ...webTools(depth, country),
+          ...webTools(depth),
           {
             name: RECORD_TOOL,
             description:

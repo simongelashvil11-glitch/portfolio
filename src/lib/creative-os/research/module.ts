@@ -37,7 +37,6 @@ export type ResearchModule<Ctx = unknown, Out = unknown> = {
   depth: (options: ModuleOptions) => Depth | null;
   load: (targetId: number, options: ModuleOptions) => Promise<Loaded<Ctx>>;
   projectId: (ctx: Ctx) => number;
-  country: (ctx: Ctx) => string | null;
   brandDomains: (ctx: Ctx) => string[];
   /** Addresses given in the material sent (the brand's site, product pages); citing them counts as seen. */
   providedUrls: (ctx: Ctx) => (string | null)[];

@@ -196,7 +196,7 @@ export default function GuidePage() {
               ],
               [
                 "Target countries",
-                "The first country sets where searches run from and the Ad Library country on competitor links.",
+                "Research focuses on these markets; the first one sets the Ad Library country on competitor links.",
                 "For your US employer: “United States”.",
               ],
               ["Target languages", "Context. Results come back in English.", "“English”, or leave empty."],

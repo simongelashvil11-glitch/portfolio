@@ -73,7 +73,7 @@ export async function prepareResearch(
 export function researchCallFor(prepared: Prepared, model: string, effort: Effort) {
   const { researchModule, ctx, depth } = prepared;
   const common = { model, effort, system: researchModule.system, user: researchModule.user(ctx), schema: researchModule.schema, maxTokens: researchModule.maxOutputTokens };
-  return depth ? webResearchCall({ ...common, depth, country: researchModule.country(ctx) }) : structuredCall(common);
+  return depth ? webResearchCall({ ...common, depth }) : structuredCall(common);
 }
 
 /**

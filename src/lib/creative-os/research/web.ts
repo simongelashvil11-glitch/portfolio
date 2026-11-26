@@ -29,15 +29,18 @@ import { DEPTHS, type Depth } from "../research-labels";
 /** The most page text one read may add, in tokens (approximate; PDFs are not capped by it). */
 export const FETCH_MAX_TOKENS = 6000;
 
-/** Web search and fetch tools for one call, capped by the depth chosen. */
-export function webTools(depth: Depth, country: string | null) {
+/**
+ * Web search and fetch tools for one call, capped by the depth chosen. No
+ * search location is sent: the search supports only some countries (it
+ * rejects Georgia, for one), and the target countries are in the prompt.
+ */
+export function webTools(depth: Depth) {
   const caps = DEPTHS[depth];
   return [
     {
       type: "web_search_20250305" as const,
       name: "web_search" as const,
       max_uses: caps.searches,
-      ...(country ? { user_location: { type: "approximate" as const, country } } : {}),
     },
     {
       type: "web_fetch_20250910" as const,

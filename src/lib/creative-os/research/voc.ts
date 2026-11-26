@@ -20,7 +20,6 @@ import {
   knowledgePack,
   productBrief,
   projectBrief,
-  projectCountry,
   SHARED_RULES,
   WEB_RULES,
   type KnowledgePack,
@@ -116,7 +115,6 @@ export const vocResearch = defineModule<Ctx, z.infer<typeof VocOut>>({
     return { ok: true, ctx: { project, products, product, competitor: competitor ?? null, knowledge, existing: value } };
   },
   projectId: (ctx) => ctx.project.id,
-  country: (ctx) => projectCountry(ctx.project),
   brandDomains: (ctx) => brandDomains(ctx.project, ctx.products),
   providedUrls: (ctx) => [ctx.project.website, ...ctx.products.map((product) => product.url), ctx.competitor?.website ?? null],
   system: SYSTEM,

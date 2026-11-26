@@ -17,7 +17,7 @@ import {
 } from "@/db/creative-os";
 
 import { COMPETITOR_SECTIONS, EVIDENCE_TYPES } from "../research-labels";
-import { brandDomains, productBrief, projectBrief, projectCountry, SHARED_RULES, WEB_RULES } from "./context";
+import { brandDomains, productBrief, projectBrief, SHARED_RULES, WEB_RULES } from "./context";
 import { defineModule, depthOption, Findings, recordRun, storeFindings } from "./module";
 import type { StoredProductResult } from "./product";
 import { markSources, normalizeUrl, wasSeen } from "./web";
@@ -105,7 +105,6 @@ export const competitorDiscovery = defineModule<DiscoveryCtx, z.infer<typeof Dis
     return { ok: true, ctx: { ...loaded, existing, count } };
   },
   projectId: (ctx) => ctx.project.id,
-  country: (ctx) => projectCountry(ctx.project),
   brandDomains: (ctx) => brandDomains(ctx.project, ctx.products),
   providedUrls: (ctx) => [ctx.project.website, ...ctx.products.map((product) => product.url)],
   system: DISCOVERY_SYSTEM,
@@ -212,7 +211,6 @@ export const competitorResearch = defineModule<ProfileCtx, z.infer<typeof Profil
     return { ok: true, ctx: { ...loaded, competitor } };
   },
   projectId: (ctx) => ctx.project.id,
-  country: (ctx) => projectCountry(ctx.project),
   brandDomains: (ctx) => brandDomains(ctx.project, ctx.products),
   providedUrls: (ctx) => [ctx.competitor.website, ctx.competitor.facebookUrl, ctx.competitor.instagramUrl, ctx.competitor.tiktokUrl],
   system: PROFILE_SYSTEM,
@@ -343,7 +341,6 @@ export const marketPatterns = defineModule<MarketCtx, StoredMarketAnalysis>({
     return { ok: true, ctx: { ...loaded, profilesText, profileCount: latest.size, ownText } };
   },
   projectId: (ctx) => ctx.project.id,
-  country: (ctx) => projectCountry(ctx.project),
   brandDomains: (ctx) => brandDomains(ctx.project, ctx.products),
   providedUrls: () => [],
   system: MARKET_SYSTEM,
