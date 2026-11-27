@@ -20,6 +20,8 @@ import {
   BRIEF_AUDIENCES,
   COPY_KINDS,
   FRAMEWORKS,
+  IMAGE_FORMATS,
+  IMAGE_TOOLS,
   SCRIPT_STATUS_LABEL,
   VIDEO_ASPECTS,
   VIDEO_TOOLS,
@@ -205,6 +207,37 @@ export default async function ScriptPage({ params, searchParams }: PageProps<"/a
               },
             ]}
             disabledReason={!hasText ? "Write the script first." : null}
+            durationHint="usually 40–90 seconds"
+          />
+          <AuthorizeDialog
+            secondary
+            triggerLabel="Make AI image prompts"
+            title="AI image plan"
+            description="Turns this copy into static image concepts for Facebook and Instagram ads and the website: the tool to use, a style sheet, and for each concept a ready-to-paste prompt, the exact text for the image, layout, sizes and variations to test."
+            models={models}
+            preview={previewResearch.bind(null, "image_plan", script.id)}
+            endpoint="/admin/creative-os/api/research"
+            body={{ module: "image_plan", targetId: script.id }}
+            manual={{ kind: "image_plan", targetId: script.id }}
+            choices={[
+              {
+                name: "tool",
+                label: "Tool",
+                defaultValue: "recommend",
+                options: [
+                  { value: "recommend", label: "Let Claude recommend" },
+                  ...Object.entries(IMAGE_TOOLS).map(([value, tool]) => ({ value, label: tool.label })),
+                ],
+              },
+              {
+                name: "format",
+                label: "Where the images go",
+                defaultValue: "mix",
+                options: Object.entries(IMAGE_FORMATS).map(([value, item]) => ({ value, label: item.label, hint: `Export at ${item.size}.` })),
+              },
+              { name: "count", label: "Concepts", defaultValue: "3", options: ["3", "5"].map((value) => ({ value, label: value })) },
+            ]}
+            disabledReason={!hasText ? "Write the copy first." : null}
             durationHint="usually 40–90 seconds"
           />
           {video ? (

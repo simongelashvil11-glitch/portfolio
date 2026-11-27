@@ -13,6 +13,7 @@ import {
   cosCompetitors,
   cosCustomerInsights,
   cosHooks,
+  cosImagePlans,
   cosKnowledgeItems,
   cosProducts,
   cosScripts,
@@ -31,7 +32,7 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
   const project = await getProjectOr404(projectId);
   const base = `/admin/creative-os/p/${project.id}`;
 
-  const [[products], [knowledge], [ads], [insights], [segments], [competitors], [sources], [angles], [hooks], [scripts], [briefs], [videoPlans]] = await Promise.all([
+  const [[products], [knowledge], [ads], [insights], [segments], [competitors], [sources], [angles], [hooks], [scripts], [briefs], [videoPlans], [imagePlans]] = await Promise.all([
     db.select({ value: count() }).from(cosProducts).where(eq(cosProducts.projectId, project.id)),
     db.select({ value: count() }).from(cosKnowledgeItems).where(eq(cosKnowledgeItems.projectId, project.id)),
     db.select({ value: count() }).from(cosAds).where(eq(cosAds.projectId, project.id)),
@@ -53,6 +54,7 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
     db.select({ value: count() }).from(cosScripts).where(and(eq(cosScripts.projectId, project.id), ne(cosScripts.status, "archived"))),
     db.select({ value: count() }).from(cosBriefs).where(and(eq(cosBriefs.projectId, project.id), ne(cosBriefs.status, "archived"))),
     db.select({ value: count() }).from(cosVideoPlans).where(and(eq(cosVideoPlans.projectId, project.id), ne(cosVideoPlans.status, "archived"))),
+    db.select({ value: count() }).from(cosImagePlans).where(and(eq(cosImagePlans.projectId, project.id), ne(cosImagePlans.status, "archived"))),
   ]);
 
   const archived = project.status === "archived";
@@ -121,6 +123,7 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
             { href: `${base}/scripts`, label: "Scripts and copy", badge: scripts.value || null, claude: true },
             { href: `${base}/briefs`, label: "Briefs", badge: briefs.value || null, claude: true },
             { href: `${base}/video`, label: "AI video", badge: videoPlans.value || null, claude: true },
+            { href: `${base}/images`, label: "AI images", badge: imagePlans.value || null, claude: true },
             { href: `${base}/ads`, label: "Ad Lab", badge: ads.value || null },
           ]}
         />

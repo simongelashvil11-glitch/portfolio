@@ -258,3 +258,61 @@ export type VideoTool = keyof typeof VIDEO_TOOLS;
 export const VIDEO_TOOL_KEYS = Object.keys(VIDEO_TOOLS) as VideoTool[];
 
 export const VIDEO_ASPECTS = ["9:16", "1:1", "4:5", "16:9"] as const;
+
+/**
+ * AI image tools, for the plan's recommendation and for you. What each is
+ * good at, as of November 2026 (from public comparisons; versions, prices and
+ * licensing change, so check the tool before you publish).
+ */
+export const IMAGE_TOOLS = {
+  gpt_image: {
+    label: "OpenAI GPT Image (in ChatGPT)",
+    bestFor: "Finished ad images with real products and short copy in the image; follows detailed instructions well.",
+    works: "Describe the whole ad, quote the exact words to show, and upload a real product photo to keep the product accurate. Edit by asking for changes in the same chat.",
+    url: "https://chatgpt.com",
+  },
+  nano_banana: {
+    label: "Google Nano Banana (in Gemini)",
+    bestFor: "Editing and combining real photos (your product into a scene), consistent people across images, accurate text.",
+    works: "Upload the product photo and describe the scene; ask for edits in plain words.",
+    url: "https://gemini.google.com",
+  },
+  ideogram: {
+    label: "Ideogram",
+    bestFor: "Text-heavy designs: headlines, offers and posters with readable words in the image.",
+    works: "Put the exact headline in quotes in the prompt; choose the aspect ratio and a style.",
+    url: "https://ideogram.ai",
+  },
+  midjourney: {
+    label: "Midjourney",
+    bestFor: "The most striking, artistic visuals and lifestyle moods; weak at text, so add words in a design tool.",
+    works: "Short visual prompt plus parameters (aspect ratio, style); no text in the image.",
+    url: "https://www.midjourney.com",
+  },
+  firefly: {
+    label: "Adobe Firefly",
+    bestFor: "The safest licensing for commercial use (trained on licensed stock); integrates with Photoshop and Express.",
+    works: "Prompt plus style and structure references; finish layout and text in Adobe Express or Photoshop.",
+    url: "https://firefly.adobe.com",
+  },
+  flux: {
+    label: "Flux (Black Forest Labs)",
+    bestFor: "Photorealistic product and lifestyle shots; strong image editing from a reference.",
+    works: "Detailed photographic prompt; use its editing mode with a product photo for accuracy.",
+    url: "https://bfl.ai",
+  },
+} as const;
+export type ImageTool = keyof typeof IMAGE_TOOLS;
+export const IMAGE_TOOL_KEYS = Object.keys(IMAGE_TOOLS) as ImageTool[];
+
+/** Where images go, with the size to export at. */
+export const IMAGE_FORMATS = {
+  mix: { label: "A mix for Meta placements", size: "1080×1350 (4:5) feed, 1080×1920 (9:16) Stories and Reels, 1080×1080 (1:1)" },
+  feed_portrait: { label: "Feed, portrait 4:5", size: "1080×1350" },
+  feed_square: { label: "Feed, square 1:1", size: "1080×1080" },
+  story: { label: "Stories and Reels 9:16", size: "1080×1920, key content inside the middle 1080×1420" },
+  link: { label: "Link ad 1.91:1", size: "1200×628" },
+  website_hero: { label: "Website hero 16:9", size: "1920×1080 (or wider), with room for a headline" },
+  website_section: { label: "Website section 4:3", size: "1600×1200" },
+} as const;
+export type ImageFormat = keyof typeof IMAGE_FORMATS;

@@ -8,6 +8,7 @@ import {
   cosAngles,
   cosBriefs,
   cosHooks,
+  cosImagePlans,
   cosScriptReviews,
   cosScripts,
   cosScriptVersions,
@@ -23,6 +24,9 @@ import {
   EDITORIAL_ISSUES,
   FRAMEWORKS,
   HOOK_CATEGORIES,
+  IMAGE_FORMATS,
+  IMAGE_TOOL_KEYS,
+  IMAGE_TOOLS,
   REVIEW_CRITERIA,
   REVIEW_VERDICTS,
   VIDEO_ASPECTS,
@@ -31,6 +35,8 @@ import {
   type BriefAudience,
   type CopyKind,
   type Framework,
+  type ImageFormat,
+  type ImageTool,
   type VideoTool,
 } from "../creative-labels";
 import { AWARENESS_LABEL, AWARENESS_STAGES } from "../elements";
@@ -758,5 +764,116 @@ export const videoPlan = defineModule<VideoCtx, StoredVideoPlan>({
       })
       .returning({ id: cosVideoPlans.id });
     return { added: 1, href: `/admin/creative-os/p/${ctx.project.id}/video/${saved.id}` };
+  },
+});
+
+/* ------------------------------------------------------------------ */
+/* AI images                                                           */
+/* ------------------------------------------------------------------ */
+
+const ImagePlanOut = z.object({
+  title: z.string(),
+  recommended_tool: z.enum(IMAGE_TOOL_KEYS as [ImageTool, ...ImageTool[]]),
+  tool_reason: z.string(),
+  alternatives: z.array(z.string()),
+  style_bible: z.string(),
+  product_reference: z.string(),
+  concepts: z.array(
+    z.object({
+      name: z.string(),
+      idea: z.string(),
+      format: z.string(),
+      layout: z.string(),
+      prompt: z.string(),
+      negative_prompt: z.string(),
+      text_in_image: z.string(),
+      text_overlay: z.string(),
+      reference_images: z.string(),
+      finishing: z.string(),
+      variations: z.array(z.string()),
+    }),
+  ),
+  website_use: z.string(),
+  compliance: z.array(z.string()),
+  cost_and_time: z.string(),
+});
+
+export type StoredImagePlan = z.infer<typeof ImagePlanOut>;
+
+type ImageCtx = CreativeContext & { script: CosScript; tool: ImageTool | null; format: ImageFormat; count: number };
+
+const imageToolGuide = () =>
+  Object.entries(IMAGE_TOOLS)
+    .map(([key, tool]) => `- ${key} — ${tool.label}: best for ${tool.bestFor} How it works: ${tool.works}`)
+    .join("\n");
+
+const IMAGE_SYSTEM = `You are an art director for direct-response ads. You turn ad copy into static image concepts for Facebook and Instagram ads and the brand's website, and write exactly what to type into an AI image tool for each.
+
+${WRITING_RULES}
+
+The tools (choose recommended_tool from these keys):
+${imageToolGuide()}
+
+Plan specifics:
+- Make the concepts genuinely different (a product hero shot, a problem/solution split, a customer moment, a bold text-led offer…), each built on the copy's angle and the customer's own words. One clear idea per image; it must read at a glance on a phone.
+- prompt: ready to paste into the recommended tool, in English (prompts work best in English even when the ad's words are not): subject, setting, composition and where empty space is left for text, lighting, camera or style, mood, colours, aspect ratio. Keep the product exactly as it is: generate from a real product photo whenever the tool allows, and say so in reference_images.
+- text_in_image: the exact words to render inside the image, in the ad's language, only when the chosen tool renders text reliably (gpt_image, nano_banana, ideogram) and the words are short; otherwise empty. text_overlay: the headline, supporting line and call to action to add in a design tool (Canva, Figma, Photoshop), in the ad's language. Georgian and other non-Latin scripts: always as overlay, never generated.
+- negative_prompt: what to avoid (warped text, extra fingers, competitor logos, fake badges…), or empty if the tool does not use one.
+- layout: where product, people, headline and CTA sit. finishing: the steps to finish it in a design tool and the export size. variations: two or three small changes worth testing (background, headline, crop, model).
+- website_use: how to use the best concepts on the website (hero or section crops, sizes, alt text, keeping text out of the image so it stays crisp and searchable).
+- compliance: Meta's rules for ad images (no misleading before-and-after, no implying personal attributes, no fake buttons or badges, accurate product), disclosure of realistic AI imagery where required, licensing (check the tool's commercial terms), and the client's prohibited claims.
+- cost_and_time: an honest note on how many generations it usually takes, without inventing prices.`;
+
+export const imagePlan = defineModule<ImageCtx, StoredImagePlan>({
+  kind: "image_plan",
+  maxOutputTokens: 12_000,
+  likelyOutputTokens: [3_000, 6_500],
+  depth: () => null,
+  async load(scriptId, options) {
+    const script = await loadScript(scriptId);
+    if (!script) return { ok: false, error: "That script no longer exists." };
+    if (!script.working.some((section) => section.text.trim())) return { ok: false, error: "Write the copy first; the images are made from it." };
+    const ctx = await creativeContext(
+      script.projectId,
+      { productId: script.productId, segmentId: script.segmentId, angleId: script.angleId, hookId: script.hookId, awarenessStage: script.awarenessStage },
+      { insights: 8, knowledge: true },
+    );
+    if (!ctx) return { ok: false, error: "That project no longer exists." };
+    const tool = options.tool && options.tool in IMAGE_TOOLS ? (options.tool as ImageTool) : null;
+    const format = (options.format && options.format in IMAGE_FORMATS ? options.format : "mix") as ImageFormat;
+    const count = [3, 5].includes(Number(options.count)) ? Number(options.count) : 3;
+    return { ok: true, ctx: { ...ctx, script, tool, format, count } };
+  },
+  projectId: (ctx) => ctx.project.id,
+  brandDomains: (ctx) => brandDomains(ctx.project, ctx.products),
+  providedUrls: () => [],
+  system: IMAGE_SYSTEM,
+  user: (ctx) =>
+    [
+      `Make ${ctx.count} distinct image concepts from this copy, for: ${IMAGE_FORMATS[ctx.format].label} (export at ${IMAGE_FORMATS[ctx.format].size}).${
+        ctx.tool ? ` Use ${IMAGE_TOOLS[ctx.tool].label} (recommended_tool: ${ctx.tool}).` : " Recommend the best tool."
+      }`,
+      `<brief>\n${scriptBrief(ctx.script)}\n</brief>`,
+      `<copy>\n${sectionsText(ctx.script.working)}\n</copy>`,
+      ctx.text,
+    ].join("\n\n"),
+  materials: (ctx) => [{ label: `The copy: ${ctx.script.title}`, chars: sectionsText(ctx.script.working).length }, ...ctx.materials],
+  schema: ImagePlanOut,
+  async save({ ctx, output, operation }) {
+    const tool = ctx.tool ?? output.recommended_tool;
+    const [saved] = await db
+      .insert(cosImagePlans)
+      .values({
+        projectId: ctx.project.id,
+        scriptId: ctx.script.id,
+        operationId: operation.id,
+        model: operation.model,
+        title: (output.title.trim() || ctx.script.title).slice(0, 200),
+        tool,
+        format: ctx.format,
+        result: { ...output, recommended_tool: tool },
+      })
+      .returning({ id: cosImagePlans.id });
+    return { added: 1, href: `/admin/creative-os/p/${ctx.project.id}/images/${saved.id}` };
   },
 });

@@ -57,6 +57,13 @@
       "when": 1795764633336,
       "tag": "0007_video_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795766042032,
+      "tag": "0008_image_plans",
+      "breakpoints": true
     }
   ]
 }

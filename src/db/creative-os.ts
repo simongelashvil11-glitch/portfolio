@@ -841,6 +841,34 @@ export const cosVideoPlans = creativeOs.table(
   (t) => [index("video_plans_project_idx").on(t.projectId)],
 );
 
+/**
+ * AI image plans: static ad and website images from a script or copy — the
+ * recommended image tool, a style sheet, and per concept a ready-to-paste
+ * prompt, the exact text to render or overlay, layout, sizes and variations.
+ */
+export const cosImagePlans = creativeOs.table(
+  "image_plans",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => cosProjects.id, { onDelete: "cascade" }),
+    scriptId: integer("script_id").references(() => cosScripts.id, { onDelete: "set null" }),
+    operationId: integer("operation_id").references(() => cosAiOperations.id, { onDelete: "set null" }),
+    model: varchar("model", { length: 64 }).notNull(),
+    title: varchar("title", { length: 200 }).notNull(),
+    /** The tool the plan is written for (see IMAGE_TOOLS). */
+    tool: varchar("tool", { length: 24 }).notNull(),
+    /** Where the images go (see IMAGE_FORMATS). */
+    format: varchar("format", { length: 24 }).notNull(),
+    result: jsonb("result").notNull(),
+    /** draft | approved | archived */
+    status: varchar("status", { length: 12 }).default("draft").notNull(),
+    ...timestamps,
+  },
+  (t) => [index("image_plans_project_idx").on(t.projectId)],
+);
+
 export type CosProject = typeof cosProjects.$inferSelect;
 export type CosProduct = typeof cosProducts.$inferSelect;
 export type CosAssignment = typeof cosAssignments.$inferSelect;
@@ -867,3 +895,4 @@ export type CosScriptVersion = typeof cosScriptVersions.$inferSelect;
 export type CosScriptReview = typeof cosScriptReviews.$inferSelect;
 export type CosBrief = typeof cosBriefs.$inferSelect;
 export type CosVideoPlan = typeof cosVideoPlans.$inferSelect;
+export type CosImagePlan = typeof cosImagePlans.$inferSelect;

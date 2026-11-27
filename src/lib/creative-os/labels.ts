@@ -36,6 +36,7 @@ export const OPERATION_KIND_LABEL: Record<string, string> = {
   script_review: "Creative director review",
   brief_generation: "Production brief",
   video_plan: "AI video plan",
+  image_plan: "AI image plan",
 };
 
 /** Where an operation's result is shown, for the history and usage pages. */
@@ -68,6 +69,7 @@ export function operationHref(kind: string, projectId: number | null, targetId: 
     case "script_review":
     case "brief_generation":
     case "video_plan":
+    case "image_plan":
       return targetId ? `${base}/scripts/${targetId}` : null;
     default:
       return null;

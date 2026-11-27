@@ -392,6 +392,11 @@ export default function GuidePage() {
                 "Export it as a Word document to send. Timings are estimates.",
               ],
               [
+                "AI images",
+                "On any copy or script, press Make AI image prompts. Pick the tool or let Claude recommend one, where the images go (Meta feed, Stories, link ads, website) and 3 or 5 concepts.",
+                "Per concept: a ready-to-paste prompt, the exact text to render (only in tools that spell well) or to add in Canva/Figma, layout, sizes, variations to test, plus website use and Meta image rules. The AI images tab compares the tools: GPT Image for finished ads with products, Ideogram for text-heavy designs, Nano Banana for editing real photos, Midjourney for striking visuals, Firefly for the safest licensing, Flux for photoreal products. Georgian words: add them in a design tool.",
+              ],
+              [
                 "AI video",
                 "Write a script of the type “AI-generated video script” (or any video script), then press Make AI video prompts. Pick the tool or let Claude recommend one, and the aspect ratio.",
                 "You get the tool and settings, a style and character sheet, a ready-to-paste prompt per shot (Copy prompt), the voiceover plan, editing steps and AI-ad compliance points. The AI video tab compares the tools: an AI presenter (HeyGen, Arcads) for someone talking to camera; a generator (Veo, Runway, Kling, Sora) for scenes and product shots. For Georgian voiceover, add it in editing.",
