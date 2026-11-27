@@ -5,6 +5,7 @@ import { WhatsAppIcon, whatsAppHref } from "@/components/brand-icons";
 import { ContactButton } from "@/components/contact-window";
 import { Document, Mail, Open } from "@/components/fluent-icons";
 import { Greeting } from "@/components/greeting";
+import { HeyButton } from "@/components/hey-button";
 import { Mark } from "@/components/mark";
 import { ProjectPicture } from "@/components/page-transition";
 import { ProjectStats } from "@/components/project-stats";
@@ -98,9 +99,16 @@ export default async function HomePage() {
         */}
         <div className="min-w-0">
           <Reveal>
-            <p className="text-sm text-faint">
-              <Greeting />
-            </p>
+            {/*
+              The greeting, and below `lg` (where the profile card and its Hey
+              button are hidden) a Hey of its own beside it, so it waves back.
+            */}
+            <div className="flex min-h-7 items-center gap-3">
+              <p className="text-sm text-faint">
+                <Greeting />
+              </p>
+              {whatsapp ? <HeyButton phone={whatsapp} name={profile.name} className="lg:hidden" /> : null}
+            </div>
             {/* Fluent's Large Title: 40/52 semibold. */}
             <h1 className="mt-2 text-[28px] font-semibold leading-9 text-balance sm:text-[40px] sm:leading-[52px]">
               {profile.headline}
@@ -194,8 +202,13 @@ export default async function HomePage() {
                 />
               </div>
               <div className="border-t border-line p-3">
-                <p className="text-sm font-semibold">{profile.name}</p>
-                {profile.role ? <p className="text-xs text-faint">{profile.role}</p> : null}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">{profile.name}</p>
+                    {profile.role ? <p className="text-xs text-faint">{profile.role}</p> : null}
+                  </div>
+                  {whatsapp ? <HeyButton phone={whatsapp} name={profile.name} className="mt-0.5 shrink-0" /> : null}
+                </div>
                 {profile.availability ? (
                   <p className="mt-2 flex items-center gap-1.5 text-xs text-muted">
                     {/* Fluent's "available" presence badge. */}
