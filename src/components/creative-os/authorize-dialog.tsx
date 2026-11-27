@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import type { Preview } from "@/actions/creative-os";
+import { manualImport, manualPrompt } from "@/actions/creative-os-manual";
 import { Dialog } from "@/components/dialog";
 import { Sparkle } from "@/components/fluent-icons";
 import { count, EFFORTS, usd, type Effort } from "@/lib/creative-os/format";
@@ -41,7 +42,8 @@ type Phase =
   | { step: "ready"; preview: Extract<Preview, { ok: true }> }
   | { step: "running"; preview: Extract<Preview, { ok: true }>; startedAt: number }
   | { step: "done"; message: string; href: string | null }
-  | { step: "error"; message: string };
+  | { step: "error"; message: string }
+  | { step: "manual" };
 
 export function AuthorizeDialog({
   triggerLabel,
@@ -55,6 +57,7 @@ export function AuthorizeDialog({
   choices = [],
   durationHint = "usually 20–90 seconds",
   secondary = false,
+  manual,
 }: {
   triggerLabel: string;
   title: string;
@@ -68,6 +71,8 @@ export function AuthorizeDialog({
   durationHint?: string;
   /** A quieter trigger button, for a second paid action on the same page. */
   secondary?: boolean;
+  /** Offer "Use my Claude subscription instead": copy the prompt to claude.ai, paste the answer back. Steps without web research only. */
+  manual?: { kind: string; targetId: number };
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -79,6 +84,13 @@ export function AuthorizeDialog({
   );
   const [now, setNow] = useState(0);
   const controller = useRef<AbortController | null>(null);
+  const [manualState, setManualState] = useState<{ busy: boolean; error: string | null; prompt: string | null; copied: boolean; pasted: string }>({
+    busy: false,
+    error: null,
+    prompt: null,
+    copied: false,
+    pasted: "",
+  });
 
   useEffect(() => {
     if (phase.step !== "running") return;
@@ -151,6 +163,88 @@ export function AuthorizeDialog({
 
   const selected = models.find((option) => option.model === model) ?? null;
 
+  async function copyManualPrompt() {
+    if (!manual) return;
+    setManualState((current) => ({ ...current, busy: true, error: null }));
+    const result = await manualPrompt(manual.kind, manual.targetId, options).catch(() => ({ ok: false as const, error: "The prompt could not be built." }));
+    if (!result.ok) {
+      setManualState((current) => ({ ...current, busy: false, error: result.error }));
+      return;
+    }
+    const copied = await navigator.clipboard.writeText(result.prompt).then(
+      () => true,
+      () => false,
+    );
+    setManualState((current) => ({ ...current, busy: false, prompt: result.prompt, copied }));
+  }
+
+  async function importAnswer() {
+    if (!manual || !manualState.pasted.trim()) return;
+    setManualState((current) => ({ ...current, busy: true, error: null }));
+    const result = await manualImport(manual.kind, manual.targetId, options, manualState.pasted).catch(() => ({
+      ok: false as const,
+      error: "The answer could not be imported.",
+    }));
+    if (!result.ok) {
+      setManualState((current) => ({ ...current, busy: false, error: result.error }));
+      return;
+    }
+    setManualState({ busy: false, error: null, prompt: null, copied: false, pasted: "" });
+    const added = typeof result.added === "number" ? ` ${count(result.added)} added.` : "";
+    setPhase({ step: "done", message: `Imported from your Claude subscription.${added} No API cost.`, href: result.href });
+    router.refresh();
+  }
+
+  const choiceFields = choices.map((choice) => (
+    <fieldset key={choice.name}>
+      <legend className="mb-1.5 text-sm font-semibold">{choice.label}</legend>
+      {choice.text ? (
+        <textarea
+          value={options[choice.name] ?? ""}
+          onChange={(event) => setOptions((current) => ({ ...current, [choice.name]: event.target.value }))}
+          placeholder={choice.text.placeholder}
+          maxLength={choice.text.maxLength}
+          rows={3}
+          className="field resize-y"
+        />
+      ) : choice.options.length > 4 ? (
+        <select
+          value={options[choice.name]}
+          onChange={(event) => setOptions((current) => ({ ...current, [choice.name]: event.target.value }))}
+          className="field"
+        >
+          {choice.options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {choice.options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setOptions((current) => ({ ...current, [choice.name]: option.value }))}
+              aria-pressed={options[choice.name] === option.value}
+              title={option.hint}
+              className={cn(
+                "rounded-[4px] border px-3 py-1 text-sm",
+                options[choice.name] === option.value ? "border-accent bg-accent-soft font-semibold text-accent-hover" : "border-line-strong",
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {(() => {
+        const hint = choice.options.find((option) => option.value === options[choice.name])?.hint ?? choice.hint;
+        return hint ? <p className="mt-1.5 text-xs text-faint">{hint}</p> : null;
+      })()}
+    </fieldset>
+  ));
+
   return (
     <>
       <button
@@ -166,63 +260,76 @@ export function AuthorizeDialog({
 
       <Dialog open={open} title={title} onClose={close} widthClassName="max-w-2xl">
         <p className="-mt-2 mb-4 text-sm text-muted">{description}</p>
-        <p className="mb-5 rounded-[4px] border border-[#f9d5a7] bg-[#fff9f2] px-3 py-2 text-sm">
-          This uses the Claude API and costs money. Nothing is sent until you press <strong>Authorize</strong>.
-        </p>
+        {phase.step === "manual" ? (
+          <p className="mb-5 rounded-[4px] border border-[#9fd89f] bg-[#f1faf1] px-3 py-2 text-sm">
+            Free here: it runs in claude.ai on your Claude subscription. Nothing is sent to the API.
+          </p>
+        ) : (
+          <p className="mb-5 rounded-[4px] border border-[#f9d5a7] bg-[#fff9f2] px-3 py-2 text-sm">
+            This uses the Claude API and costs money. Nothing is sent until you press <strong>Authorize</strong>.
+            {manual && (phase.step === "choose" || phase.step === "estimating") ? (
+              <>
+                {" "}
+                <button type="button" className="font-semibold text-accent hover:underline" onClick={() => setPhase({ step: "manual" })}>
+                  Use my Claude subscription instead
+                </button>
+              </>
+            ) : null}
+          </p>
+        )}
+
+        {phase.step === "manual" ? (
+          <div className="grid gap-5">
+            {choiceFields}
+            <ol className="grid list-decimal gap-1.5 pl-5 text-sm">
+              <li>
+                <button type="button" className="btn btn-primary" onClick={copyManualPrompt} disabled={manualState.busy}>
+                  {manualState.busy && !manualState.prompt ? "Building the prompt…" : manualState.prompt ? "Copy the prompt again" : "Copy the prompt"}
+                </button>
+                {manualState.prompt ? (
+                  <span className="ml-2 text-xs text-[#0e700e]">
+                    {manualState.copied ? "Copied" : "Ready (copy it from the box below)"} · {count(manualState.prompt.length)} characters
+                  </span>
+                ) : null}
+              </li>
+              <li>
+                Open{" "}
+                <a href="https://claude.ai/new" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+                  claude.ai ↗
+                </a>
+                , start a new chat, paste it and send. Opus or Sonnet both work.
+              </li>
+              <li>Copy Claude&apos;s whole answer (the copy button under the reply) and paste it here:</li>
+            </ol>
+            {manualState.prompt && !manualState.copied ? (
+              <textarea readOnly value={manualState.prompt} rows={4} className="field font-mono text-xs" onFocus={(event) => event.currentTarget.select()} />
+            ) : null}
+            <textarea
+              value={manualState.pasted}
+              onChange={(event) => setManualState((current) => ({ ...current, pasted: event.target.value }))}
+              rows={6}
+              placeholder="Paste Claude's answer here (the JSON it returns)"
+              className="field resize-y font-mono text-xs"
+            />
+            {manualState.error ? (
+              <p role="alert" className="rounded-[4px] border border-[#f1bbbc] bg-[#fdf3f4] px-3 py-2 text-sm">
+                {manualState.error}
+              </p>
+            ) : null}
+            <div className="flex justify-end gap-2">
+              <button type="button" className="btn btn-secondary" onClick={() => setPhase({ step: "choose" })}>
+                Back to the API
+              </button>
+              <button type="button" className="btn btn-primary" disabled={!manualState.pasted.trim() || manualState.busy} onClick={importAnswer}>
+                {manualState.busy && manualState.prompt ? "Importing…" : "Import the answer"}
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         {phase.step === "choose" || phase.step === "estimating" ? (
           <div className="grid gap-5">
-            {choices.map((choice) => (
-              <fieldset key={choice.name}>
-                <legend className="mb-1.5 text-sm font-semibold">{choice.label}</legend>
-                {choice.text ? (
-                  <textarea
-                    value={options[choice.name] ?? ""}
-                    onChange={(event) => setOptions((current) => ({ ...current, [choice.name]: event.target.value }))}
-                    placeholder={choice.text.placeholder}
-                    maxLength={choice.text.maxLength}
-                    rows={3}
-                    className="field resize-y"
-                  />
-                ) : choice.options.length > 4 ? (
-                  <select
-                    value={options[choice.name]}
-                    onChange={(event) => setOptions((current) => ({ ...current, [choice.name]: event.target.value }))}
-                    className="field"
-                  >
-                    {choice.options.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {choice.options.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setOptions((current) => ({ ...current, [choice.name]: option.value }))}
-                        aria-pressed={options[choice.name] === option.value}
-                        title={option.hint}
-                        className={cn(
-                          "rounded-[4px] border px-3 py-1 text-sm",
-                          options[choice.name] === option.value
-                            ? "border-accent bg-accent-soft font-semibold text-accent-hover"
-                            : "border-line-strong",
-                        )}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {(() => {
-                  const hint = choice.options.find((option) => option.value === options[choice.name])?.hint ?? choice.hint;
-                  return hint ? <p className="mt-1.5 text-xs text-faint">{hint}</p> : null;
-                })()}
-              </fieldset>
-            ))}
+            {choiceFields}
 
             <fieldset className="grid gap-2">
               <legend className="mb-1 text-sm font-semibold">Model</legend>

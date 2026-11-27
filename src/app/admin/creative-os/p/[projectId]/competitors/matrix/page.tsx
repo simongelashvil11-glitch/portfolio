@@ -65,6 +65,7 @@ export default async function MatrixPage({ params }: PageProps<"/admin/creative-
           preview={previewResearch.bind(null, "market_patterns", project.id)}
           endpoint="/admin/creative-os/api/research"
           body={{ module: "market_patterns", targetId: project.id }}
+            manual={{ kind: "market_patterns", targetId: project.id }}
           disabledReason={columns.length < 2 ? "Research at least two competitors first." : null}
           durationHint="usually 30–90 seconds"
         />

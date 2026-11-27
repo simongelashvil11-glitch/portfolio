@@ -139,6 +139,7 @@ export default async function HooksPage({ params, searchParams }: PageProps<"/ad
           preview={previewResearch.bind(null, "hook_generation", project.id)}
           endpoint="/admin/creative-os/api/research"
           body={{ module: "hook_generation", targetId: project.id }}
+            manual={{ kind: "hook_generation", targetId: project.id }}
           choices={[
             angleChoice(choices.angles, angleFilter),
             segmentChoice(choices.segments),

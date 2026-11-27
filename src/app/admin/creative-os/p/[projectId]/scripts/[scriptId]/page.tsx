@@ -149,6 +149,7 @@ export default async function ScriptPage({ params, searchParams }: PageProps<"/a
             preview={previewResearch.bind(null, "script_writing", script.id)}
             endpoint="/admin/creative-os/api/research"
             body={{ module: "script_writing", targetId: script.id }}
+            manual={{ kind: "script_writing", targetId: script.id }}
             choices={[
               { name: "variations", label: "Variations", defaultValue: "1", options: ["1", "2", "3"].map((value) => ({ value, label: value })), hint: "Genuinely different executions, each saved as a version." },
               KNOWLEDGE_CHOICE,
@@ -164,6 +165,7 @@ export default async function ScriptPage({ params, searchParams }: PageProps<"/a
             preview={previewResearch.bind(null, "section_rewrite", script.id)}
             endpoint="/admin/creative-os/api/research"
             body={{ module: "section_rewrite", targetId: script.id }}
+            manual={{ kind: "section_rewrite", targetId: script.id }}
             choices={[
               { name: "section", label: "Section", defaultValue: "0", options: sectionChoices },
               { name: "instruction", label: "What to change", defaultValue: "", options: [], text: { placeholder: "Make the hook name the problem in the customer's words; cut it to under 12 words.", maxLength: 600 } },
@@ -180,6 +182,7 @@ export default async function ScriptPage({ params, searchParams }: PageProps<"/a
             preview={previewResearch.bind(null, "script_review", script.id)}
             endpoint="/admin/creative-os/api/research"
             body={{ module: "script_review", targetId: script.id }}
+            manual={{ kind: "script_review", targetId: script.id }}
             disabledReason={!hasText ? "Write something first." : null}
             durationHint="usually 40–90 seconds"
           />
@@ -192,6 +195,7 @@ export default async function ScriptPage({ params, searchParams }: PageProps<"/a
             preview={previewResearch.bind(null, "brief_generation", script.id)}
             endpoint="/admin/creative-os/api/research"
             body={{ module: "brief_generation", targetId: script.id }}
+            manual={{ kind: "brief_generation", targetId: script.id }}
             choices={[
               {
                 name: "audience",
@@ -213,6 +217,7 @@ export default async function ScriptPage({ params, searchParams }: PageProps<"/a
               preview={previewResearch.bind(null, "video_plan", script.id)}
               endpoint="/admin/creative-os/api/research"
               body={{ module: "video_plan", targetId: script.id }}
+            manual={{ kind: "video_plan", targetId: script.id }}
               choices={[
                 {
                   name: "tool",

@@ -399,6 +399,14 @@ export default function GuidePage() {
             ]}
           />
           <p>
+            <strong>Use my Claude subscription instead.</strong> In any of these dialogs (and Audiences, Awareness and Market
+            patterns), the link at the end of the orange notice switches to a free route: Copy the prompt, paste it into a new
+            claude.ai chat, then paste Claude&apos;s whole answer back and Import. It is checked and saved exactly like an API run,
+            at $0. If it says the format is wrong, ask Claude in the same chat to reply again with only the JSON. Research with
+            web search (Voice of Customer, Find my rivals, competitor profiles, product research with the web on) stays on the
+            API, because the server has to see which pages were really read.
+          </p>
+          <p>
             Language: scripts are written in the language you choose in the brief (English, Georgian or Russian); briefs are in
             English with the script&apos;s own lines kept as written. Mark finished pieces <strong>Approved</strong>; Archive hides
             the rest without deleting them.

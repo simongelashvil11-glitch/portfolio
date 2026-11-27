@@ -78,6 +78,7 @@ export default async function AwarenessPage({ params, searchParams }: PageProps<
           preview={previewResearch.bind(null, "awareness_analysis", project.id)}
           endpoint="/admin/creative-os/api/research"
           body={{ module: "awareness_analysis", targetId: project.id }}
+            manual={{ kind: "awareness_analysis", targetId: project.id }}
           choices={[
             {
               name: "segment",

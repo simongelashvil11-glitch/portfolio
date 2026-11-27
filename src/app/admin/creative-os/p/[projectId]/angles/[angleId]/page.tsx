@@ -83,6 +83,7 @@ export default async function AnglePage({ params }: PageProps<"/admin/creative-o
               preview={previewResearch.bind(null, "hook_generation", project.id)}
               endpoint="/admin/creative-os/api/research"
               body={{ module: "hook_generation", targetId: project.id }}
+            manual={{ kind: "hook_generation", targetId: project.id }}
               choices={[
                 angleChoice(choices.angles.some((item) => item.id === angle.id) ? choices.angles : [...choices.angles, angle], angle.id),
                 segmentChoice(choices.segments),

@@ -101,6 +101,7 @@ export default async function AnglesPage({ params, searchParams }: PageProps<"/a
             preview={previewResearch.bind(null, "angle_generation", project.id)}
             endpoint="/admin/creative-os/api/research"
             body={{ module: "angle_generation", targetId: project.id }}
+            manual={{ kind: "angle_generation", targetId: project.id }}
             choices={dialogChoices}
             durationHint="usually 40–90 seconds"
           />

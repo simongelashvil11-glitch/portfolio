@@ -85,6 +85,7 @@ export default async function AudiencesPage({ params }: PageProps<"/admin/creati
             preview={previewResearch.bind(null, "audience_segments", project.id)}
             endpoint="/admin/creative-os/api/research"
             body={{ module: "audience_segments", targetId: project.id }}
+            manual={{ kind: "audience_segments", targetId: project.id }}
             choices={[
               {
                 name: "count",
