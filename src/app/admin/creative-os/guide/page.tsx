@@ -391,6 +391,11 @@ export default function GuidePage() {
                 "Turns the script into a production brief for a UGC creator, editor, designer or actor: concept, voiceover, shot list, b-roll, editing, music, assets, compliance, alternative hooks, and a scene-by-scene storyboard.",
                 "Export it as a Word document to send. Timings are estimates.",
               ],
+              [
+                "AI video",
+                "Write a script of the type “AI-generated video script” (or any video script), then press Make AI video prompts. Pick the tool or let Claude recommend one, and the aspect ratio.",
+                "You get the tool and settings, a style and character sheet, a ready-to-paste prompt per shot (Copy prompt), the voiceover plan, editing steps and AI-ad compliance points. The AI video tab compares the tools: an AI presenter (HeyGen, Arcads) for someone talking to camera; a generator (Veo, Runway, Kling, Sora) for scenes and product shots. For Georgian voiceover, add it in editing.",
+              ],
             ]}
           />
           <p>

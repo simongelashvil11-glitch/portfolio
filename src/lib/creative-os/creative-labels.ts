@@ -90,6 +90,7 @@ export const COPY_KINDS = {
   founder_ad: { label: "Founder ad", video: true, sections: ["Hook", "Who I am", "Why we made it", "What it does", "Proof", "Call to action"] },
   demo_script: { label: "Product demonstration script", video: true, sections: ["Hook", "The problem on screen", "Demonstration", "Result", "Call to action"] },
   vsl: { label: "VSL script", video: true, sections: ["Hook", "Story", "Problem", "Mechanism", "Proof", "Offer", "Guarantee", "Call to action"] },
+  ai_video: { label: "AI-generated video script", video: true, sections: ["Shot 1: hook", "Shot 2", "Shot 3", "Shot 4", "Shot 5: call to action"] },
   meta_primary_text: { label: "Meta primary text", video: false, sections: ["Opening line", "Body", "Call to action"] },
   meta_headlines: { label: "Meta headlines", video: false, sections: ["Headlines"] },
   static_ad: { label: "Static ad copy", video: false, sections: ["Headline", "Subheadline", "Supporting text", "Call to action"] },
@@ -203,3 +204,57 @@ export const BRIEF_AUDIENCES = {
   actor: "Actor or presenter",
 } as const;
 export type BriefAudience = keyof typeof BRIEF_AUDIENCES;
+
+/**
+ * AI video tools, for the plan's recommendation and for you. What each is
+ * good at, as of November 2026 (from public comparisons; prices and terms
+ * change, so check the tool before paying).
+ */
+export const VIDEO_TOOLS = {
+  avatar_heygen: {
+    label: "HeyGen (AI avatar)",
+    kind: "avatar",
+    bestFor: "A person talking to camera: UGC-style testimonials, founder-style explainers, many languages and lip-sync.",
+    works: "Give it the whole spoken script and pick an avatar and voice; it generates the talking-head video. B-roll comes from elsewhere.",
+    url: "https://www.heygen.com",
+  },
+  avatar_arcads: {
+    label: "Arcads (AI UGC actors)",
+    kind: "avatar",
+    bestFor: "The most realistic UGC-style actors for performance ads; priced per video, the most expensive here.",
+    works: "Give it the script per actor and pick actors; it returns UGC-style clips to cut together.",
+    url: "https://www.arcads.ai",
+  },
+  veo: {
+    label: "Google Veo 3.1",
+    kind: "generator",
+    bestFor: "Realistic scenes and product shots with sound generated together (dialogue, ambience, effects). Clips of about 4–8 seconds.",
+    works: "One prompt per shot; can start from a reference image (a real product photo) for accuracy. Through Gemini or Google Flow.",
+    url: "https://deepmind.google/models/veo/",
+  },
+  runway: {
+    label: "Runway",
+    kind: "generator",
+    bestFor: "Cinematic, controllable brand-film shots; strong camera control and editing tools around the generator.",
+    works: "One prompt per shot, usually from a reference image; assemble and add sound in its editor or yours.",
+    url: "https://runwayml.com",
+  },
+  kling: {
+    label: "Kling",
+    kind: "generator",
+    bestFor: "Realistic human motion and longer, stable shots at a competitive price.",
+    works: "One prompt per shot, image-to-video works best for consistent people and products.",
+    url: "https://klingai.com",
+  },
+  sora: {
+    label: "OpenAI Sora",
+    kind: "generator",
+    bestFor: "Imaginative, stylised scenes and storytelling shots.",
+    works: "One prompt per shot; keep each shot simple and consistent.",
+    url: "https://openai.com/sora",
+  },
+} as const;
+export type VideoTool = keyof typeof VIDEO_TOOLS;
+export const VIDEO_TOOL_KEYS = Object.keys(VIDEO_TOOLS) as VideoTool[];
+
+export const VIDEO_ASPECTS = ["9:16", "1:1", "4:5", "16:9"] as const;

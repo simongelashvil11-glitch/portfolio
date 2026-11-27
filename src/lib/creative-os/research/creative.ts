@@ -11,6 +11,7 @@ import {
   cosScriptReviews,
   cosScripts,
   cosScriptVersions,
+  cosVideoPlans,
   type CosScript,
   type ScriptSection,
 } from "@/db/creative-os";
@@ -24,9 +25,13 @@ import {
   HOOK_CATEGORIES,
   REVIEW_CRITERIA,
   REVIEW_VERDICTS,
+  VIDEO_ASPECTS,
+  VIDEO_TOOL_KEYS,
+  VIDEO_TOOLS,
   type BriefAudience,
   type CopyKind,
   type Framework,
+  type VideoTool,
 } from "../creative-labels";
 import { AWARENESS_LABEL, AWARENESS_STAGES } from "../elements";
 import { brandDomains } from "./context";
@@ -320,8 +325,11 @@ export const scriptWriting = defineModule<ScriptCtx, z.infer<typeof ScriptOut>>(
     [
       `Write ${ctx.variations === 1 ? "the piece" : `${ctx.variations} distinct variations`} described in the brief.`,
       `<brief>\n${scriptBrief(ctx.script)}\n</brief>`,
+      ctx.script.kind === "ai_video" ? AI_VIDEO_SCRIPT_RULES : null,
       ctx.text,
-    ].join("\n\n"),
+    ]
+      .filter(Boolean)
+      .join("\n\n"),
   materials: (ctx) => [{ label: `Your brief: ${ctx.script.title}`, chars: scriptBrief(ctx.script).length }, ...ctx.materials],
   schema: ScriptOut,
   async save({ ctx, output, operation }) {
@@ -626,3 +634,129 @@ export async function latestReview(scriptId: number) {
   const [row] = await db.select().from(cosScriptReviews).where(eq(cosScriptReviews.scriptId, scriptId)).orderBy(desc(cosScriptReviews.createdAt)).limit(1);
   return row ?? null;
 }
+
+/* ------------------------------------------------------------------ */
+/* AI video                                                            */
+/* ------------------------------------------------------------------ */
+
+/** Added to script writing when the piece is meant to be made with an AI video tool. */
+const AI_VIDEO_SCRIPT_RULES = `This script will be produced with AI video tools, which generate short clips (about 4–8 seconds each) from text prompts. Write for that:
+- One section per shot. Each shot is 3–8 seconds and does one thing: one action, one location, one camera idea.
+- Keep spoken lines per shot short (what fits in the shot's seconds at about 2.5 words a second). A shot can have no speech.
+- Keep the same character(s) and setting across shots unless a change is the point; describe them the same way each time in direction.
+- Put any on-screen words (captions, prices, offers) in direction as text to add in editing: AI tools render text badly.
+- Show the product as it really is; never invent features to show.
+- No AI person may claim personal results or present themselves as a real customer; demonstrations and plain statements only.`;
+
+const VideoPlanOut = z.object({
+  title: z.string(),
+  recommended_tool: z.enum(VIDEO_TOOL_KEYS as [VideoTool, ...VideoTool[]]),
+  tool_reason: z.string(),
+  alternatives: z.array(z.string()),
+  settings: z.string(),
+  style_bible: z.string(),
+  characters: z.array(z.object({ name: z.string(), description: z.string() })),
+  product_reference: z.string(),
+  shots: z.array(
+    z.object({
+      shot: z.string(),
+      duration_seconds: z.number(),
+      purpose: z.string(),
+      prompt: z.string(),
+      negative_prompt: z.string(),
+      camera: z.string(),
+      audio: z.string(),
+      voiceover: z.string(),
+      on_screen_text: z.string(),
+      reference_images: z.string(),
+      continuity: z.string(),
+    }),
+  ),
+  avatar_script: z.string(),
+  voiceover_plan: z.string(),
+  music: z.string(),
+  assembly: z.array(z.string()),
+  compliance: z.array(z.string()),
+  cost_and_time: z.string(),
+});
+
+export type StoredVideoPlan = z.infer<typeof VideoPlanOut>;
+
+type VideoCtx = CreativeContext & { script: CosScript; tool: VideoTool | null; aspect: string };
+
+const toolGuide = () =>
+  Object.entries(VIDEO_TOOLS)
+    .map(([key, tool]) => `- ${key} — ${tool.label}: best for ${tool.bestFor} How it works: ${tool.works}`)
+    .join("\n");
+
+const VIDEO_SYSTEM = `You are an AI video producer for direct-response ads. You turn an approved ad script into a production plan for AI video tools: which tool to use, and exactly what to type into it, shot by shot, so a copywriter with no film crew can make the ad.
+
+${WRITING_RULES}
+
+The tools (choose the recommended_tool from these keys):
+${toolGuide()}
+
+Plan specifics:
+- recommended_tool: the best fit for this script (a talking person to camera → an avatar tool; product shots, scenes and b-roll → a generator). If the script mixes both, recommend the main one and name the other in alternatives, saying which shots go where.
+- Shots: one per 3–8 second clip. prompt is ready to paste into the recommended tool, in English (prompts work best in English even when the ad is not): subject, action, setting, lighting, lens and camera movement, mood and style, kept consistent with style_bible and characters. Describe recurring characters with the same words in every shot. negative_prompt lists what to avoid (extra fingers, warped text, logos, brand names of others…), or is empty if the tool does not use one.
+- For avatar tools, put the full spoken script in avatar_script, with notes on the avatar's look, setting, voice and delivery; shots then cover any b-roll cut in between.
+- audio: what the tool should generate (native dialogue, ambience, effects) or "none: voiceover added in editing". voiceover: the exact line spoken in that shot, in the script's language.
+- on_screen_text: captions, prices or offers to add in editing, never to be generated by the AI.
+- product_reference: how to keep the product accurate (generate from a real product photo as the reference image, avoid close-ups of labels the tool will garble…).
+- voiceover_plan: if the language is not well supported by the tool's own voices (for example Georgian), plan silent or ambient clips and a voiceover recorded or generated separately and added in editing.
+- assembly: numbered editing steps to put it together (clip order, trims, captions, music, end card, export settings).
+- compliance: AI disclosure (Meta and TikTok label or require disclosure of realistic AI content; check current rules), no AI person presented as a real customer or claiming personal results, product shown as it really is, and anything from the client's prohibited claims.
+- cost_and_time: a rough, honest note on how many generations it usually takes and what to watch, without inventing exact prices.`;
+
+export const videoPlan = defineModule<VideoCtx, StoredVideoPlan>({
+  kind: "video_plan",
+  maxOutputTokens: 12_000,
+  likelyOutputTokens: [3_000, 6_500],
+  depth: () => null,
+  async load(scriptId, options) {
+    const script = await loadScript(scriptId);
+    if (!script) return { ok: false, error: "That script no longer exists." };
+    if (!script.working.some((section) => section.text.trim())) return { ok: false, error: "Write the script first; the plan is made from it." };
+    const ctx = await creativeContext(
+      script.projectId,
+      { productId: script.productId, segmentId: script.segmentId, angleId: script.angleId, awarenessStage: script.awarenessStage },
+      { insights: 5, knowledge: true },
+    );
+    if (!ctx) return { ok: false, error: "That project no longer exists." };
+    const tool = options.tool && options.tool in VIDEO_TOOLS ? (options.tool as VideoTool) : null;
+    const aspect = (VIDEO_ASPECTS as readonly string[]).includes((options.aspect ?? "").replace("x", ":")) ? options.aspect!.replace("x", ":") : "9:16";
+    return { ok: true, ctx: { ...ctx, script, tool, aspect } };
+  },
+  projectId: (ctx) => ctx.project.id,
+  brandDomains: (ctx) => brandDomains(ctx.project, ctx.products),
+  providedUrls: () => [],
+  system: VIDEO_SYSTEM,
+  user: (ctx) =>
+    [
+      `Make the AI video production plan for this script. Aspect ratio: ${ctx.aspect}.${
+        ctx.tool ? ` Use ${VIDEO_TOOLS[ctx.tool].label} (recommended_tool: ${ctx.tool}).` : " Recommend the best tool."
+      }`,
+      `<brief>\n${scriptBrief(ctx.script)}\n</brief>`,
+      `<script>\n${sectionsText(ctx.script.working)}\n</script>`,
+      ctx.text,
+    ].join("\n\n"),
+  materials: (ctx) => [{ label: `The script: ${ctx.script.title}`, chars: sectionsText(ctx.script.working).length }, ...ctx.materials],
+  schema: VideoPlanOut,
+  async save({ ctx, output, operation }) {
+    const tool = ctx.tool ?? output.recommended_tool;
+    const [saved] = await db
+      .insert(cosVideoPlans)
+      .values({
+        projectId: ctx.project.id,
+        scriptId: ctx.script.id,
+        operationId: operation.id,
+        model: operation.model,
+        title: (output.title.trim() || ctx.script.title).slice(0, 200),
+        tool,
+        aspect: ctx.aspect,
+        result: { ...output, recommended_tool: tool },
+      })
+      .returning({ id: cosVideoPlans.id });
+    return { added: 1, href: `/admin/creative-os/p/${ctx.project.id}/video/${saved.id}` };
+  },
+});

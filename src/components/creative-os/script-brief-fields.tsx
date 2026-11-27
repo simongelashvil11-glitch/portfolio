@@ -25,7 +25,7 @@ export function ScriptBriefFields({
 }: {
   script?: CosScript;
   choices: Choices;
-  defaults?: { angleId?: number | null; hookId?: number | null; productId?: number | null; language?: string };
+  defaults?: { angleId?: number | null; hookId?: number | null; productId?: number | null; language?: string; kind?: string | null };
 }) {
   const focus = choices.segments.find((segment) => segment.focus);
   return (
@@ -36,7 +36,7 @@ export function ScriptBriefFields({
             <Input name="title" required defaultValue={script?.title} />
           </CosField>
           <CosField label="Type" name="kind">
-            <select name="kind" defaultValue={script?.kind ?? "ugc_script"} className={inputClass}>
+            <select name="kind" defaultValue={script?.kind ?? (defaults.kind && defaults.kind in COPY_KINDS ? defaults.kind : "ugc_script")} className={inputClass}>
               {COPY_KIND_KEYS.map((key) => (
                 <option key={key} value={key}>
                   {COPY_KINDS[key].label}

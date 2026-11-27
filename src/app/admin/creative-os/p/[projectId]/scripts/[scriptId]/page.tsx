@@ -16,7 +16,16 @@ import { ArrowDownload, ChevronRight } from "@/components/fluent-icons";
 import { db } from "@/db";
 import { cosAngles, cosBriefs, cosHooks, cosScriptReviews, cosScripts, cosScriptVersions, type ScriptSection } from "@/db/creative-os";
 import { when } from "@/lib/admin-time";
-import { BRIEF_AUDIENCES, COPY_KINDS, FRAMEWORKS, SCRIPT_STATUS_LABEL, type CopyKind, type Framework } from "@/lib/creative-os/creative-labels";
+import {
+  BRIEF_AUDIENCES,
+  COPY_KINDS,
+  FRAMEWORKS,
+  SCRIPT_STATUS_LABEL,
+  VIDEO_ASPECTS,
+  VIDEO_TOOLS,
+  type CopyKind,
+  type Framework,
+} from "@/lib/creative-os/creative-labels";
 import { AWARENESS_LABEL } from "@/lib/creative-os/elements";
 import { enabledModels } from "@/lib/creative-os/pricing";
 import { getProjectOr404, getWritingChoices } from "@/lib/creative-os/queries";
@@ -194,6 +203,38 @@ export default async function ScriptPage({ params, searchParams }: PageProps<"/a
             disabledReason={!hasText ? "Write the script first." : null}
             durationHint="usually 40–90 seconds"
           />
+          {video ? (
+            <AuthorizeDialog
+              secondary
+              triggerLabel="Make AI video prompts"
+              title="AI video plan"
+              description="Turns the script into what an AI video tool needs: the tool to use and its settings, a style and character sheet, a ready-to-paste prompt for every shot, the voiceover plan, how to put it together, and the compliance points for AI-made ads."
+              models={models}
+              preview={previewResearch.bind(null, "video_plan", script.id)}
+              endpoint="/admin/creative-os/api/research"
+              body={{ module: "video_plan", targetId: script.id }}
+              choices={[
+                {
+                  name: "tool",
+                  label: "Tool",
+                  defaultValue: "recommend",
+                  options: [
+                    { value: "recommend", label: "Let Claude recommend" },
+                    ...Object.entries(VIDEO_TOOLS).map(([value, tool]) => ({ value, label: tool.label })),
+                  ],
+                },
+                {
+                  name: "aspect",
+                  label: "Aspect ratio",
+                  defaultValue: "9:16",
+                  options: VIDEO_ASPECTS.map((value) => ({ value, label: value })),
+                  hint: "9:16 for Reels, Stories and TikTok; 4:5 or 1:1 for feed; 16:9 for YouTube.",
+                },
+              ]}
+              disabledReason={!hasText ? "Write the script first." : null}
+              durationHint="usually 40–90 seconds"
+            />
+          ) : null}
         </div>
       </div>
 

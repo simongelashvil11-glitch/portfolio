@@ -6,7 +6,7 @@ import type { CosAiOperation, CosPricing } from "@/db/creative-os";
 
 import type { Effort } from "../format";
 import { competitorDiscovery, competitorResearch, marketPatterns } from "./competitors";
-import { angleGeneration, briefGeneration, hookGeneration, scriptReview, scriptWriting, sectionRewrite } from "./creative";
+import { angleGeneration, briefGeneration, hookGeneration, scriptReview, scriptWriting, sectionRewrite, videoPlan } from "./creative";
 import type { Material } from "./context";
 import type { AnyModule, ModuleOptions } from "./module";
 import { productResearch } from "./product";
@@ -38,6 +38,7 @@ export const RESEARCH_MODULES: Record<string, AnyModule> = Object.fromEntries(
     sectionRewrite,
     scriptReview,
     briefGeneration,
+    videoPlan,
   ].map((item) => [item.kind, item]),
 );
 

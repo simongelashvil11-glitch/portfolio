@@ -10,6 +10,7 @@ import {
   cosAngles,
   cosAuditLog,
   cosBriefs,
+  cosVideoPlans,
   cosHooks,
   cosScripts,
   cosScriptVersions,
@@ -406,4 +407,27 @@ export async function deleteBrief(formData: FormData) {
   await db.delete(cosBriefs).where(and(eq(cosBriefs.id, briefId), eq(cosBriefs.projectId, projectId)));
   refresh();
   redirect(`/admin/creative-os/p/${projectId}/briefs`);
+}
+
+/* ------------------------------------------------------------------ */
+/* AI video plans                                                      */
+/* ------------------------------------------------------------------ */
+
+export async function setVideoPlanStatus(formData: FormData) {
+  await requireSession();
+  const planId = id(formData.get("id"));
+  const status = text(formData.get("status"));
+  if (!planId || !["draft", "approved", "archived"].includes(status)) return;
+  await db.update(cosVideoPlans).set({ status, updatedAt: new Date() }).where(eq(cosVideoPlans.id, planId));
+  refresh();
+}
+
+export async function deleteVideoPlan(formData: FormData) {
+  await requireSession();
+  const planId = id(formData.get("id"));
+  const projectId = id(formData.get("projectId"));
+  if (!planId || !projectId) return;
+  await db.delete(cosVideoPlans).where(and(eq(cosVideoPlans.id, planId), eq(cosVideoPlans.projectId, projectId)));
+  refresh();
+  redirect(`/admin/creative-os/p/${projectId}/video`);
 }

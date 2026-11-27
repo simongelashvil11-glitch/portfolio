@@ -30,7 +30,7 @@ export default async function NewScriptPage({ params, searchParams }: PageProps<
         <input type="hidden" name="projectId" value={project.id} />
         <ScriptBriefFields
           choices={choices}
-          defaults={{ angleId: Number(query.angle) || null, hookId: Number(query.hook) || null, language }}
+          defaults={{ angleId: Number(query.angle) || null, hookId: Number(query.hook) || null, language, kind: typeof query.kind === "string" ? query.kind : null }}
         />
       </CosForm>
     </div>
