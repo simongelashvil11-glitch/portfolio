@@ -106,8 +106,8 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
             { href: `${base}/products`, label: "Products", badge: products.value || null },
             { href: `${base}/knowledge`, label: "Knowledge", badge: knowledge.value || null },
             { href: `${base}/customers`, label: "Voice of Customer", badge: insights.value || null },
-            { href: `${base}/audiences`, label: "Audiences", badge: segments.value || null },
-            { href: `${base}/awareness`, label: "Awareness" },
+            { href: `${base}/audiences`, label: "Audiences", badge: segments.value || null, claude: true },
+            { href: `${base}/awareness`, label: "Awareness", claude: true },
             { href: `${base}/competitors`, label: "Competitors", badge: competitors.value || null },
             { href: `${base}/sources`, label: "Sources", badge: sources.value || null },
           ]}
@@ -116,11 +116,11 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
           label="Create"
           heading="Create"
           items={[
-            { href: `${base}/angles`, label: "Angles", badge: angles.value || null },
-            { href: `${base}/hooks`, label: "Hooks", badge: hooks.value || null },
-            { href: `${base}/scripts`, label: "Scripts and copy", badge: scripts.value || null },
-            { href: `${base}/briefs`, label: "Briefs", badge: briefs.value || null },
-            { href: `${base}/video`, label: "AI video", badge: videoPlans.value || null },
+            { href: `${base}/angles`, label: "Angles", badge: angles.value || null, claude: true },
+            { href: `${base}/hooks`, label: "Hooks", badge: hooks.value || null, claude: true },
+            { href: `${base}/scripts`, label: "Scripts and copy", badge: scripts.value || null, claude: true },
+            { href: `${base}/briefs`, label: "Briefs", badge: briefs.value || null, claude: true },
+            { href: `${base}/video`, label: "AI video", badge: videoPlans.value || null, claude: true },
             { href: `${base}/ads`, label: "Ad Lab", badge: ads.value || null },
           ]}
         />

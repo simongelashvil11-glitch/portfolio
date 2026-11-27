@@ -10,6 +10,8 @@ import { Sparkle } from "@/components/fluent-icons";
 import { count, EFFORTS, usd, type Effort } from "@/lib/creative-os/format";
 import { cn } from "@/lib/utils";
 
+import { ClaudeMark } from "./claude-mark";
+
 /*
  * The only way a paid operation starts. The owner picks a model (there is no
  * default: it is chosen every time), sees the estimate worked out on the
@@ -256,6 +258,11 @@ export function AuthorizeDialog({
       >
         <Sparkle />
         {triggerLabel}
+        {manual ? (
+          <span className="ml-0.5 inline-flex rounded-full bg-white p-[2px]">
+            <ClaudeMark className="size-3" />
+          </span>
+        ) : null}
       </button>
 
       <Dialog open={open} title={title} onClose={close} widthClassName="max-w-2xl">
@@ -270,7 +277,12 @@ export function AuthorizeDialog({
             {manual && (phase.step === "choose" || phase.step === "estimating") ? (
               <>
                 {" "}
-                <button type="button" className="font-semibold text-accent hover:underline" onClick={() => setPhase({ step: "manual" })}>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 font-semibold text-accent hover:underline"
+                  onClick={() => setPhase({ step: "manual" })}
+                >
+                  <ClaudeMark />
                   Use my Claude subscription instead
                 </button>
               </>

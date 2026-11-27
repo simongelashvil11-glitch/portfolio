@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
+import { ClaudeMark } from "./claude-mark";
+
 /**
  * A row of tabs after Fluent's TabList: the selected tab is semibold with the
  * brand-coloured underline. It scrolls sideways on a phone rather than
@@ -15,7 +17,7 @@ export function CosTabs({
   label,
   heading,
 }: {
-  items: { href: string; label: string; exact?: boolean; badge?: string | number | null; also?: string[] }[];
+  items: { href: string; label: string; exact?: boolean; badge?: string | number | null; also?: string[]; claude?: boolean }[];
   label: string;
   /** A small label at the start of the row, when a page has more than one row of tabs. */
   heading?: string;
@@ -45,6 +47,7 @@ export function CosTabs({
                 )}
               >
                 {item.label}
+                {item.claude ? <ClaudeMark /> : null}
                 {item.badge ? (
                   <span className="tnum rounded-full bg-surface px-1.5 text-[11px] font-semibold leading-[18px] text-muted">
                     {item.badge}
