@@ -64,6 +64,13 @@
       "when": 1795766042032,
       "tag": "0008_image_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795768731162,
+      "tag": "0009_script_ad",
+      "breakpoints": true
     }
   ]
 }

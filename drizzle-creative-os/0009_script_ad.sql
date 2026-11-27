@@ -1,0 +1,2 @@
+ALTER TABLE "creative_os"."scripts" ADD COLUMN "ad_id" integer;--> statement-breakpoint
+ALTER TABLE "creative_os"."scripts" ADD CONSTRAINT "scripts_ad_id_ads_id_fk" FOREIGN KEY ("ad_id") REFERENCES "creative_os"."ads"("id") ON DELETE set null ON UPDATE no action;

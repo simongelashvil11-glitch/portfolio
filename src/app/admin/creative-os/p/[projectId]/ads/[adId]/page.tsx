@@ -4,25 +4,29 @@ import { notFound } from "next/navigation";
 
 import { deleteAd, deleteAdImage, previewDeconstruction, saveAd } from "@/actions/creative-os";
 import { transcribeVideo } from "@/actions/creative-os-research";
+import { writeCopyForAd } from "@/actions/creative-os-writing";
 import { ConfirmForm } from "@/components/admin/confirm-form";
 import { DeleteForm } from "@/components/admin/delete-form";
 import { Panel } from "@/components/admin/stats";
-import { button, EmptyState } from "@/components/admin/ui";
+import { button, EmptyState, inputClass } from "@/components/admin/ui";
 import { AdFields } from "@/components/creative-os/ad-fields";
 import { BulletList, ElementTag, HighlightedText, OverviewFacts, SegmentCard } from "@/components/creative-os/analysis-view";
 import { AuthorizeDialog } from "@/components/creative-os/authorize-dialog";
 import { CosForm } from "@/components/creative-os/forms";
+import { TranscribeUpload } from "@/components/creative-os/transcribe-upload";
 import { AdImagesUpload } from "@/components/creative-os/uploads";
 import { ArrowDownload, ChevronRight } from "@/components/fluent-icons";
 import { db } from "@/db";
-import { cosAdAnalyses, cosAdImages, cosAds, cosAdSegments, cosAiOperations } from "@/db/creative-os";
+import { cosAdAnalyses, cosAdImages, cosAds, cosAdSegments, cosAiOperations, cosScripts } from "@/db/creative-os";
 import { when } from "@/lib/admin-time";
+import { COPY_KINDS, COPY_KIND_KEYS } from "@/lib/creative-os/creative-labels";
 import { ELEMENT_STYLE, type Element } from "@/lib/creative-os/elements";
 import type { StoredOverview } from "@/lib/creative-os/export";
 import { adDaysRunning, runningLabel, usd } from "@/lib/creative-os/format";
 import { getPricing, getSettings } from "@/lib/creative-os/pricing";
 import { getProjectOr404 } from "@/lib/creative-os/queries";
 import { isFacebookVideoUrl, transcriptWorstCase } from "@/lib/creative-os/transcribe";
+import { LANGUAGES } from "@/lib/creative-os/writing-choices";
 
 export const dynamic = "force-dynamic";
 // Transcribe runs as a server action on this page: room for the download and the transcription.
@@ -43,7 +47,7 @@ export default async function AdPage({ params, searchParams }: PageProps<"/admin
     .limit(1);
   if (!ad) notFound();
 
-  const [images, analyses, pricing, { transcriptionPerHour }] = await Promise.all([
+  const [images, analyses, pricing, { transcriptionPerHour }, written] = await Promise.all([
     db.select({ id: cosAdImages.id, size: cosAdImages.size }).from(cosAdImages).where(eq(cosAdImages.adId, ad.id)).orderBy(asc(cosAdImages.id)),
     db
       .select({ analysis: cosAdAnalyses, cost: cosAiOperations.costUsd, effort: cosAiOperations.effort })
@@ -53,6 +57,11 @@ export default async function AdPage({ params, searchParams }: PageProps<"/admin
       .orderBy(desc(cosAdAnalyses.createdAt)),
     getPricing(),
     getSettings(),
+    db
+      .select({ id: cosScripts.id, title: cosScripts.title, updatedAt: cosScripts.updatedAt })
+      .from(cosScripts)
+      .where(eq(cosScripts.adId, ad.id))
+      .orderBy(desc(cosScripts.updatedAt)),
   ]);
 
   const requested = Number((await searchParams).analysis);
@@ -65,6 +74,8 @@ export default async function AdPage({ params, searchParams }: PageProps<"/admin
   const usedElements = [...new Set(segments.map((segment) => segment.element))];
   const base = `/admin/creative-os/p/${project.id}/ads/${ad.id}`;
   const running = adDaysRunning(ad);
+  const transcribeKey = Boolean(process.env.ELEVENLABS_API_KEY);
+  const hasWords = Boolean(ad.transcript?.trim() || ad.adCopy?.trim() || ad.notes?.trim());
   const models = pricing
     .filter((row) => row.enabled)
     .map((row) => ({ model: row.model, label: row.label, inputPerMtok: row.inputPerMtok, outputPerMtok: row.outputPerMtok, note: row.note }));
@@ -114,14 +125,9 @@ export default async function AdPage({ params, searchParams }: PageProps<"/admin
         />
       </div>
 
-      {ad.mediaKind === "video" && !ad.transcript?.trim() ? (
+      {ad.mediaKind !== "image" && !ad.transcript?.trim() ? (
         <Panel title="Video transcript">
-          {!isFacebookVideoUrl(ad.videoUrl) ? (
-            <p className="text-sm text-muted">
-              No video address was saved, so it can&apos;t be transcribed automatically. In the Ad Library, play this video for a
-              second, then press Save to CreativeOS again; or paste what is said into the transcript below.
-            </p>
-          ) : !process.env.ELEVENLABS_API_KEY ? (
+          {!transcribeKey ? (
             <p className="text-sm text-muted">
               Automatic transcripts need an ElevenLabs API key on the server (ELEVENLABS_API_KEY). See the{" "}
               <Link href="/admin/creative-os/guide#transcripts" className="text-accent hover:underline">
@@ -130,18 +136,31 @@ export default async function AdPage({ params, searchParams }: PageProps<"/admin
               ; until then, paste what is said into the transcript below.
             </p>
           ) : (
-            <CosForm action={transcribeVideo} submitLabel="Transcribe video" pendingLabel="Transcribing… (usually under a minute)">
-              <input type="hidden" name="adId" value={ad.id} />
-              <input type="hidden" name="key" value={crypto.randomUUID()} />
-              <p className="text-sm text-muted">
-                Writes what is said in the video into the transcript, with timestamps, using ElevenLabs Scribe (handles Georgian
-                and English).{" "}
-                {ad.videoSeconds
-                  ? `About ${Math.round(ad.videoSeconds)} seconds of audio: roughly ${usd((ad.videoSeconds / 3600) * transcriptionPerHour)}.`
-                  : `The length is unknown; at most ${usd(transcriptWorstCase(null, transcriptionPerHour))} (10 minutes).`}{" "}
-                Counted in your spending limits.
-              </p>
-            </CosForm>
+            <div className="grid gap-5">
+              {isFacebookVideoUrl(ad.videoUrl) ? (
+                <CosForm action={transcribeVideo} submitLabel="Transcribe video" pendingLabel="Transcribing… (usually under a minute)">
+                  <input type="hidden" name="adId" value={ad.id} />
+                  <input type="hidden" name="key" value={crypto.randomUUID()} />
+                  <p className="text-sm text-muted">
+                    Writes what is said in the video into the transcript, with timestamps, using ElevenLabs Scribe (handles Georgian
+                    and English).{" "}
+                    {ad.videoSeconds
+                      ? `About ${Math.round(ad.videoSeconds)} seconds of audio: roughly ${usd((ad.videoSeconds / 3600) * transcriptionPerHour)}.`
+                      : `The length is unknown; at most ${usd(transcriptWorstCase(null, transcriptionPerHour))} (10 minutes).`}{" "}
+                    Counted in your spending limits.
+                  </p>
+                </CosForm>
+              ) : ad.source === "extension" ? (
+                <p className="text-sm text-muted">
+                  No video address was saved with this ad. In the Ad Library, play the video for a second and press Save to CreativeOS
+                  again, or upload the video below.
+                </p>
+              ) : null}
+              <section aria-label="Upload a video to transcribe" className={isFacebookVideoUrl(ad.videoUrl) || ad.source === "extension" ? "border-t border-line pt-4" : ""}>
+                <h3 className="mb-2 text-sm font-semibold">{isFacebookVideoUrl(ad.videoUrl) ? "Or upload the video from your computer" : "Upload the video from your computer"}</h3>
+                <TranscribeUpload adId={ad.id} perHour={transcriptionPerHour} keyAvailable={transcribeKey} />
+              </section>
+            </div>
           )}
         </Panel>
       ) : null}
@@ -264,6 +283,49 @@ export default async function AdPage({ params, searchParams }: PageProps<"/admin
           </div>
         </>
       )}
+
+      <Panel title="Write copy for this ad">
+        {written.length > 0 ? (
+          <ul className="mb-4 grid gap-1 text-sm">
+            {written.map((script) => (
+              <li key={script.id} className="flex flex-wrap items-baseline gap-x-2">
+                <Link href={`/admin/creative-os/p/${project.id}/scripts/${script.id}`} className="text-accent hover:underline">
+                  {script.title}
+                </Link>
+                <span className="text-xs text-faint">changed {when(script.updatedAt)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <CosForm action={writeCopyForAd} submitLabel={written.length > 0 ? "Start another" : "Start the copy"} pendingLabel="Creating…">
+          <input type="hidden" name="adId" value={ad.id} />
+          <p className="text-sm text-muted">
+            Opens a new copy brief already filled in from this ad: {hasWords ? "what is said in it, its copy and notes" : "its transcript and copy (add them first)"}
+            {current ? ", plus the hook, structure, offer and call to action from the analysis" : ""}. Nothing is sent yet; on the next
+            page you press Generate (API or your Claude subscription) as with any copy.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-semibold">What to write</span>
+              <select name="kind" defaultValue="meta_primary_text" className={inputClass}>
+                {COPY_KIND_KEYS.map((key) => (
+                  <option key={key} value={key}>
+                    {COPY_KINDS[key].label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-semibold">Language</span>
+              <select name="language" defaultValue={project.targetLanguages.some((language) => /georgian/i.test(language)) ? "Georgian" : "English"} className={inputClass}>
+                {LANGUAGES.map((language) => (
+                  <option key={language}>{language}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </CosForm>
+      </Panel>
 
       <Panel title={`Screenshots (${images.length})`}>
         {images.length > 0 ? (

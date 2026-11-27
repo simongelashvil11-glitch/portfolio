@@ -731,6 +731,8 @@ export const cosScripts = creativeOs.table(
     segmentId: integer("segment_id").references(() => cosAudienceSegments.id, { onDelete: "set null" }),
     angleId: integer("angle_id").references(() => cosAngles.id, { onDelete: "set null" }),
     hookId: integer("hook_id").references(() => cosHooks.id, { onDelete: "set null" }),
+    /** The Ad Lab ad this copy is written for ("Write copy for this ad"). */
+    adId: integer("ad_id").references(() => cosAds.id, { onDelete: "set null" }),
     title: varchar("title", { length: 200 }).notNull(),
     /** What it is: ugc_script, meta_primary_text, advertorial… (see COPY_KINDS) */
     kind: varchar("kind", { length: 32 }).notNull(),

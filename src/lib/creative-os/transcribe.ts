@@ -94,16 +94,30 @@ const VIDEO_NOTE = "Video ad saved from the Ad Library. Paste what is said into 
  * Transcribes one ad's video into its Transcript. `key` makes the run
  * idempotent (a repeated request finds the first and does nothing).
  */
-export async function transcribeAd(adId: number, { trigger, key }: { trigger: "manual" | "auto"; key: string }): Promise<TranscribeOutcome> {
+export async function transcribeAd(
+  adId: number,
+  {
+    trigger,
+    key,
+    upload,
+  }: {
+    trigger: "manual" | "auto" | "upload";
+    key: string;
+    /** Audio sent from the browser (extracted from a video on your computer), instead of the Ad Library video. */
+    upload?: { bytes: ArrayBuffer; type: string; name: string; seconds: number };
+  },
+): Promise<TranscribeOutcome> {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) return { ok: false, reason: "The ElevenLabs API key is not set on this server (ELEVENLABS_API_KEY)." };
 
-  const [ad] = await db.select().from(cosAds).where(eq(cosAds.id, adId)).limit(1);
-  if (!ad) return { ok: false, reason: "That ad no longer exists." };
-  if (ad.transcript?.trim()) return { ok: false, reason: "This ad already has a transcript. Clear it first to transcribe again." };
-  if (!isFacebookVideoUrl(ad.videoUrl)) {
+  const [found] = await db.select().from(cosAds).where(eq(cosAds.id, adId)).limit(1);
+  if (!found) return { ok: false, reason: "That ad no longer exists." };
+  if (found.transcript?.trim()) return { ok: false, reason: "This ad already has a transcript. Clear it first to transcribe again." };
+  if (!upload && !isFacebookVideoUrl(found.videoUrl)) {
     return { ok: false, reason: "No video address was saved for this ad. Play the video once in the Ad Library, then save the ad again." };
   }
+  // An uploaded file is priced by its own length.
+  const ad = upload ? { ...found, videoSeconds: upload.seconds } : found;
 
   const [existing] = await db.select({ id: cosAiOperations.id }).from(cosAiOperations).where(eq(cosAiOperations.idempotencyKey, key)).limit(1);
   if (existing) return { ok: false, reason: "Already requested." };
@@ -156,27 +170,33 @@ export async function transcribeAd(adId: number, { trigger, key }: { trigger: "m
     return { ok: false, reason: "This would pass your monthly limit." };
   }
 
-  // 1. The video, from Facebook's CDN. Nothing has been sent to ElevenLabs yet, so a failure here costs nothing.
-  let video: ArrayBuffer;
-  try {
-    const response = await fetch(ad.videoUrl!, { signal: AbortSignal.timeout(60_000) });
-    if (!response.ok) throw new Error(`status ${response.status}`);
-    const declared = Number(response.headers.get("content-length") ?? 0);
-    if (declared > MAX_VIDEO_BYTES) throw new Error("too large");
-    video = await response.arrayBuffer();
-    if (video.byteLength > MAX_VIDEO_BYTES) throw new Error("too large");
-  } catch (error) {
-    const reason =
-      error instanceof Error && error.message === "too large"
-        ? "The video is too large to transcribe here (over 80 MB)."
-        : "The video could not be downloaded; its link has probably expired. Open the ad in the Ad Library, play it, and save it again.";
-    await finish({ status: "failed", error: reason, costUsd: 0 }, "failed");
-    return { ok: false, reason };
+  // 1. The media: the audio you uploaded, or the video from Facebook's CDN.
+  //    Nothing has been sent to ElevenLabs yet, so a failure here costs nothing.
+  let media: { bytes: ArrayBuffer; type: string; name: string };
+  if (upload) {
+    media = upload;
+  } else {
+    try {
+      const response = await fetch(ad.videoUrl!, { signal: AbortSignal.timeout(60_000) });
+      if (!response.ok) throw new Error(`status ${response.status}`);
+      const declared = Number(response.headers.get("content-length") ?? 0);
+      if (declared > MAX_VIDEO_BYTES) throw new Error("too large");
+      const bytes = await response.arrayBuffer();
+      if (bytes.byteLength > MAX_VIDEO_BYTES) throw new Error("too large");
+      media = { bytes, type: "video/mp4", name: `ad-${ad.libraryId ?? ad.id}.mp4` };
+    } catch (error) {
+      const reason =
+        error instanceof Error && error.message === "too large"
+          ? "The video is too large to transcribe here (over 80 MB)."
+          : "The video could not be downloaded; its link has probably expired. Open the ad in the Ad Library, play it, and save it again.";
+      await finish({ status: "failed", error: reason, costUsd: 0 }, "failed");
+      return { ok: false, reason };
+    }
   }
 
   // 2. The transcript.
   const form = new FormData();
-  form.append("file", new Blob([video], { type: "video/mp4" }), `ad-${ad.libraryId ?? ad.id}.mp4`);
+  form.append("file", new Blob([media.bytes], { type: media.type }), media.name);
   form.append("model_id", TRANSCRIBE_MODEL);
   form.append("timestamps_granularity", "word");
   form.append("tag_audio_events", "false");

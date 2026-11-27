@@ -636,6 +636,16 @@ export default function GuidePage() {
               Facebook&apos;s video links expire after some days, so transcribe soon after saving (automatic mode does it at once).
             </li>
             <li>
+              <strong>Your own videos</strong> (or a link that expired): add the ad in the Ad Lab, then under{" "}
+              <strong>Video transcript</strong> choose the video file from your computer. Your browser takes only the sound out of
+              it, so a big file is fine and only about 1 MB is sent; the button shows the cost first. Up to about 2 minutes.
+            </li>
+            <li>
+              <strong>Write copy for this ad</strong>, on every Ad Lab ad, opens a new copy brief already filled in with what is
+              said in the ad, its copy, notes and (if analysed) its hook, structure, offer and CTA. Pick the type and language,
+              then press Write it there, with the API or your Claude subscription.
+            </li>
+            <li>
               Every transcript is in Research history with its cost, and counts against your monthly and per-operation limits.
               A transcript you pasted is never overwritten.
             </li>

@@ -7,10 +7,13 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import {
+  cosAdAnalyses,
+  cosAds,
   cosAngles,
   cosAuditLog,
   cosBriefs,
   cosImagePlans,
+  cosProducts,
   cosVideoPlans,
   cosHooks,
   cosScripts,
@@ -454,4 +457,74 @@ export async function deleteImagePlan(formData: FormData) {
   await db.delete(cosImagePlans).where(and(eq(cosImagePlans.id, planId), eq(cosImagePlans.projectId, projectId)));
   refresh();
   redirect(`/admin/creative-os/p/${projectId}/images`);
+}
+
+/* ------------------------------------------------------------------ */
+/* Copy for an Ad Lab ad                                               */
+/* ------------------------------------------------------------------ */
+
+type AnalysisOverview = {
+  overview?: { opening_hook?: string; structure_summary?: string; offer?: string | null; cta?: string | null; target_audience_hypothesis?: string };
+};
+
+/**
+ * Starts a piece of copy written for an ad in the Ad Lab: a script brief
+ * filled with what the ad says (transcript, copy, notes) and, if it was
+ * analysed, its hook, structure, offer and call to action. Free: nothing is
+ * written until you press Write it on the next page.
+ */
+export async function writeCopyForAd(_previous: FormState, formData: FormData): Promise<FormState> {
+  await requireSession();
+  const adId = id(formData.get("adId"));
+  const [ad] = adId ? await db.select().from(cosAds).where(eq(cosAds.id, adId)).limit(1) : [];
+  if (!ad) return { error: "That ad no longer exists." };
+  if (!ad.transcript?.trim() && !ad.adCopy?.trim() && !ad.notes?.trim()) {
+    return { error: "Add the ad's transcript or copy first, so there is something to write from." };
+  }
+  const kind = (COPY_KIND_KEYS as string[]).includes(text(formData.get("kind"))) ? (text(formData.get("kind")) as CopyKind) : "meta_primary_text";
+  const language = ["English", "Georgian", "Russian"].includes(text(formData.get("language"))) ? text(formData.get("language")) : "English";
+
+  const [analysis] = await db
+    .select({ overview: cosAdAnalyses.overview })
+    .from(cosAdAnalyses)
+    .where(eq(cosAdAnalyses.adId, ad.id))
+    .orderBy(desc(cosAdAnalyses.createdAt))
+    .limit(1);
+  const overview = (analysis?.overview as AnalysisOverview | undefined)?.overview;
+  const products = await db.select({ id: cosProducts.id }).from(cosProducts).where(eq(cosProducts.projectId, ad.projectId));
+
+  const instructions = [
+    `Write this to run with the ad "${ad.title}"${ad.format ? ` (${ad.format})` : ""}. Match what the ad says and shows; do not promise anything it does not.`,
+    ad.transcript?.trim() ? `What is said in the video:\n${ad.transcript.trim()}` : null,
+    ad.adCopy?.trim() ? `The ad's current copy:\n${ad.adCopy.trim()}` : null,
+    ad.notes?.trim() ? `Notes on the ad and its visuals:\n${ad.notes.trim()}` : null,
+    overview?.opening_hook ? `Its opening hook: ${overview.opening_hook}` : null,
+    overview?.structure_summary ? `Its structure: ${overview.structure_summary}` : null,
+    overview?.offer ? `Its offer: ${overview.offer}` : null,
+    overview?.cta ? `Its call to action: ${overview.cta}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n\n")
+    .slice(0, 6000);
+
+  const working: ScriptSection[] = COPY_KINDS[kind].sections.map((label) => ({ label, text: "", direction: "" }));
+  const [script] = await db
+    .insert(cosScripts)
+    .values({
+      projectId: ad.projectId,
+      adId: ad.id,
+      productId: products.length === 1 ? products[0].id : null,
+      title: `${COPY_KINDS[kind].label}: ${ad.title}`.slice(0, 200),
+      kind,
+      platform: ad.platform ?? "Meta",
+      language,
+      offer: overview?.offer ?? null,
+      cta: overview?.cta?.slice(0, 200) ?? null,
+      instructions,
+      working,
+    })
+    .returning({ id: cosScripts.id });
+  await log("created", "script", script.id, { fromAd: ad.id });
+  refresh();
+  redirect(`/admin/creative-os/p/${ad.projectId}/scripts/${script.id}`);
 }

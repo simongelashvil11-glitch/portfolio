@@ -14,7 +14,7 @@ import { ScriptBriefFields } from "@/components/creative-os/script-brief-fields"
 import { ScriptEditor } from "@/components/creative-os/script-editor";
 import { ArrowDownload, ChevronRight } from "@/components/fluent-icons";
 import { db } from "@/db";
-import { cosAngles, cosBriefs, cosHooks, cosScriptReviews, cosScripts, cosScriptVersions, type ScriptSection } from "@/db/creative-os";
+import { cosAds, cosAngles, cosBriefs, cosHooks, cosScriptReviews, cosScripts, cosScriptVersions, type ScriptSection } from "@/db/creative-os";
 import { when } from "@/lib/admin-time";
 import {
   BRIEF_AUDIENCES,
@@ -89,7 +89,7 @@ export default async function ScriptPage({ params, searchParams }: PageProps<"/a
     .limit(1);
   if (!script) notFound();
 
-  const [versions, reviews, briefs, choices, models, [angle], [hook]] = await Promise.all([
+  const [versions, reviews, briefs, choices, models, [angle], [hook], [sourceAd]] = await Promise.all([
     db.select().from(cosScriptVersions).where(eq(cosScriptVersions.scriptId, script.id)).orderBy(desc(cosScriptVersions.number)),
     db.select().from(cosScriptReviews).where(eq(cosScriptReviews.scriptId, script.id)).orderBy(desc(cosScriptReviews.createdAt)),
     db.select({ id: cosBriefs.id, title: cosBriefs.title, audience: cosBriefs.audience, createdAt: cosBriefs.createdAt }).from(cosBriefs).where(eq(cosBriefs.scriptId, script.id)).orderBy(desc(cosBriefs.createdAt)),
@@ -97,6 +97,7 @@ export default async function ScriptPage({ params, searchParams }: PageProps<"/a
     enabledModels(),
     script.angleId ? db.select({ id: cosAngles.id, name: cosAngles.name }).from(cosAngles).where(eq(cosAngles.id, script.angleId)).limit(1) : Promise.resolve([]),
     script.hookId ? db.select({ text: cosHooks.text }).from(cosHooks).where(eq(cosHooks.id, script.hookId)).limit(1) : Promise.resolve([]),
+    script.adId ? db.select({ id: cosAds.id, title: cosAds.title }).from(cosAds).where(eq(cosAds.id, script.adId)).limit(1) : Promise.resolve([]),
   ]);
 
   const kind = COPY_KINDS[script.kind as CopyKind];
@@ -130,6 +131,14 @@ export default async function ScriptPage({ params, searchParams }: PageProps<"/a
               .join(" · ")}
           </p>
           <p className="mt-0.5 text-sm text-muted">
+            {sourceAd ? (
+              <span className="mr-3">
+                Written for the ad{" "}
+                <Link href={`/admin/creative-os/p/${project.id}/ads/${sourceAd.id}`} className="text-accent hover:underline">
+                  {sourceAd.title}
+                </Link>
+              </span>
+            ) : null}
             {angle ? (
               <>
                 Angle:{" "}
