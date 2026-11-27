@@ -21,6 +21,7 @@
     "docx": "^9.16.1",
     "drizzle-orm": "^0.45.2",
     "jose": "^6.2.10",
+    "jszip": "^3.10.2",
     "lucide-react": "^1.38.0",
     "mammoth": "^1.13.0",
     "maxmind": "^4.3.29",

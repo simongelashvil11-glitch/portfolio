@@ -4,6 +4,7 @@ import { deleteProject, duplicateProject, setProjectArchived } from "@/actions/c
 import { ConfirmForm } from "@/components/admin/confirm-form";
 import { button } from "@/components/admin/ui";
 import { CosTabs } from "@/components/creative-os/tabs";
+import { ArrowDownload } from "@/components/fluent-icons";
 import { db } from "@/db";
 import {
   cosAds,
@@ -74,6 +75,22 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <a
+            href={`/admin/creative-os/api/export/project/${project.id}?format=csv`}
+            className={`${button.secondary} inline-flex items-center gap-1.5`}
+            title="Everything in this project as one CSV, to paste or attach in another AI tool such as Manus"
+          >
+            <ArrowDownload className="size-4" />
+            Export CSV
+          </a>
+          <a
+            href={`/admin/creative-os/api/export/project/${project.id}?format=xlsx`}
+            className={`${button.secondary} inline-flex items-center gap-1.5`}
+            title="Everything in this project as an Excel workbook: one sheet with all of it, then one per section"
+          >
+            <ArrowDownload className="size-4" />
+            Export Excel
+          </a>
           <form action={duplicateProject}>
             <input type="hidden" name="id" value={project.id} />
             <button type="submit" className={button.secondary}>
